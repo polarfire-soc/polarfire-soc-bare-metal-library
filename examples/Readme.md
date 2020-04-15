@@ -5,8 +5,8 @@ the PolarFire SoC Bare Metal Library.
 ## Important Note About SoftConsole Workspace
 SoftConsole includes an empty workspace. We recommend that you make a copy of
 this empty workspace to a location of your choice. This will allow you to take
-advantage of the integrated "develop and debug" perpective, Renode platform
-launchers and other preconfigured settings.
+advantage of the integrated "develop and debug" perspective, Renode platform
+launchers and other pre-configured settings.
 
 Using the empty workspace as a starting point for your own workspace allows the
 example projects to work out of the box. In particular the Renode debug launchers
@@ -25,49 +25,91 @@ Bare Metal Library: mpfs-bare-metal-library/examples
 - Select the File->Import menu to import an example project into your SoftConsole
 Workspace:
 
-   ![File_Import_menu](images/file_import_menu.png)
+   ![File_Import_menu_1](images/file_import_menu_1.png)
 
 
-- Select "Existing Projects into Workspace" and click "Next":
 
-   ![Import_Select_Dialog](images/import_select_dialog.png)
+- Expand "Git" -> "Projects from Git (with smart import)" and click "Next":
 
-- Select the folder inside the Bare Metal Library containing the example project
-of your choice then click "Select Folder".
+   ![Import_Select_Dialog_1](images/import_select_dialog_1.png)
+   
+   
+- Select "Clone URL" and click "Next":
 
-   Ensure that the project of your choice is listed and the box beside it ticked
-in the "Projects" list. If the project does not show up in the list, it probably
-means that you selected the incorrect folder level in the previous step.
-Ensure the "Copy projects into workspace" option is ticked then click "Finish".
+   ![import_projects_from_git_dialog_1](images/import_projects_from_git_dialog_1.png)
+   
 
-   ![Import_Projects_Dialog](images/import_projects_dialog.png)
+- Copy the link to the PolarFire SoC Bare Metal Library GitHub repository:
 
-- The imported project now appears in the "Project Explorer":
+   ![copy_bare_metal_library_link_1](images/copy_bare_metal_library_link_1.png)   
+   
 
-   ![Imported_Project](images/imported_project.png)
+- Paste the link to the PolarFire SoC Bare Metal Library GitHub repository into the "URL" field, others will auto populate, and click "Next":
+
+   ![import_projects_from_git_dialog_2](images/import_projects_from_git_dialog_2.png)
+
+
+- Ensure the "Master" branch is selected and click "Next":
+
+   ![import_projects_from_git_dialog_3](images/import_projects_from_git_dialog_3.png)   
+   
+   
+- Select a destination folder to clone the bare metal library to and click "Next":
+
+   ![import_projects_from_git_dialog_4](images/import_projects_from_git_dialog_4.png)    
+   
+   
+- Allow SoftConsole to clone the bare metal library:
+
+   ![import_projects_from_git_dialog_5](images/import_projects_from_git_dialog_5.png)       
+   
+   
+- Use the "Deselect All" option to deselect all of the included projects and only import the required project and click "Finish":
+
+   ![import_projects_from_git_dialog_6](images/import_projects_from_git_dialog_6.png)       
+   
+   
+- The imported project will now appear in the project explorer and the "polarfire-soc-bare-metal-libray" will now appear as a git repository:
+
+   ![imported_project_1](images/imported_project_1.png)          
+   
+
+- Further projects can be imported following these steps, as the bare metal library is already cloned, the projects can be imported from a local repository instead of a URL
+   
+   ![local_repository_1](images/local_repository_1.png)     
+   
 
 ## Executing/Debugging Examples In Renode
 Most example projects include a Renode debug launcher allowing execution of the
 example projects in the Renode virtual platform.
 
+
+- Open the project and build it using the "Build" button:
+
+   ![Build_button_1](images/build_button_1.png)
+
+
 - Click on the down-arrow on the right of the "Debug" button then click on "Debug Configurations":
 
    ![Debug_Config](images/debug_config.png)
+
 
 - Select a Renode launcher in the "Launch Group" list then click "debug":
 
    ![Debug_Configurations](images/debug_configurations.png)
 
+
 - This will launch Renode and some Renode analyzers allowing you to interact with the executing example code:
 
    ![Renode_Example](images/renode_example.png)
+
 
 - The debug perspective reflects the debug operations:
 
    ![Debug_Perspective](images/debug_perspective.png)
 
+
 - The debug execution is controlled using the debug buttons:
 
-   ![Debug_Buttons](images/debug_buttons.png)
-
+   ![Debug_Buttons_1](images/debug_buttons_1.png)
 
