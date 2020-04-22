@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,19 +21,17 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *
- * PolarFire SoC microprocessor subsystem CAN bare metal software driver public 
+ * PolarFire SoC Microprocessor Subsystem CAN bare metal software driver public 
  * API.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 /*=========================================================================*//**
-  @mainpage PolarFire MSS CAN Bare Metal Driver.
+  @mainpage PolarFire SoC MSS CAN Bare Metal Driver.
 
   ==============================================================================
   Introduction
   ==============================================================================
-  The PolarFire SoC microprocessor subsystem (MSS) includes two CAN controller. 
+  The PolarFire SoC Microprocessor Subsystem (MSS) includes two CAN controller. 
   The CAN controller is configurable to provide support for up to 32 transmit 
   and 32 receive mailboxes.
 
