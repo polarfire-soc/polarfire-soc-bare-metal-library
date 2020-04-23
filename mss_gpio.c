@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  * 
@@ -7,8 +7,6 @@
  *
  * This driver is based on SmartFusion2 MSS GPIO driver v2.1.102
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #include "mss_gpio.h"
@@ -39,7 +37,7 @@ extern "C" {
  * The GPIO interrupts are multiplexed. Total GPIO interrupts are 41.
  * 41 = (14 from GPIO0 + 24 from GPIO1 + 3 non direct interrupts)
  * GPIO2 interrupts are not available by default. Setting the corresponding bit
- * in GPIO_INTERRUPT_FAB_CR(32:0) will enable GPIO2(32:0) corresponding
+ * in GPIO_INTERRUPT_FAB_CR(31:0) will enable GPIO2(31:0) corresponding
  * interrupt on PLIC.
  *
  * PLIC       GPIO_INTERRUPT_FAB_CR

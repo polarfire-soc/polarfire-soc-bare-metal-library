@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,19 +27,17 @@
  *
  * This driver is based on SmartFusion2 MSS GPIO driver v2.1.102
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 /*=========================================================================*//**
-  @mainpage PolarFire SoC MSS GPIO Bare Metal Driver.
+  @mainpage PolarFire SoC MSS GPIO Bare Metal Driver
 
   ==============================================================================
   Introduction
   ==============================================================================
   The PolarFire SoC Microprocessor Subsystem (MSS) includes three blocks of
   general  purpose input/outputs (GPIO). The GPIO0, GPIO1 and GPIO2 blocks have
-  14, 24 and 34 GPIO ports respectively. This software driver provides a set of
+  14, 24 and 32 GPIO ports respectively. This software driver provides a set of
   functions for controlling the MSS GPIO blocks as part of a bare metal system
   where no operating system is available. This driver can be adapted for use as
   part of an operating system but the implementation of the adaptation layer
@@ -140,7 +138,7 @@
   The GPIO interrupts are multiplexed. Total GPIO interrupt inputs on PLIC are 41.
   41 = (14 from GPIO0 + 24 from GPIO1 + 3 non direct interrupts)
   GPIO2 interrupts are not available by default. Setting the corresponding bit
-  in GPIO_INTERRUPT_FAB_CR(32:0) system register will enable GPIO2(32:0)
+  in GPIO_INTERRUPT_FAB_CR(31:0) system register will enable GPIO2(31:0)
   corresponding interrupt on PLIC. e.g. If GPIO_INTERRUPT_FAB_CR bit0 is set
   then GPIO2 bit0 interrupt is available on the direct input pin on the PLIC.
   In this case GPIO0 bit 0 interrupt will not be available on the direct input
@@ -148,28 +146,33 @@
   all the GPIO0 interrupts which don't have a direct interrupt input on PLIC are
   connected to corresponding non-direct input pin. The table below explains all
   the GPIO direct and non-direct interrupt connectivity options.
+  
+  | PLIC | GPIO_INTERRUPT_FAB_CR = 0 | GPIO_INTERRUPT_FAB_CR = 1 |
+  |------|---------------------------|---------------------------|
+  |   0  |      GPIO0 bit 0          |        GPIO2 bit 0        |
+  |   1  |      GPIO0 bit 1          |        GPIO2 bit 1        |
+  |  ... |         ...               |        ...                |
+  |  12  |      GPIO0 bit 12         |        GPIO2 bit 12       |
+  |  13  |      GPIO0 bit 13         |        GPIO2 bit 13       |
+  |  14  |      GPIO1 bit 0          |        GPIO2 bit 14       |
+  |  15  |      GPIO1 bit 1          |        GPIO2 bit 15       |
+  |  ... |          ...              |             ...           |
+  |  30  |      GPIO1  bit 16        |        GPIO2 bit 30       |
+  |  31  |      GPIO1  bit 17        |        GPIO2 bit 31       |
+  
+  
+  | PLIC |                           Interrupt source                            |
+  |------|-----------------------------------------------------------------------|
+  |  32  |                             GPIO1 bit 18                              |
+  |  33  |                             GPIO1 bit 19                              |
+  |  34  |                             GPIO1 bit 20                              |
+  |  35  |                             GPIO1 bit 21                              |
+  |  36  |                             GPIO1 bit 22                              |
+  |  37  |                             GPIO1 bit 23                              |
+  |  38  | OR of all GPIO0 interrupts who don't have a direct connection enabled |
+  |  39  | OR of all GPIO1 interrupts who don't have a direct connection enabled |
+  |  40  | OR of all GPIO2 interrupts who don't have a direct connection enabled |
 
-   PLIC         GPIO_INTERRUPT_FAB_CR
-                0               1
-    0       GPIO0 bit 0     GPIO2 bit 0
-    1       GPIO0 bit 1     GPIO2 bit 1
-    …           …
-    12      GPIO0 bit 12    GPIO2 bit 12
-    13      GPIO0 bit 13    GPIO2 bit 13
-    14      GPIO1 bit 0     GPIO2 bit 14
-    15      GPIO1 bit 1     GPIO2 bit 15
-    …       …   …
-    30      GPIO1 bit 16    GPIO2 bit 30
-    31      GPIO1 bit 17    GPIO2 bit 31
-    32          GPIO1 bit 18
-    33          GPIO1 bit 19
-    34          GPIO1 bit 20
-    35          GPIO1 bit 21
-    36          GPIO1 bit 22
-    37          GPIO1 bit 23
-    38  OR of all GPIO0 interrupts who don't have a direct connection enabled
-    39  OR of all GPIO1 interrupts who don't have a direct connection enabled
-    40  OR of all GPIO2 interrupts who don't have a direct connection enabled
 
     NOTE: GPIO_INTERRUPT_FAB_CR controls the multiplexing in above table. It is
     your responsibility to set up the GPIO_INTERRUPT_FAB_CR bits in application
@@ -192,7 +195,8 @@ extern "C" {
     - MSS_GPIO_config()
     - MSS_GPIO_set_output() and MSS_GPIO_drive_inout()
     - MSS_GPIO_enable_irq(), MSS_GPIO_disable_irq() and MSS_GPIO_clear_irq()
-  Note that the GPIO0, GPIO1 and GPIO2 blocks have 14, 24 and 34 GPIO ports
+    
+  Note that the GPIO0, GPIO1 and GPIO2 blocks have 14, 24 and 32 GPIO ports
   respectively.
  */
 typedef enum mss_gpio_id
@@ -257,13 +261,24 @@ typedef enum mss_gpio_byte_num
 } mss_gpio_byte_num_t;
 
 /*-------------------------------------------------------------------------*//**
- * GPIO Instance Identification
- These constants are provided for the application use. These constants must be
- passed as a first parameter of all the APIs provided by this driver. The
- GPIO0_LO, GPIO1_LO, GPIO2_LO represent the GPIO0, GPIO1 and GPIO2 hardware
- blocks when they are connected on the main APB bus. The GPIO0_HI, GPIO1_HI,
- GPIO2_HI represent the GPIO0, GPIO1 and GPIO2 hardware blocks when they are
- connected on the AMP APB bus.
+  GPIO Instance Identification
+  ============================
+  These constants are provided for the application use. These constants must be
+  passed as a first parameter of all the APIs provided by this driver. The
+  GPIO0_LO, GPIO1_LO, GPIO2_LO represent the GPIO0, GPIO1 and GPIO2 hardware
+  blocks when they are connected on the main APB bus. The GPIO0_HI, GPIO1_HI,
+  GPIO2_HI represent the GPIO0, GPIO1 and GPIO2 hardware blocks when they are
+  connected on the AMP APB bus.
+  
+  | Constant | Description                           |
+  |----------|---------------------------------------|
+  | GPIO0_LO | GPIO0 block connected on main APB bus |
+  | GPIO1_LO | GPIO1 block connected on main APB bus |
+  | GPIO2_LO | GPIO2 block connected on main APB bus |
+  | GPIO0_HI | GPIO0 block connected on AMP APB bus  |
+  | GPIO1_HI | GPIO1 block connected on AMP APB bus  |
+  | GPIO2_HI | GPIO2 block connected on AMP APB bus  |
+  
  */
 #define GPIO0_LO                        ((GPIO_TypeDef*)0x20120000UL)
 #define GPIO1_LO                        ((GPIO_TypeDef*)0x20121000UL)
@@ -273,12 +288,49 @@ typedef enum mss_gpio_byte_num
 #define GPIO2_HI                        ((GPIO_TypeDef*)0x28122000UL)
 
 /*-------------------------------------------------------------------------*//**
-  GPIO Port Masks:
+  GPIO Port Masks
+  ===============
   These constant definitions are used as an argument to the
   MSS_GPIO_set_outputs() function to identify GPIO ports. A logical OR of these
   constants can be used to specify multiple GPIO ports.
   These definitions can also be used to identify GPIO ports through logical
   operations on the return value of the MSS_GPIO_get_inputs() function.
+  
+  | Constant         | Description           |
+  |------------------|-----------------------|
+  | MSS_GPIO_0_MASK  | GPIO port 0-bit mask  |
+  | MSS_GPIO_1_MASK  | GPIO port 1-bit mask  |
+  | MSS_GPIO_2_MASK  | GPIO port 2-bit mask  |
+  | MSS_GPIO_3_MASK  | GPIO port 3-bit mask  |
+  | MSS_GPIO_4_MASK  | GPIO port 4-bit mask  |
+  | MSS_GPIO_5_MASK  | GPIO port 5-bit mask  |
+  | MSS_GPIO_6_MASK  | GPIO port 6-bit mask  |
+  | MSS_GPIO_7_MASK  | GPIO port 7-bit mask  |
+  | MSS_GPIO_8_MASK  | GPIO port 8-bit mask  |
+  | MSS_GPIO_9_MASK  | GPIO port 9-bit mask  |
+  | MSS_GPIO_10_MASK | GPIO port 10-bit mask |
+  | MSS_GPIO_11_MASK | GPIO port 11-bit mask |
+  | MSS_GPIO_12_MASK | GPIO port 12-bit mask |
+  | MSS_GPIO_13_MASK | GPIO port 13-bit mask |
+  | MSS_GPIO_14_MASK | GPIO port 14-bit mask |
+  | MSS_GPIO_15_MASK | GPIO port 15-bit mask |
+  | MSS_GPIO_16_MASK | GPIO port 16-bit mask |
+  | MSS_GPIO_17_MASK | GPIO port 17-bit mask |
+  | MSS_GPIO_18_MASK | GPIO port 18-bit mask |
+  | MSS_GPIO_19_MASK | GPIO port 19-bit mask |
+  | MSS_GPIO_20_MASK | GPIO port 20-bit mask |
+  | MSS_GPIO_21_MASK | GPIO port 21-bit mask |
+  | MSS_GPIO_22_MASK | GPIO port 22-bit mask |
+  | MSS_GPIO_23_MASK | GPIO port 23-bit mask |
+  | MSS_GPIO_24_MASK | GPIO port 24-bit mask |
+  | MSS_GPIO_25_MASK | GPIO port 25-bit mask |
+  | MSS_GPIO_26_MASK | GPIO port 26-bit mask |
+  | MSS_GPIO_27_MASK | GPIO port 27-bit mask |
+  | MSS_GPIO_28_MASK | GPIO port 28-bit mask |
+  | MSS_GPIO_29_MASK | GPIO port 29-bit mask |
+  | MSS_GPIO_30_MASK | GPIO port 30-bit mask |
+  | MSS_GPIO_31_MASK | GPIO port 31-bit mask |
+  
  */
 #define MSS_GPIO_0_MASK         0x00000001UL
 #define MSS_GPIO_1_MASK         0x00000002UL
@@ -314,18 +366,36 @@ typedef enum mss_gpio_byte_num
 #define MSS_GPIO_31_MASK        0x80000000UL
 
 /*-------------------------------------------------------------------------*//**
-  GPIO Port I/O Mode:
+  GPIO Port I/O Mode
+  ==================
   These constant definitions are used as an argument to the MSS_GPIO_config()
   function to specify the I/O mode of each GPIO port.
+  
+  | Constant             | Description                |
+  |----------------------|----------------------------|
+  | MSS_GPIO_INPUT_MODE  | Input port only            |
+  | MSS_GPIO_OUTPUT_MODE | Output port only           |
+  | MSS_GPIO_INOUT_MODE  | Both input and output port |
+  
  */
 #define MSS_GPIO_INPUT_MODE              0x0000000002UL
 #define MSS_GPIO_OUTPUT_MODE             0x0000000005UL
 #define MSS_GPIO_INOUT_MODE              0x0000000003UL
 
 /*-------------------------------------------------------------------------*//**
-  GPIO Interrupt Mode:
+  GPIO Interrupt Mode
+  ===================
   These constant definitions are used as an argument to the MSS_GPIO_config()
   function to specify the interrupt mode of each GPIO port.
+  
+  | Constant                   | Description                                         |
+  |----------------------------|-----------------------------------------------------|
+  | MSS_GPIO_IRQ_LEVEL_HIGH    | Interrupt on GPIO input level High                  |
+  | MSS_GPIO_IRQ_LEVEL_LOW     | Interrupt on GPIO input level Low                   |
+  | MSS_GPIO_IRQ_EDGE_POSITIVE | Interrupt on GPIO input positive edge               |
+  | MSS_GPIO_IRQ_EDGE_NEGATIVE | Interrupt on GPIO input negative edge               |
+  | MSS_GPIO_IRQ_EDGE_BOTH     | Interrupt on GPIO input positive and negative edges |
+  
  */
 #define MSS_GPIO_IRQ_LEVEL_HIGH           0x0000000000UL
 #define MSS_GPIO_IRQ_LEVEL_LOW            0x0000000020UL
@@ -577,7 +647,7 @@ void MSS_GPIO_config_all
   @return
     This function does not return any value.
 
-  Example 1:
+  Example:
     @code
       #include "mss_gpio.h"
       int main(void)
@@ -819,6 +889,7 @@ MSS_GPIO_get_irq( GPIO_TypeDef const * gpio )
     - High
     - Low
     - High impedance
+    
   An INOUT output would typically be used where several devices can drive the
   state of a shared signal line. The High and Low states are equivalent to the
   High and Low states of a GPIO configured as an output. The High impedance
