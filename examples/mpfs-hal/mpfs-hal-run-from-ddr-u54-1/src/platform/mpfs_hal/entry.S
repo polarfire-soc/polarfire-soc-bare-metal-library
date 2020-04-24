@@ -84,11 +84,14 @@ _start:
     # enable FPU and accelerator if present, setting ignored on E51
     li t0, MSTATUS_FS | MSTATUS_XS
     csrs mstatus, t0
+
     # Init floating point control register to zero
     # skip if e51
     csrr a0, mhartid
     beqz a0, .no_float
+#ifdef __riscv_flen
     fscsr x0
+#endif
 .no_float:
 
      # make sure XLEN agrees with compilation choice, if not will loop here

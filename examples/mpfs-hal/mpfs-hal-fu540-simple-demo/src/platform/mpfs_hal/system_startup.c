@@ -1,5 +1,5 @@
 /******************************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,12 @@
 extern "C" {
 #endif
 
+static void copy_section
+(
+    uint64_t * p_load,
+    uint64_t * p_vma,
+    uint64_t * p_vma_end);
+
 /*LDRA_INSPECTED 440 S MR:R.11.1,R.11.2,R.11.4,R.11.6,R.11.7  Have to allocate number (address) as point reference*/
 mss_sysreg_t*   SYSREG = ((mss_sysreg_t*) BASE32_ADDR_MSS_SYSREG);
 
@@ -54,6 +60,8 @@ __attribute__((weak)) int main_first_hart(void)
     {
         uint8_t hard_idx;
         init_memory();
+
+#ifndef MPFS_HAL_BOOT2
         (void)init_bus_error_unit();
         (void)init_mem_protection_unit();
         (void)init_pmp((uint8_t)MPFS_HAL_FIRST_HART);
@@ -65,7 +73,10 @@ __attribute__((weak)) int main_first_hart(void)
          *      DDR
          *      IOMUX
          */
+
         (void)mss_nwc_init();
+
+        copy_section(&__text_load, &__text_start, &__text_end);
 
         /*
          * Start the other harts. They are put in wfi in entry.S
@@ -126,7 +137,7 @@ __attribute__((weak)) int main_first_hart(void)
                     break;
             }
         }
-
+#endif /* MPFS_HAL_BOOT2 */
         (void)main_other_hart();
     }
 
@@ -395,6 +406,27 @@ __attribute__((weak)) void u54_2(void)
      }
 }
 
+ /*==============================================================================
+  * Copy hardware configuration to registers.
+  * This function should be used in place of memcpy() to cover the use case
+  * where C library code has not yet been copied from its LMA to VMA. For
+  * example copying before the copy_section of the .text section has taken
+  * place.
+  */
+ char * config_copy(void *dest, const void * src, size_t len)
+ {
+     char *csrc = (char *)src;
+     char *cdest = (char *)dest;
+
+     for(int inc = 0; inc < len; inc++)
+     {
+         cdest[inc] = csrc[inc];
+     }
+
+     return(csrc);
+ }
+
+
 /**
  * copy_section
  * @param p_load
@@ -491,7 +523,7 @@ __attribute__((weak)) uint8_t init_mem_protection_unit(void)
  */
 __attribute__((weak)) uint8_t init_pmp(uint8_t hart_id)
 {
-    pmp_configure(hart_id);
+    //todo:mod to allow support for unleashed: pmp_configure(hart_id);
     return (0U);
 }
 

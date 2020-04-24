@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solution.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
  *
  * Code running on U54 second hart
  *
- * SVN $Revision: 10516 $
- * SVN $Date: 2018-11-08 18:09:23 +0000 (Thu, 08 Nov 2018) $
  */
 #include <stdio.h>
 #include <string.h>

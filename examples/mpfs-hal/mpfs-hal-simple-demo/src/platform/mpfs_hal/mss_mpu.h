@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,6 @@
  * @brief PolarFire SoC MSS MPU driver APIS for configuring access regions for
  * the external masters.
  *
- * SVN $Revision: 11867 $
- * SVN $Date: 2019-07-29 19:26:04 +0100 (Mon, 29 Jul 2019) $
  */
 /*=========================================================================*//**
   
@@ -91,7 +89,8 @@ extern uint8_t num_pmp_lut[10];
 
 
 typedef struct
-{    __IO uint64_t  pmp   : 38;
+{
+    __IO uint64_t  pmp   : 38;
     __IO uint64_t  rsrvd : 18;
     __IO uint64_t  mode  : 8;
 } MPUCFG_TypeDef;

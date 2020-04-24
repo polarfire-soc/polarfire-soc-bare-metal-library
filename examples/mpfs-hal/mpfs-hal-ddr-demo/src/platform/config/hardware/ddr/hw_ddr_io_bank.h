@@ -35,7 +35,7 @@ extern  "C" {
 
 #if !defined (LIBERO_SETTING_DPC_BITS)
 /*DPC Bits Register */ 
-#define LIBERO_SETTING_DPC_BITS    0x0004C431UL
+#define LIBERO_SETTING_DPC_BITS    0x0004A431UL
     /* DPC_VS                            [0:4]   RW value= 0x1 */ 
     /* DPC_VRGEN_H                       [4:6]   RW value= 0x8 */ 
     /* DPC_VRGEN_EN_H                    [10:1]  RW value= 0x1 */ 

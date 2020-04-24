@@ -20,8 +20,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
- * SVN $Revision: 8241 $
- * SVN $Date: 2016-02-15 16:51:27 +0530 (Mon, 15 Feb 2016) $
  *
  */
 

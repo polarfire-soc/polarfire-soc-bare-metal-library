@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 
 #include "mpfs_hal/mss_hal.h"
 #include "mss_nwc_init.h"
+#include "simulation.h"
 
 /*******************************************************************************
  * Local Defines

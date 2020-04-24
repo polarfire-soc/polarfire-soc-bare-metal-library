@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include "mpfs_hal/mss_hal.h"
 
-
 /*
  * SCB bank addresses, used to setup NCODE, PCODE and VS
  */
@@ -33,7 +32,7 @@
 /*
  * IOMUX values from Libero
  */
-IOMUX_CONFIG 	iomux_config_values = {
+IOMUX_CONFIG   iomux_config_values = {
     LIBERO_SETTING_IOMUX0_CR, /* Selects whether the peripheral is connected to
                                  the Fabric or IOMUX structure. */
     LIBERO_SETTING_IOMUX1_CR, /* BNK4 SDV PAD 0 to 7, each IO has 4 bits   */
@@ -163,8 +162,10 @@ static int32_t io_mux_and_bank_config(void)
      * entry to the IOMUX structure
      *
      * */
-    memcpy((void *)(&(SYSREG->IOMUX0_CR)), &(iomux_config_values)\
-            , sizeof(IOMUX_CONFIG));
+    config_copy((void *)(&(SYSREG->IOMUX0_CR)),
+                &(iomux_config_values),
+                sizeof(IOMUX_CONFIG));
+
     /*
      * Configure MSS IO banks
      *    sets pcode and ncode using (mssio_bank2_cfg_cr/mssio_bank4_cfg_cr)
@@ -192,10 +193,15 @@ static int32_t io_mux_and_bank_config(void)
         |      io_cfg_lp_persist_en |13             |      |
         |      io_cfg_lp_bypass_en  |14             |      |
      * */
-    memcpy((void *)(&(SYSREG->MSSIO_BANK4_IO_CFG_0_1_CR)),\
-        &(mssio_bank4_io_config), sizeof(MSSIO_BANK4_CONFIG));
-    memcpy((void *)(&(SYSREG->MSSIO_BANK2_IO_CFG_0_1_CR)),\
-            &(mssio_bank2_io_config), sizeof(MSSIO_BANK2_CONFIG));
+
+    config_copy((void *)(&(SYSREG->MSSIO_BANK4_IO_CFG_0_1_CR)),
+                &(mssio_bank4_io_config),
+                sizeof(MSSIO_BANK4_CONFIG));
+
+    config_copy((void *)(&(SYSREG->MSSIO_BANK2_IO_CFG_0_1_CR)),
+                &(mssio_bank2_io_config),
+                sizeof(MSSIO_BANK2_CONFIG));
+
     return(0L);
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  * 
@@ -7,8 +7,6 @@
  * implementation.
  *
  *
- * SVN $Revision: 11806 $
- * SVN $Date: 2019-07-25 12:34:03 +0530 (Thu, 25 Jul 2019) $
  */
 
 #include "mss_uart.h"

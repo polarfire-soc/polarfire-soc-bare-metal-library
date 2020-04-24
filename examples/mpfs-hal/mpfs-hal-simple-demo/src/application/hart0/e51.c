@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solution.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
  *
  * Code running on E51
  *
- * SVN $Revision: 10516 $
- * SVN $Date: 2018-11-08 18:09:23 +0000 (Thu, 08 Nov 2018) $
  */
 
 #include <stdio.h>
@@ -67,9 +65,9 @@ void e51(void)
      * TX/RX on UART0. This mutex is shared across all harts.*/
     mss_init_mutex((uint64_t)&uart_lock);
 
-    MSS_UART_init( &g_mss_uart0_lo,
-    MSS_UART_115200_BAUD,
-    MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+    MSS_UART_init( &g_mss_uart0_lo,\
+        MSS_UART_115200_BAUD,\
+            MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
 
     MSS_UART_polled_tx_string (&g_mss_uart0_lo, g_message);
 

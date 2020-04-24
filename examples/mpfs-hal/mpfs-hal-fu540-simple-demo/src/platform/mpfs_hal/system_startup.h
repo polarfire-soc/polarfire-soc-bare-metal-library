@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,10 @@ extern unsigned long __bss_end;
 extern unsigned long __sdata_load;
 extern unsigned long __sdata_start;
 extern unsigned long __sdata_end;
+
+extern unsigned long __text_load;
+extern unsigned long __text_start;
+extern unsigned long __text_end;
 
 /*
  * Function Declarations

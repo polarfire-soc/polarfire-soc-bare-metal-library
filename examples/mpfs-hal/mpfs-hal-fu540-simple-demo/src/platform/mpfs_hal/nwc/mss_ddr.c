@@ -18,6 +18,9 @@
 
 #include <string.h>
 #include <stdio.h>
+#include "simulation.h"
+
+extern char * config_copy(void *dest, const void * src, size_t len);
 
 /*******************************************************************************
  * Local Defines
@@ -54,12 +57,13 @@ static uint8_t FPGA_VREFDQ_calibration_using_mtc(void);
 static uint8_t VREFDQ_calibration_using_mtc(void);
 #endif
 static uint8_t rw_sanity_chk(uint64_t * address, uint32_t count);
-#if 0 /* todo: remove if not required */
-static uint8_t read_back_sanity_check(uint64_t * address, uint32_t count);
-#endif
+#ifdef DDR_SANITY_CHECKS_EN
 static uint8_t mtc_sanity_check(uint64_t start_address);
+#endif
 static uint8_t mode_register_write(uint32_t MR_ADDR, uint32_t MR_DATA);
+#ifdef DDR_SANITY_CHECKS_EN
 static uint8_t memory_tests(void);
+#endif
 static void ddr_off_mode(void);
 static void set_ddr_mode_reg_and_vs_bits(void);
 static void set_ddr_rpc_regs(DDR_TYPE ddr_type);
@@ -72,6 +76,9 @@ static uint8_t get_num_lanes(void);
 extern void ddr_pvt_calibration(void);
 extern void ddr_pvt_recalibration(void);
 extern void delay(uint32_t n);
+#ifdef DDR_FULL_32BIT_NC_CHECK_EN
+extern uint32_t ddr_read_write_fn (uint64_t* DDR_word_ptr, uint32_t no_access);
+#endif
 
 /*******************************************************************************
  * Instance definitions
@@ -149,9 +156,10 @@ int32_t  ddr_status(void)
  */
 static int32_t ddr_setup(void)
 {
-    static DDR_TRAINING_SM ddr_training_state;
+    static DDR_TRAINING_SM ddr_training_state = DDR_TRAINING_INIT;
     static uint8_t error;
     static uint32_t timeout;
+    static uint32_t try_next_addr_cmd;
     DDR_TYPE ddr_type;
     uint32_t ret_status = 0U;
     uint8_t number_of_lanes_to_calibrate;
@@ -166,18 +174,20 @@ static int32_t ddr_setup(void)
         case DDR_TRAINING_INIT:
             ddr_training_state = DDR_TRAINING_OFFMODE;
             ddr_error_count = 0U;
-            ret_status = 0U;
             error = 0U;
             memcpy((uint8_t *)&calib_data,0U,sizeof(calib_data));
-#if 0 //todo: investigate why this causes a crash
- //           DDRCFG->DFI.PHY_DFI_INIT_START.PHY_DFI_INIT_START   = 0x00000000U;
- //           DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000000U;
- //           CFG_DDR_SGMII_PHY->training_start.training_start      = 0x00000000U;
-#endif
+            try_next_addr_cmd = LIBERO_SETTING_TIP_CFG_PARAMS\
+                    & ADDRESS_CMD_OFFSETT_MASK;
             break;
 
         case DDR_TRAINING_FAIL:
-            ddr_training_state = DDR_TRAINING_INIT;
+            ddr_training_state = DDR_TRAINING_OFFMODE;
+            ddr_error_count = 0U;
+            error = 0U;
+            memcpy((uint8_t *)&calib_data,0U,sizeof(calib_data));
+            DDRCFG->DFI.PHY_DFI_INIT_START.PHY_DFI_INIT_START   = 0x00000000U;
+            DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000000U; //tell controller to initiate training.
+            CFG_DDR_SGMII_PHY->training_start.training_start    = 0x00000000U;
             break;
 
         case DDR_TRAINING_OFFMODE:
@@ -395,14 +405,13 @@ static int32_t ddr_setup(void)
             {
 
                 CFG_DDR_SGMII_PHY->tip_cfg_params.tip_cfg_params =\
-                        LIBERO_SETTING_TIP_CFG_PARAMS;
+                        ((LIBERO_SETTING_TIP_CFG_PARAMS &\
+                                (~ADDRESS_CMD_OFFSETT_MASK))|(try_next_addr_cmd));
                 /*
                  * Initiate training and wait for dfi_init_complete
                  */
                 /*asserting training_reset */
                 CFG_DDR_SGMII_PHY->training_reset.training_reset = 0x00000000U;
-                CFG_DDR_SGMII_PHY->lane_alignment_fifo_control.lane_alignment_fifo_control = 0x00;
-                /* ctrlr soft reset: Memory controller out of soft reset */
                 DDRCFG->MC_BASE2.CTRLR_SOFT_RESET_N.CTRLR_SOFT_RESET_N  =\
                                                                     0x00000001U;
                 ddr_training_state = DDR_TRAINING_IP_SM_START;
@@ -411,15 +420,13 @@ static int32_t ddr_setup(void)
             break;
         case DDR_TRAINING_IP_SM_START:
             {
+                DDRCFG->DFI.PHY_DFI_INIT_START.PHY_DFI_INIT_START   =\
+                                                                    0x00000000U;
                 /* kick off training- DDRC, set dfi_init_start */
                 DDRCFG->DFI.PHY_DFI_INIT_START.PHY_DFI_INIT_START   =\
                                                                     0x00000001U;
-                /* kick off training- TIP, Starts training on
-                 * 0->1 transition */
-                CFG_DDR_SGMII_PHY->training_start.training_start    =\
-                                                                    0x00000000U;
-                CFG_DDR_SGMII_PHY->training_start.training_start    = \
-                                                                    0x00000001U;
+                DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000000;
+                DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000001;
                 ddr_training_state = DDR_TRAINING_IP_SM_START_CHECK;
             }
             break;
@@ -487,6 +494,14 @@ static int32_t ddr_setup(void)
             }
             if(--timeout == 0U)
             {
+                /*
+                 * sweep:  ADDR_CMD OFFSET = 2,3,4 5,6 and 7
+                 */
+                try_next_addr_cmd++;
+                if (try_next_addr_cmd > LIBERO_SETTING_MAX_ADDRESS_CMD_OFFSET)
+                {
+                    try_next_addr_cmd = LIBERO_SETTING_MIN_ADDRESS_CMD_OFFSET;
+                }
                 ddr_training_state = DDR_TRAINING_FAIL;
             }
             break;
@@ -564,18 +579,27 @@ static int32_t ddr_setup(void)
                       */
                      /* 0x6DU => setting vref_ca to 40% */
                      mode_register_write(0xCU, 0x6DU);
-                     ddr_training_state = DDR_TRAINING_WRITE_CALIBRATION;
+                     ddr_training_state = DDR_TRAINING_SET_FINAL_MODE;
                  }
                  else /* fail, try again */
                  {
                      SIM_FEEDBACK1(20U);
-                     ddr_training_state = DDR_TRAINING_INIT;
+                     ddr_training_state = DDR_TRAINING_FAIL;
                  }
              }
             else
             {
                 ddr_training_state = DDR_TRAINING_FAIL;
             }
+            break;
+
+        case DDR_TRAINING_SET_FINAL_MODE:
+            /*
+             * Set final mode register value.
+             */
+            CFG_DDR_SGMII_PHY->DDRPHY_MODE.DDRPHY_MODE =\
+                LIBERO_SETTING_DDRPHY_MODE;
+            ddr_training_state = DDR_TRAINING_WRITE_CALIBRATION;
             break;
 
         case DDR_TRAINING_WRITE_CALIBRATION:
@@ -622,8 +646,95 @@ static int32_t ddr_setup(void)
              */
             if(error == 0U)
             {
+#ifdef DDR_SANITY_CHECKS_EN
                 error = memory_tests();
+#endif
             }
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_MTC_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+
+            break;
+        case DDR_FULL_MTC_CHECK:
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_32BIT_NC_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+            break;
+        case DDR_FULL_32BIT_NC_CHECK:
+            /*
+             *
+             */
+            {
+#ifdef DDR_FULL_32BIT_NC_CHECK_EN
+                uint64_t ddr_addr_type = MSS_BASE_ADD_DRC_NC;
+                uint32_t no_access = 0x20000U; //SM 0x4000000U;//0x8;// 0x4000000U;
+                uint32_t var = 1;
+         //       MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+         //       MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\r             Accessing 256 M Byte DDR NC "); //- 256MB MEMORY");
+         //       MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+                ddr_read_write_fn((uint64_t*)ddr_addr_type,(uint32_t)no_access);
+#endif
+            }
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_32BIT_CACHE_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+            break;
+        case DDR_FULL_32BIT_CACHE_CHECK:
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_32BIT_WRC_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+            break;
+        case DDR_FULL_32BIT_WRC_CHECK:
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_64BIT_NC_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+            break;
+        case DDR_FULL_64BIT_NC_CHECK:
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_64BIT_CACHE_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+            break;
+        case DDR_FULL_64BIT_CACHE_CHECK:
+            if(error == 0U)
+            {
+                ddr_training_state = DDR_FULL_64BIT_WRC_CHECK;
+            }
+            else
+            {
+                ddr_training_state = DDR_TRAINING_FAIL;
+            }
+            break;
+        case DDR_FULL_64BIT_WRC_CHECK:
             if(error == 0U)
             {
                 ddr_training_state = DDR_TRAINING_VREFDQ_CALIB;
@@ -662,10 +773,10 @@ static int32_t ddr_setup(void)
                 ddr_error_count++;
             }
 #endif
-            ddr_training_state = DDR_TRAINING_SANITY_CHECK;
+            ddr_training_state = DDR_TRAINING_FINISH_CHECK;
             break;
 
-        case DDR_TRAINING_SANITY_CHECK:
+        case DDR_TRAINING_FINISH_CHECK:
             /*
              *   return status
              */
@@ -684,6 +795,64 @@ static int32_t ddr_setup(void)
     return (ret_status);
 }
 
+
+
+
+
+#if 0
+void ddr_read_write_nc (void)
+{
+    static DDR_MEMORY_TYPE ddr_mem_type;
+    uint64_t ddr_addr_type;
+    uint32_t no_access,var;
+    ddr_mem_type = DDR_NC_256MB;
+    //switch(ddr_mem_type)
+    //{
+    //case DDR_NC_256MB:
+        ddr_addr_type = MSS_BASE_ADD_DRC_NC;
+        no_access = 0x20000U; //SM 0x4000000U;//0x8;// 0x4000000U;
+        var = 1;
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\r             Accessing 256 M Byte DDR NC "); //- 256MB MEMORY");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        ddr_read_write_fn((uint64_t*)ddr_addr_type,(uint32_t)no_access);
+        ddr_mem_type = DDR_NC_WCB_256MB;
+//      break;
+//  case DDR_NC_WCB_256MB:
+        ddr_addr_type = MSS_BASE_ADD_DRC_NC_WCB;
+        no_access = 0x20000U; //SM 0x4000000U;//0x8;//0x4000000U;
+        var = 1;
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\r             Accessing 256 M Byte DDR NC WCB "); //- 256MB MEMORY");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        ddr_read_write_fn((uint64_t*)ddr_addr_type,(uint32_t)no_access);
+        ddr_mem_type = DDR_NC_2GB;
+//      break;
+//  case DDR_NC_2GB:
+        ddr_addr_type = MSS_BASE_ADD_DRC_NC_AXI_NC;
+        no_access = 0x20000U;//0x8;//0x20000000U;
+        var = 3;
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\r             Accessing  1 GB (8 Gb)  DDR NC "); //- 2GB MEMORY");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        ddr_read_write_fn((uint64_t*)ddr_addr_type,(uint32_t)no_access);
+        ddr_mem_type = DDR_NC_WCB_2GB;
+//      break;
+//  case DDR_NC_WCB_2GB:
+        ddr_addr_type = MSS_BASE_ADD_DRC_NC_WCB_AXI_NC;
+        no_access = 0x20000U;//0x8;//0x20000000U;
+        var = 3;
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\r             Accessing 1 GB (8 Gb) DDR NC WCB "); //- 2GB MEMORY");
+        MSS_UART_polled_tx_string(&g_mss_uart0_lo, "\n\n\r ****************************************************** \n\r");
+        ddr_read_write_fn((uint64_t*)ddr_addr_type,(uint32_t)no_access);
+        ddr_mem_type = DDR_NC_256MB;
+//      break;
+//  case DDR_ACCESSING_FINISHED:
+//      break;
+//  }
+  }
+#endif
 
 /* todo: adding here as a test during verification- will remove */
 void ddr_recalib_io_test(void)
@@ -1097,8 +1266,9 @@ static void ddr_off_mode(void)
       * RPC_WPU_*=0 and RPC_WPD_*=1 to override the default.
       *
       */
+    /* Note: DMI_DBI [8:1]   needs to be 0 (off) during training */
      CFG_DDR_SGMII_PHY->DDRPHY_MODE.DDRPHY_MODE  =\
-             LIBERO_SETTING_DDRPHY_MODE_OFF;
+             (LIBERO_SETTING_DDRPHY_MODE_OFF & DMI_DBI_MASK);
      /*
       * VS for off mode
       */
@@ -1144,6 +1314,7 @@ static void ddr_off_mode(void)
  * Number of tests which write and read from DDR
  * Tests data path through the cache and through AXI4 switch.
  */
+#ifdef DDR_SANITY_CHECKS_EN
 static uint8_t memory_tests(void)
 {
     uint64_t shift_walking_one = 4U;
@@ -1290,7 +1461,7 @@ static uint8_t memory_tests(void)
     SIM_FEEDBACK1(299U);
     return (error);
 }
-
+#endif
 
 /***************************************************************************//**
  * rw_sanity_chk()
@@ -3226,7 +3397,7 @@ MSS_DDR_user_commands
         case USR_CMD_GET_MODE_SETTING:
             break;
         case USR_CMD_GET_W_CALIBRATION:
-            memcpy(return_data, &calib_data, sizeof(calib_data));
+            config_copy(return_data, &calib_data, sizeof(calib_data));
             break;
         case USR_CMD_GET_GREEN_ZONE:
             /* READ DQ WINDOW MEASUREMENT */
@@ -3239,14 +3410,14 @@ MSS_DDR_user_commands
             /*
              * First check if address valid
              */
-            memcpy(reg_address, extra_command_data, 4U);
+            config_copy(reg_address, extra_command_data, 4U);
             reg_address = (uint32_t *)((uint32_t)reg_address &\
                 (uint32_t)(0xFFFFFFFCUL));
             if ((reg_address >=\
                 &CFG_DDR_SGMII_PHY->SOFT_RESET_DDR_PHY.SOFT_RESET_DDR_PHY)\
                 && (reg_address < &CFG_DDR_SGMII_PHY->SPARE_STAT.SPARE_STAT))
             {
-                memcpy(return_data, reg_address, sizeof(uint32_t));
+                config_copy(return_data, reg_address, sizeof(uint32_t));
             }
             else
             {

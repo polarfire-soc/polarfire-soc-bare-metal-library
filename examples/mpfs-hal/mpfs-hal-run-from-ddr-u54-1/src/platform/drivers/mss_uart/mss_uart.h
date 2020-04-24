@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,6 @@
  * PolarFire SoC Microprocessor Subsystem MMUART bare metal software driver
  * public API.
  *
- * SVN $Revision: 11793 $
- * SVN $Date: 2019-07-24 10:53:07 +0530 (Wed, 24 Jul 2019) $
  */
 /*=========================================================================*//**
   @mainpage PolarFire SoC MSS UART Bare Metal Driver.

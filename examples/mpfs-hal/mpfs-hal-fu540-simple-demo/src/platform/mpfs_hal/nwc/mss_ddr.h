@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -318,6 +318,14 @@ typedef enum DDR_TYPE_
     DDR_OFF_MODE                        = 0x07          /*!< 4 LPDDR4        */
 } DDR_TYPE;
 
+typedef enum DDR_MEMORY_ACCESS_
+{
+    DDR_NC_256MB,
+    DDR_NC_WCB_256MB,
+    DDR_NC_2GB,
+    DDR_NC_WCB_2GB,
+} DDR_MEMORY_ACCESS;
+
 /*  The first five bits represent the currently supported training in the TIP */
 /*  This value will not change unless more training possibilities are added to
  *  the TIP */
@@ -332,6 +340,10 @@ typedef enum DDR_TYPE_
 #define RDGATE_BIT                      (0x1U<<3U)
 #define DQ_DQS_BIT                      (0x1U<<4U)
 
+/* LIBERO_SETTING_TIP_CFG_PARAMS
+ *     ADDCMD_OFFSET                     [0:3]   RW value */
+#define ADDRESS_CMD_OFFSETT_MASK        (0xFU<<0U)
+
 /* masks and associated values used with  DDRPHY_MODE register */
 #define DDRPHY_MODE_MASK                0x7U
 /* ECC */
@@ -344,6 +356,8 @@ typedef enum DDR_TYPE_
 #define DDRPHY_MODE_RANK_MASK           (0x1U<<26U)
 #define DDRPHY_MODE_ONE_RANK            (0x0U<<26U)
 #define DDRPHY_MODE_TWO_RANKS           (0x1U<<26U)
+
+#define DMI_DBI_MASK                    (~(0x1U<<8U))
 
 /***************************************************************************//**
 
@@ -411,11 +425,19 @@ typedef enum DDR_TRAINING_SM_
     DDR_TRAINING_IP_SM_RDGATE,
     DDR_TRAINING_IP_SM_DQ_DQS,
     DDR_TRAINING_IP_SM_VERIFY,
+    DDR_TRAINING_SET_FINAL_MODE,
     DDR_TRAINING_WRITE_CALIBRATION,
     DDR_SANITY_CHECKS,
+    DDR_FULL_MTC_CHECK,
+    DDR_FULL_32BIT_NC_CHECK,
+    DDR_FULL_32BIT_CACHE_CHECK,
+    DDR_FULL_32BIT_WRC_CHECK,
+    DDR_FULL_64BIT_NC_CHECK,
+    DDR_FULL_64BIT_CACHE_CHECK,
+    DDR_FULL_64BIT_WRC_CHECK,
     DDR_TRAINING_VREFDQ_CALIB,
     DDR_TRAINING_FPGA_VREFDQ_CALIB,
-    DDR_TRAINING_SANITY_CHECK,
+    DDR_TRAINING_FINISH_CHECK,
     DDR_TRAINING_FINISHED
 } DDR_TRAINING_SM;
 

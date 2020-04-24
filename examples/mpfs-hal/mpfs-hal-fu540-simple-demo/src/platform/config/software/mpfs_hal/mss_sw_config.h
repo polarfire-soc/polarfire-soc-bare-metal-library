@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,8 +110,10 @@
 #define LIBERO_SETTING_SEG1_5     (-(0x1800000000LL >> 24u))
 
 /*
- *
+ * todo: verify with Alister if these need to added to Libero
  */
+#define LIBERO_SETTING_MAX_ADDRESS_CMD_OFFSET   7
+#define LIBERO_SETTING_MIN_ADDRESS_CMD_OFFSET   2
 
 
 #endif /* USER_CONFIG_MSS_USER_CONFIG_H_ */

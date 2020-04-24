@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,12 +85,78 @@
 #define BEU_LOCAL_INT               0x0ULL
 
 /*
+ * Clear memory on startup
+ * 0 => do not clear DTIM and L2
+ * 1 => Clears memory
+ */
+#ifndef MPFS_HAL_CLEAR_MEMORY
+#define MPFS_HAL_CLEAR_MEMORY  0
+#endif
+
+/*
+ * Support loaded by a bootloader
+ * not defined => we are first stage bootloader, configure hardware
+ * defined => clocks, DDR already configured, do not configure
+ */
+#ifndef MPFS_HAL_BOOT2
+//#define MPFS_HAL_BOOT2
+#endif
+
+/*
  * If not using item, comment out line below
  */
 //#define SGMII_SUPPORT
 //#define DDR_SUPPORT
-//#define MSSIO_SUPPORT
+#define MSSIO_SUPPORT
 //#define SIMULATION_TEST_FEEDBACK
+//#define E51_ENTER_SLEEP_STATE
+/*
+ * DDR software options
+ */
+#define DDR_FULL_32BIT_NC_CHECK_EN
+
+#define PATTERN_INCREMENTAL     (0x01U << 0U)
+#define PATTERN_WALKING_ONE     (0x01U << 1U)
+#define PATTERN_WALKING_ZERO    (0x01U << 2U)
+#define PATTERN_RANDOM          (0x01U << 3U)
+#define PATTERN_0xCCCCCCCC      (0x01U << 4U)
+#define PATTERN_0x55555555      (0x01U << 5U)
+#define PATTERN_ZEROS           (0x01U << 6U)
+#define MAX_NO_PATTERNS         7U
+/* number of test writes to perform */
+#define SW_CFG_NUM_READS_WRITES        0x20000U
+/*
+ * what test patterns to write/read on start-up
+ * */
+#define SW_CONFIG_PATTERN (PATTERN_INCREMENTAL|\
+                                        PATTERN_WALKING_ONE|\
+                                        PATTERN_WALKING_ZERO|\
+                                        PATTERN_RANDOM|\
+                                        PATTERN_0xCCCCCCCC|\
+                                        PATTERN_0x55555555)
+/* Training types status offsets */
+#define BCLK_SCLK_BIT                   (0x1U<<0U)
+#define ADDCMD_BIT                      (0x1U<<1U)
+#define WRLVL_BIT                       (0x1U<<2U)
+#define RDGATE_BIT                      (0x1U<<3U)
+#define DQ_DQS_BIT                      (0x1U<<4U)
+/*  The first five bits represent the currently supported training in the TIP */
+/*  This value will not change unless more training possibilities are added to
+ *  the TIP */
+#define TRAINING_MASK                   (BCLK_SCLK_BIT|\
+                                        ADDCMD_BIT|\
+                                        WRLVL_BIT|\
+                                        RDGATE_BIT|\
+                                        DQ_DQS_BIT)
+/*
+ * Debug DDR startup through a UART
+ * Comment out in normal operation. May be useful for debug purposes in bring-up
+ * of a new board design.
+ * See the weak function setup_ddr_debug_port(mss_uart_instance_t * uart)
+ * If you need to edit this function, make a copy of of the function without the
+ * weak declaration in your application code.
+ * */
+//#define DEBUG_DDR_INIT
 
 /*
  * You can over write any on the settings coming from Libero here
@@ -99,23 +165,84 @@
  * the default settings
  */
 
-#define LIBERO_SETTING_SEG0_0     (-(0x0080000000LL >> 24u))
-#define LIBERO_SETTING_SEG0_1     (-(0x1000000000LL >> 24u))
-#define LIBERO_SETTING_SEG1_2     (-(0x00C0000000LL >> 24u))
-#define LIBERO_SETTING_SEG1_3     (-(0x1400000000LL >> 24u))
-#define LIBERO_SETTING_SEG1_4     (-(0x00D0000000LL >> 24u))
-#define LIBERO_SETTING_SEG1_5     (-(0x1800000000LL >> 24u))
+#define LIBERO_SETTING_SEG0_0     (-(0x0080000000LL >> 24U))
+#define LIBERO_SETTING_SEG0_1     (-(0x1000000000LL >> 24U))
+#define LIBERO_SETTING_SEG1_2     (-(0x00C0000000LL >> 24U))
+#define LIBERO_SETTING_SEG1_3     (-(0x1400000000LL >> 24U))
+#define LIBERO_SETTING_SEG1_4     (-(0x00D0000000LL >> 24U))
+#define LIBERO_SETTING_SEG1_5     (-(0x1800000000LL >> 24U))
+
+/*  comment out any of these defines if you do not want to sweep values
+ *      SUPPORT_ADDR_CMD_OFFSET_SWEEP
+ *      SUPPORT_BCLK_SCLK_SWEEP
+ *      SUPPORT_DPC_SWEEP
+ *  Alternatively, modify the sweep values. This helps when calibrating a new
+ *  board design. Enabling DEBUG_DDR_INIT define above will display the
+ *  calibration sweep.
+ */
+#define SUPPORT_ADDR_CMD_OFFSET_SWEEP
+#define SUPPORT_BCLK_SCLK_SWEEP
+#define SUPPORT_DPC_SWEEP
+
+#define LIBERO_SETTING_MAX_ADDRESS_CMD_OFFSET       5UL
+#define LIBERO_SETTING_MIN_ADDRESS_CMD_OFFSET       2UL
+#define MAX_NUMBER_ADDR_CMD_OFFSET_SWEEPS           ((LIBERO_SETTING_MAX_ADDRESS_CMD_OFFSET-LIBERO_SETTING_MIN_ADDRESS_CMD_OFFSET) +1U)
+
+#define LIBERO_SETTING_MAX_ADDRESS_BCLK_SCLK_OFFSET 5UL
+#define LIBERO_SETTING_MIN_ADDRESS_BCLK_SCLK_OFFSET 5UL
+#define MAX_NUMBER__BCLK_SCLK_OFFSET_SWEEPS         ((LIBERO_SETTING_MAX_ADDRESS_BCLK_SCLK_OFFSET-LIBERO_SETTING_MIN_ADDRESS_BCLK_SCLK_OFFSET)+1U)
+
+#define LIBERO_SETTING_MAX_DPC_V_GEN                10UL
+#define LIBERO_SETTING_MIN_DPC_V_GEN                10UL
+#define MAX_NUMBER_DPC_V_GEN_SWEEPS                 ((LIBERO_SETTING_MAX_DPC_V_GEN-LIBERO_SETTING_MIN_DPC_V_GEN)+1U)
 
 /*
- * Turn off DDR, bits 0:3 == 0x7
+ * over-write value from Libero
  */
-//#define LIBERO_SETTING_DDRPHY_MODE    0x04000127UL
+#define LIBERO_SETTING_TIP_CFG_PARAMS    0x07C3E035UL //0x07C3E025UL
+    /* ADDCMD_OFFSET                     [0:3]   RW value= 0x2 5*/
+    /* BCKLSCLK_OFFSET                   [3:3]   RW value= 0x4 */
+    /* WRCALIB_WRITE_COUNT               [6:7]   RW value= 0x0 */
+    /* READ_GATE_MIN_READS               [13:8]  RW value= 0x1F */
+    /* ADDRCMD_WAIT_COUNT                [22:8]  RW value= 0x1F */
 
 /*
- *
+ * over write value from Libero
  */
+#define LIBERO_SETTING_CFG_DFI_T_PHY_WRLAT          0x00000003UL
 
+/*
+ * Temporarily over write values from Libero
+ */
+#define LIBERO_SETTING_RPC_ODT_ADDCMD           2
+#define LIBERO_SETTING_RPC_ODT_CLK              2
+#define LIBERO_SETTING_RPC_ODT_DQ               6
+#define LIBERO_SETTING_RPC_ODT_DQS              2
+
+/*
+ * 0 implies all IP traing's used. This should be the default
+ * setting.
+ */
+#define LIBERO_SETTING_TRAINING_SKIP_SETTING        0x00000000UL
+/*
+ * 1 implies sw BCLK_SCK traing carried out before IP training. This should be
+ * the default
+ * setting.
+ */
+#define USE_SW_BCLK_SCK_TRAINING                    0x00000001UL
+#define SW_TRAING_BCLK_SCLK_OFFSET                  0x00000006UL
+
+/*
+ * 0x6DU => setting vref_ca to 40%
+ * This (0x6DU) is the default setting.
+ * */
+#define DDR_MODE_REG_VREF_VALUE       0x6DU
+
+/*
+ * Will review address settings in Libero, tie in, sanity check with SEG
+ * settings
+ */
+#define LIBERO_SETTING_DDR_32_NON_CACHE 0xC0000000ULL
 
 #endif /* USER_CONFIG_MSS_USER_CONFIG_H_ */
-
 
