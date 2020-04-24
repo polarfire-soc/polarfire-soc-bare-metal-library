@@ -74,7 +74,7 @@ void e51(void)
     PLIC_SetPriority(USART0_PLIC_4, 1);
     /* Enable UART Interrupt on PLIC */
     PLIC_EnableIRQ(USART0_PLIC_4);
-  
+
     MSS_FU540_UART_polled_tx(&g_mss_FU540_uart0, g_message, sizeof(g_message));
     /* Start the tick timer */
     (void)SysTick_Config();

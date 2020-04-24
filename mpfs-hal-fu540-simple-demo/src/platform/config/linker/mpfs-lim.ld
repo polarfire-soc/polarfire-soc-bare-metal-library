@@ -133,6 +133,8 @@ SECTIONS
   . = 0x08000000;
   .text : ALIGN(0x10)
   {
+    __text_load = LOADADDR(.text);
+    __text_start = .; 
      *(.text.init)
 /*  *entry.o(.text); */
     . = ALIGN(0x10);
@@ -169,7 +171,7 @@ SECTIONS
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
     . = ALIGN(0x10);
-    
+    __text_end = .;
   } > ram
   
     /* 

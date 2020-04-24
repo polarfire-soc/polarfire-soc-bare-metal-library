@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  * 
@@ -7,8 +7,6 @@
  * implementation.
  *
  *
- * SVN $Revision: 11894 $
- * SVN $Date: 2019-07-31 13:29:07 +0530 (Wed, 31 Jul 2019) $
  */
 
 #include "mss_uart.h"
@@ -1319,10 +1317,10 @@ MSS_UART_enable_local_irq
     const mss_uart_instance_t * this_uart
 )
 {
-	/*Make sure to disable interrupt on PLIC as it might have been enabled
-	 * when application registered an interrupt handler function or
-	 * used MSS_UART_enable_irq() to enable PLIC interrupt*/
-	disable_irq(this_uart);
+  /*Make sure to disable interrupt on PLIC as it might have been enabled
+   * when application registered an interrupt handler function or
+   * used MSS_UART_enable_irq() to enable PLIC interrupt*/
+  disable_irq(this_uart);
 
     /* Enable local interrupt UART instance.
      * Local interrupt will be enabled on the HART on which the application

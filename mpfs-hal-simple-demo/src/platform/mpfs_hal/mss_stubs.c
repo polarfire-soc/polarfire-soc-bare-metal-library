@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,6 @@
  * defined with weak linking so that they can be overridden by a function with
  * same prototype in the user's application code.
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
 #include <stdint.h>
 #include "mss_hal.h"

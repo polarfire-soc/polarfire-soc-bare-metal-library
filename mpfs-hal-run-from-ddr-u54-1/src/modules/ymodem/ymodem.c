@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
- * SVN $Revision: 8353 $
- * SVN $Date: 2016-03-30 19:51:22 +0530 (Wed, 30 Mar 2016) $
  *
  *
  */

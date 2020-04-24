@@ -1,2 +1,2 @@
-@Library('continuous-integration-shared-library') _
-pipelineMPFSHAL()
+@Library('automated-testing-library') _
+pipelineBareMetalDriverExamples()

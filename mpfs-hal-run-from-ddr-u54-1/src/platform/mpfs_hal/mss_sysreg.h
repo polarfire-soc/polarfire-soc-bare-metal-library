@@ -1,6 +1,6 @@
 /**************************************************************************
     *****
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,8 @@
  * @file mss_sysreg.h
  * @author Microchip-FPGA Embedded Systems Solutions
  * @brief Hardware register definitions.
- * updated sysreg defines Based on SVN rev 100432 of g5_mss_top_sysreg.xls
     
  *
- * SVN $Revision: 12184 $
- * SVN $Date: 2019-08-28 11:15:24 +0100 (Wed, 28 Aug 2019) $
  */
 #ifndef MSS_SYSREG_H
 #define MSS_SYSREG_H
@@ -202,7 +199,6 @@ extern "C" {
 
 /*MSS Build Info*/
 #define MSS_BUILD_OFFSET                                         0x28
-    /* Set to the SVN revision of the g5_mss_main.sv file*/
     #define MSS_BUILD_REVISION_OFFSET                            0x0
     #define MSS_BUILD_REVISION_MASK                              (0xFFFFFFFF << 0x0)
 

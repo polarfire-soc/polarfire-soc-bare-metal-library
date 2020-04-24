@@ -77,11 +77,11 @@
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.abi.integer.400765988" name="Integer ABI" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.abi.integer" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.abi.integer.lp64" valueType="enumerated"/>
                             							
-                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.base.834640608" name="Architecture" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.base" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.arch.rv64g" valueType="enumerated"/>
+                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.base.834640608" name="Architecture" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.base" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.arch.rv64i" valueType="enumerated"/>
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.toerrors.826709419" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.toerrors" useByScannerDiscovery="true" value="false" valueType="boolean"/>
                             							
-                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.abi.fp.647509189" name="Floating point ABI" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.abi.fp" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.abi.fp.double" valueType="enumerated"/>
+                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.abi.fp.647509189" name="Floating point ABI" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.abi.fp" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.abi.fp.none" valueType="enumerated"/>
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.id.1549391898" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.id" useByScannerDiscovery="false" value="-2032619395" valueType="string"/>
                             							
@@ -94,6 +94,10 @@
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.align.1268426788" name="Align" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.align" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.align.strict" valueType="enumerated"/>
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.compressed.1504283746" name="Compressed extension (RVC)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.compressed" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                            							
+                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.multiply.1665807105" name="Multiply extension (RVM)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.multiply" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                            							
+                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.atomic.1207580236" name="Atomic extension (RVA)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.atomic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                             							
                             <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnumcueclipse.managedbuild.cross.riscv.targetPlatform.980747747" isAbstract="false" osList="all" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.targetPlatform"/>
                             							

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -203,8 +203,15 @@ typedef enum RTC_CLK_SOURCE_
     MSS_PLL_CLOCK                   = 0x01,       /*!< 1 MSS PLL clock source */
 }   RTC_CLK_SOURCE;
 
+typedef enum REG_LOAD_METHOD_
+{
+    SCB_UPDATE                   = 0x00,       /*!< 0 SCB direct load */
+    RPC_REG_UPDATE               = 0x01,       /*!< 1 RPC -> SCB load */
+}   REG_LOAD_METHOD;
+
 
 void ddr_pll_config_scb(void);
+void ddr_pll_config(REG_LOAD_METHOD option);
 uint8_t ddr_pll_lock_scb(void);
 void sgmii_pll_config_scb(uint8_t option);
 uint8_t sgmii_pll_lock_scb(void);

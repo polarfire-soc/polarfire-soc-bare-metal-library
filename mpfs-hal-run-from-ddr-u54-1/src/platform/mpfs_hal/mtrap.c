@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
  * @author Microchip-FPGA Embedded Systems Solutions
  * @brief trap functions
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
 #include "mss_hal.h"
 
@@ -780,8 +778,14 @@ uint32_t SysTick_Config(void)
     return (ret_val);
 }
 
-
-
+/**
+ * Disable system tick interrupt
+ */
+void SysTick_off(void)
+{
+    clear_csr(mie, MIP_MTIP);   /* mie Register - Machine Timer Interrupt Enable */
+    return;
+}
 
 
 /*------------------------------------------------------------------------------

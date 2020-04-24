@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
  *
  * Code running on E51
  *
- * SVN $Revision: 10516 $
- * SVN $Date: 2018-11-08 18:09:23 +0000 (Thu, 08 Nov 2018) $
  */
 
 #include <stdio.h>
@@ -31,14 +29,15 @@
  * Instruction message. This message will be transmitted over the UART to
  * HyperTerminal when the program starts.
  ******************************************************************************/
+#ifdef DEBUG_DDR_INIT
 const uint8_t g_message[] =
         "\r\n\r\n\r\n\
-MPFS HAL DDR example version 0.3.2\r\n\
+MPFS HAL DDR example version 0.3.3\r\n\
 This program is run from E51\r\n\
 This program can load a program to DDR using ymodem\r\n\
 and has option to run the image using hart1 \r\n\
 Type 0  Show this menu\r\n\
-Type 1  Raise sw int hart 1\r\n\
+Type 1  Show ddr training values\r\n\
 Type 2  Raise sw int hart 2\r\n\
 Type 3  Raise sw int hart 3\r\n\
 Type 4  Raise sw int hart 4\r\n\
@@ -46,6 +45,23 @@ Type 5  Print debug messages from hart0\r\n\
 Type 6  load image to DDR\r\n\
 Type 7  Start U54_1 running image in DDR\r\n\
 ";
+#else
+const uint8_t g_message[] =
+        "\r\n\r\n\r\n\
+MPFS HAL DDR example version 0.3.3\r\n\
+This program is run from E51\r\n\
+This program can load a program to DDR using ymodem\r\n\
+and has option to run the image using hart1 \r\n\
+Type 0  Show this menu\r\n\
+Type 1  Not used\r\n\
+Type 2  Raise sw int hart 2\r\n\
+Type 3  Raise sw int hart 3\r\n\
+Type 4  Raise sw int hart 4\r\n\
+Type 5  Print debug messages from hart0\r\n\
+Type 6  load image to DDR\r\n\
+Type 7  Start U54_1 running image in DDR\r\n\
+";
+#endif
 
 #define MAX_BUFFER_SIZE 128
 
@@ -54,8 +70,20 @@ volatile uint32_t g_10ms_count;
 uint8_t data_block[256];
 uint64_t hart1_jump_ddr = 0U;
 mss_uart_instance_t *g_uart= &g_mss_uart0_lo ;
+mss_uart_instance_t *g_debug_uart= &g_mss_uart0_lo ;
 uint64_t uart_lock;
 MEM_TYPE mem_area = E51_DDR_START_CACHE;
+
+/*
+ * Local functions
+ */
+__attribute__((section(".ram_codetext"))) \
+        static void loop_in_dtim(void);
+
+/*
+ * Extern functions
+ */
+extern uint32_t tip_register_status (mss_uart_instance_t *g_mss_uart_debug_pt);
 
 /**
  * Simple jump to application
@@ -97,8 +125,8 @@ void e51(void)
     uint64_t mcycle_start = 0U;
     uint64_t mcycle_end = 0U;
     uint64_t delta_mcycle = 0U;
-    uint64_t hartid = read_csr(mhartid);
     uint8_t rx_buff[1];
+    uint64_t hartid = read_csr(mhartid);
     uint8_t rx_size = 0;
     uint8_t debug_hart0 = 0U;
     uint8_t rcv_buff[MAX_BUFFER_SIZE] = {0};
@@ -187,7 +215,9 @@ void e51(void)
                     mss_release_mutex((uint64_t)&uart_lock);
                     break;
                 case '1':
-                    raise_soft_interrupt(1u);
+#ifdef DEBUG_DDR_INIT
+                    tip_register_status (&g_mss_uart0_lo);
+#endif
                     break;
                 case '2':
                     raise_soft_interrupt(2u);
@@ -214,6 +244,10 @@ void e51(void)
                 case '7':
                     raise_soft_interrupt(1u);
                     hart1_jump_ddr = 1U;
+#ifdef E51_ENTER_SLEEP_STATE
+                    SysTick_off();
+                    loop_in_dtim();
+#endif
                     break;
 
                 default:
@@ -249,4 +283,40 @@ void SysTick_Handler_h0_IRQHandler(void)
     g_10ms_count += TIMER_INCREMENT;
     if(g_10ms_count < TIMER_INCREMENT)
         g_10ms_count = 0;
+}
+
+/**
+ * idle in DTIM
+ * Note. Switch code is copied to DTIM on start-up.
+ */
+__attribute__((section(".ram_codetext"))) \
+        static void loop_in_dtim(void)
+{
+    /*Put this hart into WFI.*/
+    while(1U)
+    {
+        do
+        {
+            __asm("wfi");
+        }while(0 == (read_csr(mip) & MIP_MSIP));
+    }
+}
+
+/**
+ * Setup serial port if DDR debug required during start-up
+ * @param uart Ref to uart you want to use
+ * @return
+ */
+uint32_t setup_ddr_debug_port(mss_uart_instance_t * uart)
+{
+#ifdef DEBUG_DDR_INIT
+    /* Turn on UART0 clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MMUART0_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= ~(SUBBLK_CLOCK_CR_MMUART0_MASK);
+    MSS_UART_init( uart,
+        MSS_UART_115200_BAUD,
+            MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+#endif
+    return(0U);
 }

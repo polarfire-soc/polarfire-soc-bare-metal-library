@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
  * @brief MPFS HAL include file. This is the file intended for application to
  * include so that all the other MPFS files are then accessible to it.
  *
- * SVN $Revision: 11867 $
- * SVN $Date: 2019-07-29 19:26:04 +0100 (Mon, 29 Jul 2019) $
  */
 
 #ifndef MSS_HAL_H

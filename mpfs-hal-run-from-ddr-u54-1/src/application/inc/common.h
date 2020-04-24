@@ -4,8 +4,6 @@
  * 
  *
  *  
- * SVN $Revision: 10597 $
- * SVN $Date: 2018-11-23 15:48:29 +0000 (Fri, 23 Nov 2018) $
  */
 
 #ifndef COMMON_H_

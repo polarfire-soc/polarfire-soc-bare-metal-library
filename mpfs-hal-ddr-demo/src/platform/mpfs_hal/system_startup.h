@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,10 @@ extern unsigned long __sdata_load;
 extern unsigned long __sdata_start;
 extern unsigned long __sdata_end;
 
+extern unsigned long __text_load;
+extern unsigned long __text_start;
+extern unsigned long __text_end;
+
 /*
  * Function Declarations
  */
@@ -68,6 +72,8 @@ void init_memory( void);
 uint8_t init_mem_protection_unit(void);
 uint8_t init_pmp(uint8_t hart_id);
 uint8_t init_bus_error_unit( void);
+char * config_copy(void *dest, const void * src, size_t len);
+
 /*
  * extern Functions Used
  */

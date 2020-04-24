@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -318,19 +318,27 @@ typedef enum DDR_TYPE_
     DDR_OFF_MODE                        = 0x07          /*!< 4 LPDDR4        */
 } DDR_TYPE;
 
-/*  The first five bits represent the currently supported training in the TIP */
-/*  This value will not change unless more training possibilities are added to
- *  the TIP */
-#define TRAINING_MASK                  	0x1FU
-/* this is a fixed value, currently only 5 supported in the TIP  */
-#define MAX_POSSIBLE_TIP_TRAININGS		0x05U
+typedef enum DDR_MEMORY_ACCESS_
+{
+    DDR_NC_256MB,
+    DDR_NC_WCB_256MB,
+    DDR_NC_2GB,
+    DDR_NC_WCB_2GB,
+} DDR_MEMORY_ACCESS;
 
-/* Training types status offsets */
-#define BCLK_SCLK_BIT                   (0x1U<<0U)
-#define ADDCMD_BIT                      (0x1U<<1U)
-#define WRLVL_BIT                       (0x1U<<2U)
-#define RDGATE_BIT                      (0x1U<<3U)
-#define DQ_DQS_BIT                      (0x1U<<4U)
+/* this is a fixed value, currently only 5 supported in the TIP  */
+#define MAX_POSSIBLE_TIP_TRAININGS    0x05U
+
+/* LIBERO_SETTING_TIP_CFG_PARAMS
+ *     ADDCMD_OFFSET                     [0:3]   RW value */
+#define ADDRESS_CMD_OFFSETT_MASK        (0x7U<<0U)
+
+#define BCLK_SCLK_OFFSET_SHIFT                (3U)
+#define BCLK_SCLK_OFFSET_MASK           (0x7U<<3U)
+
+#define BCLK_DPC_VRGEN_V_SHIFT                (12U)
+#define BCLK_DPC_VRGEN_V_MASK           (0x3FU<<12U)
+
 
 /* masks and associated values used with  DDRPHY_MODE register */
 #define DDRPHY_MODE_MASK                0x7U
@@ -344,6 +352,20 @@ typedef enum DDR_TYPE_
 #define DDRPHY_MODE_RANK_MASK           (0x1U<<26U)
 #define DDRPHY_MODE_ONE_RANK            (0x0U<<26U)
 #define DDRPHY_MODE_TWO_RANKS           (0x1U<<26U)
+
+#define DMI_DBI_MASK                    (~(0x1U<<8U))
+
+/* Write latency min/max settings If write calibration fails
+ * For Libero setting, we iterate through these values looking for a
+ * Calibration pass */
+#define MIN_LATENCY                     0UL
+#define MAX_LATENCY                     8UL
+
+#define DDR_MODE_REG_VREF               0xCU
+
+#define CALIBRATION_PASSED              0xFF
+#define CALIBRATION_FAILED              0x11
+
 
 /***************************************************************************//**
 
@@ -389,7 +411,9 @@ typedef enum DDR_TRAINING_SM_
 
     DDR_TRAINING_INIT,              /*!< DDR_TRAINING_INIT */
     DDR_TRAINING_FAIL,
-    DDR_TRAINING_OFFMODE,           /*!< DDR_TRAINING_OFFMODE */
+    DDR_CHECK_TRAINING_SWEEP,
+    DDR_TRAINING_SWEEP,
+    DDR_TRAINING_CHECK_FOR_OFFMODE, /*!< DDR_TRAINING_OFFMODE */
     DDR_TRAINING_SET_MODE_VS_BITS,
     DDR_TRAINING_FLASH_REGS,
     DDR_TRAINING_CORRECT_RPC,
@@ -402,6 +426,7 @@ typedef enum DDR_TRAINING_SM_
     DDR_TRAINING_RESET,
     DDR_TRAINING_ROTATE_CLK,
     DDR_TRAINING_SET_TRAINING_PARAMETERS,
+    DDR_TRAINING_IP_SM_BCLKSCLK_SW,
     DDR_TRAINING_IP_SM_START,
     DDR_TRAINING_IP_SM_START_CHECK,
     DDR_TRAINING_IP_SM,
@@ -411,12 +436,36 @@ typedef enum DDR_TRAINING_SM_
     DDR_TRAINING_IP_SM_RDGATE,
     DDR_TRAINING_IP_SM_DQ_DQS,
     DDR_TRAINING_IP_SM_VERIFY,
+    DDR_TRAINING_SET_FINAL_MODE,
     DDR_TRAINING_WRITE_CALIBRATION,
+    DDR_TRAINING_WRITE_CALIBRATION_RETRY, /*!< Retry on calibration fail */
+    DDR_SWEEP_CHECK,
     DDR_SANITY_CHECKS,
+    DDR_FULL_MTC_CHECK,
+    DDR_FULL_32BIT_NC_CHECK,
+    DDR_FULL_32BIT_CACHE_CHECK,
+    DDR_FULL_32BIT_WRC_CHECK,
+    DDR_FULL_64BIT_NC_CHECK,
+    DDR_FULL_64BIT_CACHE_CHECK,
+    DDR_FULL_64BIT_WRC_CHECK,
     DDR_TRAINING_VREFDQ_CALIB,
     DDR_TRAINING_FPGA_VREFDQ_CALIB,
-    DDR_TRAINING_SANITY_CHECK,
-    DDR_TRAINING_FINISHED
+    DDR_TRAINING_FINISH_CHECK,
+    DDR_TRAINING_FINISHED,
+    DDR_TRAINING_FAIL_DDR_SANITY_CHECKS,
+    DDR_TRAINING_FAIL_SM2_VERIFY,
+    DDR_TRAINING_FAIL_SM_VERIFY,
+    DDR_TRAINING_FAIL_SM_DQ_DQS,
+    DDR_TRAINING_FAIL_SM_RDGATE,
+    DDR_TRAINING_FAIL_SM_WRLVL,
+    DDR_TRAINING_FAIL_SM_ADDCMD,
+    DDR_TRAINING_FAIL_SM_BCLKSCLK,
+    DDR_TRAINING_FAIL_BCLKSCLK_SW,
+    DDR_TRAINING_FAIL_FULL_32BIT_NC_CHECK,
+    DDR_TRAINING_FAIL_MIN_LATENCY,
+    DDR_TRAINING_FAIL_START_CHECK,
+    DDR_TRAINING_FAIL_PLL_LOCK,
+    DDR_SWEEP_AGAIN
 } DDR_TRAINING_SM;
 
 
@@ -444,16 +493,26 @@ typedef enum {
     USR_CMD_SET_REG                  = 0x85    //!< USR_CMD_SET_REG
 } DDR_USER_SET_COMMANDS_t;
 
+/***************************************************************************//**
+
+ */
+typedef enum SWEEP_STATES_{
+    INIT_SWEEP,                     //!< start the sweep
+    ADDR_CMD_OFFSET_SWEEP,          //!< sweep address command
+    BCLK_SCLK_OFFSET_SWEEP,         //!< sweep bclk sclk
+    DPC_VRGEN_H_SWEEP,              //!< sweep vgen_h
+    FINISHED_SWEEP,                 //!< finished sweep
+} SWEEP_STATES;
 
 /***************************************************************************//**
 
  */
 typedef enum {
-	USR_OPTION_tip_register_dump    = 0x00     //!< USR_OPTION_tip_register_dump
+  USR_OPTION_tip_register_dump    = 0x00     //!< USR_OPTION_tip_register_dump
 } USR_STATUS_OPTION_t;
 
 
-#define MAX_LANES	5
+#define MAX_LANES  5
 
 /***************************************************************************//**
 
@@ -461,9 +520,9 @@ typedef enum {
 typedef struct mss_ddr_fpga_vref_{
     uint32_t    status_lower;
     uint32_t    status_upper;
-	uint32_t	lower;
-	uint32_t	upper;
-	uint32_t    vref_result;
+  uint32_t  lower;
+  uint32_t  upper;
+  uint32_t    vref_result;
 } mss_ddr_vref;
 
 /***************************************************************************//**
@@ -489,13 +548,21 @@ typedef struct mss_lpddr4_dq_calibration_{
   Calibration settings derived during write training
  */
 typedef struct mss_ddr_calibration_{
-	/* CMSIS related defines identifying the UART hardware. */
+  /* CMSIS related defines identifying the UART hardware. */
     mss_ddr_write_calibration write_cal;
     mss_lpddr4_dq_calibration dq_cal;
-	mss_ddr_vref fpga_vref;
-	mss_ddr_vref mem_vref;
+  mss_ddr_vref fpga_vref;
+  mss_ddr_vref mem_vref;
 } mss_ddr_calibration;
 
+/***************************************************************************//**
+  sweep index's
+ */
+typedef struct sweep_index_{
+    uint8_t cmd_index;
+    uint8_t bclk_sclk_index;
+    uint8_t dpc_vgen_index;
+} sweep_index;
 
 /***************************************************************************//**
 

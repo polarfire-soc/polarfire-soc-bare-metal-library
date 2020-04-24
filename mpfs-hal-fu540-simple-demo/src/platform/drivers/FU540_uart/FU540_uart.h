@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,6 @@
  * FU540_uart.c
  * UART integrated in the SiFive FU540
  *
- * SVN $Revision: 11793 $
- * SVN $Date: 2019-07-24 10:53:07 +0530 (Wed, 24 Jul 2019) $
  */
 
 #ifndef FU540_uart_H_
@@ -102,10 +100,10 @@ typedef struct _FU540_UART
  */
 struct mss_FU540_uart_instance{
     /* CMSIS related defines identifying the UART hardware. */
-	FU540_UART *            hw_reg;     /*!< Pointer to UART registers. */
-	uint32_t                baudrate;   /*!< Operating baud rate. */
-	uint8_t                 lineconfig; /*!< Line configuration parameters. */
-	uint32_t                 status;     /*!< Sticky line status. */
+  FU540_UART *            hw_reg;     /*!< Pointer to UART registers. */
+  uint32_t                baudrate;   /*!< Operating baud rate. */
+  uint8_t                 lineconfig; /*!< Line configuration parameters. */
+  uint32_t                 status;     /*!< Sticky line status. */
 
     /* transmit related info (used with interrupt driven transmit): */
     volatile uint8_t   *   tx_buffer;          /*!< Pointer to transmit buffer. */
@@ -136,7 +134,7 @@ extern mss_FU540_uart_instance_t g_mss_uart1;
 /**
  * Initialize the UART
  * @param this_uart
- * 	structure contains information related to UART you want to use
+ *   structure contains information related to UART you want to use
  * @param baud_rate
  *   baud rate to use
  * @param line_config
@@ -153,7 +151,7 @@ MSS_FU540_UART_init
 /**
  *
  * @param this_uart
- * 	structure contains information related to UART you want to use
+ *   structure contains information related to UART you want to use
  * @param rx_buff
  *  rx bytes stored here
  * @param buff_size

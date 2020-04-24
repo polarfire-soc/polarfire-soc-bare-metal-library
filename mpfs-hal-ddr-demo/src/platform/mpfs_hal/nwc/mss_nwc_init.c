@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,13 @@
 
 #include "mpfs_hal/mss_hal.h"
 #include "mss_nwc_init.h"
+#include "simulation.h"
+#include "drivers/mss_uart/mss_uart.h"
+
+#ifdef DEBUG_DDR_INIT
+extern mss_uart_instance_t *g_debug_uart ;
+uint32_t setup_ddr_debug_port(mss_uart_instance_t * uart);
+#endif
 
 /*******************************************************************************
  * Local Defines
@@ -48,6 +55,9 @@ extern uint32_t sgmii_setup(void);
 #ifdef MSSIO_SUPPORT
 extern int32_t mssio_setup(void);
 #endif
+#endif
+#ifdef DEBUG_DDR_INIT
+uint32_t setup_ddr_debug_port(mss_uart_instance_t * uart);
 #endif
 
 /******************************************************************************
@@ -339,10 +349,15 @@ uint8_t mss_nwc_init(void)
 
     {
 #ifdef DDR_SUPPORT
-        SIM_FEEDBACK0(4);
+#ifdef DEBUG_DDR_INIT
+        {
+            (void)setup_ddr_debug_port(g_debug_uart);
+        }
+#endif
+
         uint32_t  ddr_status;
         ddr_status = ddr_state_machine(DDR_SS__INIT);
-        SIM_FEEDBACK0(5);
+
         while((ddr_status & DDR_SETUP_DONE) != DDR_SETUP_DONE)
         {
             ddr_status = ddr_state_machine(DDR_SS_MONITOR);
@@ -352,10 +367,6 @@ uint8_t mss_nwc_init(void)
             error |= (0x1U << 2U);
         }
         //todo: remove, just for sim test ddr_recalib_io_test();
-        SIM_FEEDBACK0(300U);
-        SIM_FEEDBACK0(error);
-        SIM_FEEDBACK0(301U);
-
 #endif
     }
 

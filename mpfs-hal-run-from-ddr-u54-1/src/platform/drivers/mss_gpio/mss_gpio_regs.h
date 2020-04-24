@@ -1,13 +1,11 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  * 
  * Register bit offsets and masks defintions for PSE GPIO.
  * This driver is based on SmartFusion2 MSS GPIO driver v2.1.102
  * 
- * SVN $Revision: 10222 $
- * SVN $Date: 2018-06-29 14:32:17 +0530 (Fri, 29 Jun 2018) $
  */
 #ifndef MSS_GPIO_REGS_H_
 #define MSS_GPIO_REGS_H_

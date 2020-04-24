@@ -5,6 +5,7 @@
 # Workspace files
 
 /RemoteSystemsTempFiles
+/*/.settings
 
 # .lock and write.lock and others
 /.metadata/**/.lock
