@@ -107,10 +107,12 @@ MEMORY
     ram_DTIM (rwx) : ORIGIN  = 0x01000000, LENGTH = 7k
     scratchpad(rwx):  ORIGIN = 0x0A000000, LENGTH = 512k
     /* This 1k of DTIM is used to run code when switching the eNVM clock */
-    switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k     
+    switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k    
+    DDR_NON_CACHED (rwx) : ORIGIN  = 0xC0000000, LENGTH = 120k
+    DDR_CACHED (rwx) : ORIGIN  = 0x80000000, LENGTH = 120k
 }
 
-HEAP_SIZE           = 8k;               /* needs to be calculated for your application if using */
+HEAP_SIZE           = 0k;               /* needs to be calculated for your application if using */
 
 /* STACK_SIZE_PER_HART needs to be calculated for your */
 /* application. Must be aligned */
@@ -124,7 +126,6 @@ HEAP_SIZE           = 8k;               /* needs to be calculated for your appli
 /* TLS hart 1   */
 /* etc */
 /* note: HLS_DEBUG_AREA_SIZE is defined in mss_sw_config.h */
-/* STACK_SIZE_PER_HART = 1k; */                     
 
 /*
  * Stack size for each hart's application.
@@ -137,15 +138,19 @@ STACK_SIZE_U54_2_APPLICATION = 1k;
 STACK_SIZE_U54_3_APPLICATION = 1k;
 STACK_SIZE_U54_4_APPLICATION = 1k;
 
+/* reset address 0xC0000000 */
+SECTION_START_ADDRESS           = 0x80000000; 
+
+
 SECTIONS
 {
 
 /* text: test code section */
-  . = 0x08000000;
+  . = SECTION_START_ADDRESS;
   .text : ALIGN(0x10)
   {
-    __text_load = LOADADDR(.text);
-    __text_start = .; 
+     __text_load = LOADADDR(.text);
+     __text_start = .; 
      *(.text.init)
     . = ALIGN(0x10);
     *(.text .text.* .gnu.linkonce.t.*)
@@ -182,8 +187,8 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
     . = ALIGN(0x10);
     __text_end = .;
-  } > ram
- 
+  } > DDR_CACHED
+
   .l2_scratchpad : ALIGN(0x10)
   { 
     __l2_scratchpad_load = LOADADDR(.l2_scratchpad);
@@ -193,8 +198,8 @@ SECTIONS
     . = ALIGN(0x10);
     __l2_scratchpad_end = .;
     __l2_scratchpad_vma_end = .;
-  } >scratchpad AT> ram
-  
+  } >scratchpad AT> DDR_CACHED
+    
   /* 
    *   The .ram_code section will contain the code That is run from RAM.
    *   We are using this code to switch the clocks including eNVM clock.
@@ -227,7 +232,7 @@ SECTIONS
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
-  } > ram
+  } > DDR_CACHED
 
   /* data section */
   .data : ALIGN(0x10)
@@ -239,7 +244,7 @@ SECTIONS
     *(.data .data.* .gnu.linkonce.d.*)
     . = ALIGN(0x10);
     __data_end = .;
-  } > ram
+  } > DDR_CACHED
 
   /* sbss section */
   .sbss : ALIGN(0x10)
@@ -249,7 +254,7 @@ SECTIONS
     *(.scommon)
     . = ALIGN(0x10);
     __sbss_end = .;
-  } > ram
+  } > DDR_CACHED
   
   /* sbss section */
   .bss : ALIGN(0x10)
@@ -260,7 +265,7 @@ SECTIONS
     *(COMMON)
     . = ALIGN(0x10);
     __bss_end = .;
-  } > ram
+  } > DDR_CACHED
 
   /* End of uninitialized data segment */
   _end = .;
@@ -272,9 +277,9 @@ SECTIONS
     __heap_end = .;
     . = ALIGN(0x10);
     _heap_end = __heap_end;
-  } > ram
+  } > DDR_CACHED
   
-  /* must be on 4k boundary- corresponds to page size */
+    /* must be on 4k boundary- corresponds to page size */
   .stack : ALIGN(0x1000)
   {
     PROVIDE(__stack_bottom_h0$ = .);
@@ -307,6 +312,6 @@ SECTIONS
     PROVIDE(__app_stack_top_h4 = .);
     PROVIDE(__stack_top_h4$ = .);
     
-  } > ram
+  } > DDR_CACHED
 }
 
