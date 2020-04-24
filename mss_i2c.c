@@ -1,13 +1,11 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
  * PolarFire SoC Microprocessor Subsystem I2C bare metal software driver
  * implementation.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #include "mss_i2c.h"
@@ -325,7 +323,7 @@ void MSS_I2C_write_read
     ASSERT(read_size > 0u);
     ASSERT(read_buffer != (uint8_t *)0);
 
-    if((read_size > 0u) && (offset_size > 0u))
+    if ((read_size > 0u) && (offset_size > 0u))
     {
         uint32_t primask;
         volatile uint8_t stat_ctrl;
@@ -421,7 +419,7 @@ mss_i2c_status_t MSS_I2C_wait_complete
     
     this_i2c->master_timeout_ms = timeout_ms;
 
-    /* Run the loop until state returns I2C_FAILED  or I2C_SUCESS*/
+    /* Run the loop until state returns I2C_FAILED  or I2C_SUCESS */
     do {
         i2c_status = this_i2c->master_status;
     } while(MSS_I2C_IN_PROGRESS == i2c_status);
@@ -431,7 +429,7 @@ mss_i2c_status_t MSS_I2C_wait_complete
 
 /*------------------------------------------------------------------------------
  * I2C_system_tick()
- * See "core_i2c.h" for details of how to use this function.
+ * See "mss_i2c.h" for details of how to use this function.
  */
 void MSS_I2C_system_tick
 (
@@ -1376,7 +1374,7 @@ void MSS_I2C_clear_gca
 
 /*------------------------------------------------------------------------------
  * MSS_I2C_set_user_data()
- * See "i2c.h" for details of how to use this function.
+ * See "mss_i2c.h" for details of how to use this function.
  */
 void MSS_I2C_set_user_data
 (
@@ -1389,7 +1387,7 @@ void MSS_I2C_set_user_data
 
 /*------------------------------------------------------------------------------
  * MSS_I2C_get_user_data()
- * See "i2c.h" for details of how to use this function.
+ * See "mss_i2c.h" for details of how to use this function.
  */
 void * MSS_I2C_get_user_data
 (

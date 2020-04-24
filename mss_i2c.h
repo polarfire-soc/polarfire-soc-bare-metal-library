@@ -1,6 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2019 Microchip FPGA Embedded Systems Solutions.
- * All rights reserved.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,15 +24,14 @@
  * PolarFire SoC Microprocessor Subsystem I2C bare metal software driver
  * public API.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 /*=========================================================================*//**
   @mainpage PolarFire SoC MSS I2C Bare Metal Driver.
+  
   ==============================================================================
   Introduction
   ==============================================================================
-  The PolarFire SoC microcontroller subsystem (MSS) includes two I2C peripherals
+  The PolarFire SoC Microprocessor Subsystem (MSS) includes two I2C peripherals
   for serial communication. This driver provides a set of functions for
   controlling the MSS I2Cs as part of a bare metal system where no
   operating system is available. The driver can be adapted for use as part of an
@@ -48,17 +46,17 @@
   this driver with the exception of the PolarFire SoC IOMUX configuration.
   PolarFire SoC allows multiple non-concurrent uses of some external pins
   through IOMUX configuration. This feature allows optimization of external pin
-  usage by assigning external pins for use by either the microcontroller
+  usage by assigning external pins for use by either the microprocessor
   subsystem or the FPGA fabric. The MSS I2C serial signals are routed through
   IOMUXs to the PolarFire SoC device external pins. The MSS I2C serial signals
   may also be routed through IOMUXs to the PolarFire SoC FPGA fabric. For more
   information on IOMUX, refer to the IOMUX section of the PolarFire SoC
-  Microcontroller Subsystem (MSS) User's Guide.
+  Microprocessor Subsystem (MSS) User's Guide.
   
   The IOMUXs are configured using the PolarFire SoC MSS configurator tool. You
   must ensure that the MSS I2C peripherals are enabled and configured in the
   PolarFire SoC MSS configurator if you wish to use them. For more information
-  on IOMUXs, refer to the IOMUX section of the PolarFire SoC Microcontroller
+  on IOMUXs, refer to the IOMUX section of the PolarFire SoC Microprocessor
   Subsystem (MSS) User’s Guide.
   
   On PolarFire SoC an AXI switch forms a bus matrix interconnect among 
@@ -383,6 +381,8 @@ typedef enum mss_i2c_clock_divider {
 } mss_i2c_clock_divider_t;
 
 /*-------------------------------------------------------------------------*//**
+  MSS_I2C_RELEASE_BUS
+  =================================
   The MSS_I2C_RELEASE_BUS constant is used to specify the options parameter to
   functions MSS_I2C_read(), MSS_I2C_write() and MSS_I2C_write_read() to indicate
   that a STOP bit must be generated at the end of the I2C transaction to release
@@ -391,6 +391,8 @@ typedef enum mss_i2c_clock_divider {
 #define MSS_I2C_RELEASE_BUS        0x00u
 
 /*-------------------------------------------------------------------------*//**
+  MSS_I2C_HOLD_BUS
+  =================================
   The MSS_I2C_HOLD_BUS constant is used to specify the options parameter to
   functions MSS_I2C_read(), MSS_I2C_write() and MSS_I2C_write_read() to
   indicate that a STOP bit must not be generated at the end of the I2C
@@ -401,6 +403,8 @@ typedef enum mss_i2c_clock_divider {
 #define MSS_I2C_HOLD_BUS           0x01u
 
 /*-------------------------------------------------------------------------*//**
+  MSS_I2C_SMBALERT_IRQ
+  =================================
   The MSS_I2C_SMBALERT_IRQ constant is used with the MSS_I2C_enable_smbus_irq()
   and MSS_I2C_disable_smbus_irq() functions to enable or disable the SMBus
   SMBALERT interrupt.
@@ -408,6 +412,8 @@ typedef enum mss_i2c_clock_divider {
 #define MSS_I2C_SMBALERT_IRQ       0x01u
 
 /*-------------------------------------------------------------------------*//**
+  MSS_I2C_SMBSUS_IRQ
+  =================================
  The MSS_I2C_SMBSUS_IRQ constant is used with the MSS_I2C_enable_smbus_irq() and
  MSS_I2C_disable_smbus_irq() functions to enable or disable the SMBus
  SMBSUS interrupt.
@@ -415,6 +421,8 @@ typedef enum mss_i2c_clock_divider {
 #define MSS_I2C_SMBSUS_IRQ         0x02u
 
 /*-------------------------------------------------------------------------*//**
+  MSS_I2C_NO_TIMEOUT
+  =================================
   The MSS_I2C_NO_TIMEOUT constant is used to specify the timeout_ms parameter to
   the MSS_I2C_wait_complete() function to indicate that the function must not
   time out while waiting for the I2C transaction to complete.
@@ -797,14 +805,11 @@ void MSS_I2C_init
         uint8_t  target_slave_addr = 0x12;
         mss_i2c_status_t status;
         
-        // Initialize MSS I2C peripheral
         MSS_I2C_init( &g_mss_i2c0_lo, I2C_DUMMY_ADDR, MSS_I2C_PCLK_DIV_256 );
         
-        // Write data to slave.
         MSS_I2C_write( &g_mss_i2c0_lo, target_slave_addr, tx_buffer, write_length,
                        MSS_I2C_RELEASE_BUS );
 
-        // Wait for completion and record the outcome
         status = MSS_I2C_wait_complete( &g_mss_i2c0_lo, MSS_I2C_NO_TIMEOUT );
     }
   @endcode
@@ -883,10 +888,8 @@ void MSS_I2C_write
         uint8_t  target_slave_addr = 0x12;
         mss_i2c_status_t status;
         
-        // Initialize MSS I2C peripheral
         MSS_I2C_init( &g_mss_i2c0_lo, I2C_DUMMY_ADDR, MSS_I2C_PCLK_DIV_256 );
         
-        // Read data from target slave using MSS I2C 0.
         MSS_I2C_read( &g_mss_i2c0_lo, target_slave_addr, rx_buffer, read_length,
                       MSS_I2C_RELEASE_BUS );
         
@@ -975,7 +978,6 @@ void MSS_I2C_read
         uint8_t  target_slave_addr = 0x12;
         mss_i2c_status_t status;
         
-        // Initialize MSS I2C peripheral
         MSS_I2C_init( &g_mss_i2c0_lo, I2C_DUMMY_ADDR, MSS_I2C_PCLK_DIV_256 );
                       
         MSS_I2C_write_read( &g_mss_i2c0_lo, target_slave_addr, tx_buffer,
