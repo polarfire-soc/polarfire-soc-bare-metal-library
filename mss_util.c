@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,9 @@
 
 /***************************************************************************
  * @file mss_util.c
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief Utility functions
  *
- * SVN $Revision$
- * SVN $Date$
  */
 #include <stddef.h>
 #include <stdbool.h>
