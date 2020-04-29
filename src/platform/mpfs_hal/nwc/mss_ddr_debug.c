@@ -1,12 +1,24 @@
+/*******************************************************************************
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * MPFS HAL Embedded Software
+ *
+ */
+
+/*******************************************************************************
+ * @file mss_ddr_debug.h
+ * @author Microchip FPGA Embedded Systems Solutions
+ * @brief DDR write and read test functions
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
 #include "mss_ddr_debug.h"
-#define mem_size 4 //1=1Gb, 2=2Gb, 3= 12Gb, 4= 8Gb
-#define DDR3_NON_CACHE_BASE           (MSS_UART_TypeDef*)0xC0000000UL
-
-
 
 /*******************************************************************************
  * Local Defines
@@ -15,8 +27,10 @@
 /*******************************************************************************
  * External Defines
  */
+#ifdef DEBUG_DDR_INIT
 extern uint8_t sweep_results[MAX_NUMBER_DPC_V_GEN_SWEEPS]\
     [MAX_NUMBER__BCLK_SCLK_OFFSET_SWEEPS][MAX_NUMBER_ADDR_CMD_OFFSET_SWEEPS];
+#endif
 
 /*******************************************************************************
  * External function declarations
@@ -107,7 +121,6 @@ static uint32_t ddr_write
     uint32_t i;
     uint32_t DATA, read_data;
     uint32_t error_count = 0U;
-    //DDR_word_ptr = (uint32_t *) DDR3_NON_CACHE_BASE;
 
     switch (data_ptrn)
     {
