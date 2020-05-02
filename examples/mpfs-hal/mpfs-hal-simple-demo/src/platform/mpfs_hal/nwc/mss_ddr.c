@@ -177,6 +177,7 @@ static int32_t ddr_setup(void)
     static uint32_t tip_cfg_params;
     static uint32_t dpc_bits;
     static uint8_t last_sweep_status;
+
     DDR_TYPE ddr_type;
     uint32_t ret_status = 0U;
     uint8_t number_of_lanes_to_calibrate;
@@ -290,29 +291,39 @@ static int32_t ddr_setup(void)
             ddr_training_state = DDR_TRAINING_FAIL;
             break;
         case DDR_SWEEP_AGAIN:
-            last_sweep_status = CALIBRATION_PASSED;
             retry_count++;
-#ifdef DEBUG_DDR_INIT
+            last_sweep_status = CALIBRATION_PASSED;
+    #ifdef DEBUG_DDR_INIT
             (void)uprint32(g_debug_uart, "\n\r\n\r DDR_SWEEP_AGAIN: ",\
-                                    ddr_training_state);
-#endif
+                                        ddr_training_state);
+    #endif
             ddr_training_state = DDR_CHECK_TRAINING_SWEEP;
             break;
         case DDR_TRAINING_FAIL:
-            last_sweep_status = CALIBRATION_FAILED;
             retry_count++;
-#ifdef DEBUG_DDR_INIT
+            if(last_sweep_status != CALIBRATION_SUCCESS)
+            {
+                last_sweep_status = CALIBRATION_FAILED;
+            }
+    #ifdef DEBUG_DDR_INIT
             (void)uprint32(g_debug_uart, "\n\r\n\r DDR_TRAINING_FAIL: ",\
-                    ddr_training_state);
+                        ddr_training_state);
             (void)uprint32(g_debug_uart, "\n\r Retry Count: ", retry_count);
-#endif
+    #endif
             ddr_training_state = DDR_CHECK_TRAINING_SWEEP;
             break;
 
         case DDR_CHECK_TRAINING_SWEEP:
             {
                 /* first check if we are finished */
-                if(retry_count == TOTAL_SWEEPS)
+                if(last_sweep_status == CALIBRATION_SUCCESS)
+                {
+                    /*
+                     * Try again with calculated values
+                     */
+                    ddr_training_state = DDR_TRAINING_CHECK_FOR_OFFMODE;
+                }
+                else if(retry_count == TOTAL_SWEEPS)
                 {
                     sweep_index index;
 #ifdef DEBUG_DDR_INIT
@@ -323,6 +334,11 @@ static int32_t ddr_setup(void)
                      */
                     if (get_best_sweep(&index) == 0U)
                     {
+#ifdef DEBUG_DDR_INIT
+                        (void)uprint32(g_debug_uart, "\n\r sweep success: ",\
+                                                                tip_cfg_params);
+#endif
+                        last_sweep_status = CALIBRATION_SUCCESS;
                         /*
                          * Use obtained settings
                          */
@@ -349,10 +365,6 @@ static int32_t ddr_setup(void)
                         ddr_training_state = DDR_TRAINING_SWEEP;
                     }
                 }
-                else if(retry_count > TOTAL_SWEEPS)
-                {
-                    ddr_training_state = DDR_TRAINING_CHECK_FOR_OFFMODE;
-                }
                 else
                 {
                     ddr_training_state = DDR_TRAINING_SWEEP;
@@ -364,7 +376,6 @@ static int32_t ddr_setup(void)
                 /* reset controller */
                 DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x0U;
                 CFG_DDR_SGMII_PHY->training_start.training_start = 0x0U;
-                ddr_training_state = DDR_TRAINING_SWEEP;
             }
             break;
 
@@ -423,6 +434,14 @@ static int32_t ddr_setup(void)
                         }
                         else
                         {
+#ifdef DEBUG_DDR_INIT
+                            (void)uprint32(g_debug_uart, "\n\r addr_cmd_value: ",\
+                                                                addr_cmd_value);
+                            (void)uprint32(g_debug_uart, "\n\r bclk_sclk_offset_value: ",\
+                                                                    bclk_sclk_offset_value);
+                            (void)uprint32(g_debug_uart, "\n\r dpc_vrgen_value: ",\
+                                                               dpc_vrgen_value);
+#endif
                             /*
                              * Now do a sweep
                              */
@@ -522,15 +541,6 @@ static int32_t ddr_setup(void)
 
         case DDR_TRAINING_SET_MODE_VS_BITS:
 #ifdef DEBUG_DDR_INIT
-                (void)uprint32(g_debug_uart, "\n\r addr_cmd_value: ",\
-                                                                addr_cmd_value);
-                (void)uprint32(g_debug_uart, "\n\r bclk_sclk_offset_value: ",\
-                                                        bclk_sclk_offset_value);
-                (void)uprint32(g_debug_uart, "\n\r tip_cfg_params: ",\
-                                                                tip_cfg_params);
-                (void)uprint32(g_debug_uart, "\n\r dpc_vrgen_value: ",\
-                                                               dpc_vrgen_value);
-
                 (void)uprint32(g_debug_uart, "\n\r dpc_bits: ",\
                                                                       dpc_bits);
 #endif
@@ -743,6 +753,10 @@ static int32_t ddr_setup(void)
              *  2:0  Number of VCO Phase offsets between REFCLK and ADDCMD bits
              */
             {
+#ifdef DEBUG_DDR_INIT
+                (void)uprint32(g_debug_uart, "\n\r tip_cfg_params: ",\
+                                                                tip_cfg_params);
+#endif
 
                 CFG_DDR_SGMII_PHY->tip_cfg_params.tip_cfg_params =\
                                                                 tip_cfg_params;

@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 uint32_t SysTick_Config(void);
-void SysTick_off(void);
+void disable_systick(void);
 
 #ifdef __cplusplus
 }

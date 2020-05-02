@@ -41,7 +41,9 @@ static void copy_section
     uint64_t * p_vma,
     uint64_t * p_vma_end);
 
+#ifdef  MPFS_HAL_HW_CONFIG
 static void load_virtual_rom(void);
+#endif  /* MPFS_HAL_HW_CONFIG */
 
 /*LDRA_INSPECTED 440 S MR:R.11.1,R.11.2,R.11.4,R.11.6,R.11.7  Have to allocate number (address) as point reference*/
 mss_sysreg_t*   SYSREG = ((mss_sysreg_t*) BASE32_ADDR_MSS_SYSREG);
@@ -61,17 +63,25 @@ __attribute__((weak)) int main_first_hart(void)
     if(hartid == MPFS_HAL_FIRST_HART)
     {
         uint8_t hard_idx;
-#ifndef MPFS_HAL_BOOT2
+        /*
+         * We only use code within the conditional compile
+         * #ifdef MPFS_HAL_HW_CONFIG
+         * if this program is used as part of the initial board bring-up
+         * Please comment/uncomment MPFS_HAL_HW_CONFIG define in
+         * platform/config/software/mpfs_hal/sw_config.h
+         * as required.
+         */
+#ifdef  MPFS_HAL_HW_CONFIG
         load_virtual_rom();
         config_l2_cache();
-#endif
+#endif  /* MPFS_HAL_HW_CONFIG */
         init_memory();
 
-#ifndef MPFS_HAL_BOOT2
+#ifdef  MPFS_HAL_HW_CONFIG
         (void)init_bus_error_unit();
         (void)init_mem_protection_unit();
         (void)init_pmp((uint8_t)MPFS_HAL_FIRST_HART);
-
+#endif  /* MPFS_HAL_HW_CONFIG */
         /*
          * Initialise NWC
          *      Clocks
@@ -79,13 +89,15 @@ __attribute__((weak)) int main_first_hart(void)
          *      DDR
          *      IOMUX
          */
-
+#ifdef  MPFS_HAL_HW_CONFIG
         (void)mss_nwc_init();
+#endif  /* MPFS_HAL_HW_CONFIG */
         /*
          * Copies text section if relocation required
          */
         (void)copy_section(&__text_load, &__text_start, &__text_end);
 
+#ifdef  MPFS_HAL_HW_CONFIG
         /*
          * Start the other harts. They are put in wfi in entry.S
          * When debugging, harts are released from reset separately,
@@ -146,7 +158,7 @@ __attribute__((weak)) int main_first_hart(void)
             }
         }
 
-#endif /* MPFS_HAL_BOOT2 */
+#endif /* MPFS_HAL_HW_CONFIG */
         (void)main_other_hart();
     }
 
@@ -245,6 +257,7 @@ __attribute__((weak)) int main_other_hart(void)
  * Load the virtual ROM located at address 0x20003120 within the SCB system
  * registers with an executable allowing to park a hart in an infinite loop.
  */
+#ifdef  MPFS_HAL_HW_CONFIG
 #define VIRTUAL_BOOTROM_BASE_ADDR   0x20003120U
 #define NB_BOOT_ROM_WORDS       8
 static void load_virtual_rom(void)
@@ -269,6 +282,7 @@ static void load_virtual_rom(void)
         p_virtual_bootrom[inc] = rom[inc];
     }
 }
+#endif  /* MPFS_HAL_HW_CONFIG */
 
 /*==============================================================================
  * Put the hart executing this code into an infinite loop executing from the

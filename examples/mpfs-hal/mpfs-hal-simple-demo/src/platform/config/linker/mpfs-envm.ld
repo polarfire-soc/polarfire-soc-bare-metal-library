@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -250,6 +250,15 @@ SECTIONS
         . = ALIGN(0x10);
         __sdata_end = .;
     } > ram_LIM AT > eNVM_SEC_2_0_1_3
+    
+    /*
+     * The s2data section is required when using cetrtain versions of newlib-nano
+     * The _global_impure_ptr used in that libary is initialised to point here.
+     */
+    .sdata2 : ALIGN(0x10)
+    {
+        *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
+    } > ram_LIM
 
     /* data section */
     .data : ALIGN(0x10)

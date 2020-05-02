@@ -365,6 +365,7 @@ typedef enum DDR_MEMORY_ACCESS_
 
 #define CALIBRATION_PASSED              0xFF
 #define CALIBRATION_FAILED              0x11
+#define CALIBRATION_SUCCESS             0x12
 
 
 /***************************************************************************//**
