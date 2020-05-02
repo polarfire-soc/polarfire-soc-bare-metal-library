@@ -20,9 +20,9 @@
 #include "mpfs_hal/mss_hal.h"
 #include "mss_nwc_init.h"
 #include "simulation.h"
-#include "drivers/mss_uart/mss_uart.h"
 
 #ifdef DEBUG_DDR_INIT
+#include "drivers/mss_uart/mss_uart.h"
 extern mss_uart_instance_t *g_debug_uart ;
 uint32_t setup_ddr_debug_port(mss_uart_instance_t * uart);
 #endif

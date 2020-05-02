@@ -31,8 +31,6 @@
 #ifndef USER_CONFIG_MSS_USER_CONFIG_H_
 #define USER_CONFIG_MSS_USER_CONFIG_H_
 
-/* #define RENODE_DEBUG */
-
 /*------------------------------------------------------------------------------
  * MPFS_HAL_FIRST_HART and MPFS_HAL_LAST_HART defines used to specify which
  * harts to actually start.
@@ -94,12 +92,26 @@
 #endif
 
 /*
- * Support loaded by a bootloader
- * not defined => we are first stage bootloader, configure hardware
- * defined => clocks, DDR already configured, do not configure
+ * MPFS_HAL_HW_CONFIG
+ * Conditional compile switch is used to determine if MPFS HAL will perform the
+ * hardware configurations or not.
+ * Defined      => This program acts as a First stage bootloader and performs
+ *                 hardware configurations.
+ * Not defined  => This program assumes that the hardware configurations are
+ *                 already performed (Typically by a previous boot stage)
+ *
+ * List of items initialised when MPFS_HAL_HW_CONFIG is enabled
+ * - load virtual rom (see load_virtual_rom(void) in system_startup.c)
+ * - l2 cache config
+ * - Bus error unit config
+ * - MPU config
+ * - pmp config
+ * - I/O, clock and clock mux's, DDR and SGMII
+ * - will start other harts, see text describing MPFS_HAL_FIRST_HART,
+ *   MPFS_HAL_LAST_HART above
  */
-#ifndef MPFS_HAL_BOOT2
-#define MPFS_HAL_BOOT2
+#ifndef MPFS_HAL_HW_CONFIG
+/*#define MPFS_HAL_HW_CONFIG */
 #endif
 
 /*

@@ -781,7 +781,7 @@ uint32_t SysTick_Config(void)
 /**
  * Disable system tick interrupt
  */
-void SysTick_off(void)
+void disable_systick(void)
 {
     clear_csr(mie, MIP_MTIP);   /* mie Register - Machine Timer Interrupt Enable */
     return;
