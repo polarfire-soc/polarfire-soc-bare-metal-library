@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,6 @@
  * PolarFire and PolarFire SoC PCIe subsystem software driver public API 
  * and data structure.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 /*=========================================================================*//**
   @mainpage PolarFire and PolarFire SoC PCIe Bare Metal Driver.
