@@ -1,17 +1,14 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * Microchip PolarFire SoC MSS USB Driver Stack
+ * PolarFire SoC MSS USB Driver Stack
  *      USB Core Interface Layer (USB-CIFL)
  *          USB-CIF driver
  *
  * USB-CIF driver public API.
  *
- *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #ifndef __MSS_USB_COMMON_CIF_H_
@@ -27,7 +24,7 @@ extern "C" {
 #endif
 
 /*-------------------------------------------------------------------------*//**
- Constant values internally used by the driver.
+  Constant values internally used by the driver.
  */
 #define CEP_MAX_PKT_SIZE                                64u
 #define SETUP_PKT_SIZE                                  8u
@@ -161,7 +158,7 @@ typedef enum {
     MSS_USB_EP_STALL_RCVD,
     MSS_USB_EP_XFR_SUCCESS,
     MSS_USB_EP_ABORTED
-#endif  //MSS_USB_HOST_ENABLED
+#endif  /* MSS_USB_HOST_ENABLED */
 
 } mss_usb_ep_state_t;
 
@@ -279,7 +276,7 @@ typedef struct {
     uint32_t                    interval;
     /*This index will be used to choose a particular connected device out of the
       Multiple connected devices when Multiple devices are supported.
-      Currently we support only one device hence this will always evalueate to 0*/
+      Currently we support only one device hence this will always evaluate to 0*/
     uint8_t                     tdev_idx;
 
 #endif  /* MSS_USB_HOST_ENABLED */
@@ -500,7 +497,8 @@ MSS_USB_CIF_rx_ep_configure
 );
 
 /*-------------------------------------------------------------------------*//**
-  Prepares the RX EP for receiving data as per parameters provided by upper layer
+  Prepares the RX EP for receiving data as per parameters provided by upper 
+  layer
  */
 void
 MSS_USB_CIF_rx_ep_read_prepare

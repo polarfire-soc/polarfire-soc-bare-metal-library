@@ -1,18 +1,15 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * Microchip PolarFire SoC MSS USB Driver Stack
+ * PolarFire SoC MSS USB Driver Stack
  *      USB Core Interface Layer (USB-CIFL)
  *          USB-CIF.
  *
  * This file provides interfaces to perform register bit level
  * I\O operations which are independent of USB Device/host mode.
  *
- *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #ifndef __MSS_USB_COMMON_REG_IO_H_

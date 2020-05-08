@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * Microchip PolarFire SoC MSS USB Driver Stack
+ * PolarFire SoC MSS USB Driver Stack
  *      USB Core Interface Layer (USB-CIFL)
  *          USB-CIF driver
  *
@@ -12,9 +12,6 @@
  * also implements core interface function for the logical layer to control
  * the MSS USB core. These interface functions are independent of the USB mode.
  *
- *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #include "mss_usb_common_cif.h"
@@ -486,12 +483,12 @@ MSS_USB_CIF_rx_ep_read_prepare
 {
     /* 
      * Fixed Buffer overwriting issue found with printer driver and issue with 
-     *  interrupt transfer with DMA by moving the location of interrupt enable 
-     *  function
+     * interrupt transfer with DMA by moving the location of interrupt enable 
+     * function.
      */
     if (DMA_ENABLE == dma_enable)
     {
-        /*Make sure that address is Modulo-4.Bits D0-D1 are read only.*/
+        /* Make sure that address is Modulo-4.Bits D0-D1 are read only.*/
         HAL_ASSERT(!(((uint32_t)buf_addr) & 0x00000002U));
 
         MSS_USB_CIF_dma_write_addr(dma_channel, (uint32_t)buf_addr);
@@ -707,17 +704,18 @@ MSS_USB_CIF_rx_ep_configure
 {
     uint8_t dpb = 1u;
     mss_usb_dma_mode_t mode;
+    
     if (DPB_ENABLE == core_ep->dpb_enable)
     {
         dpb = 2u;
     }
 
     MSS_USB_CIF_rx_ep_set_fifo_size(core_ep->num,
-                                     ((core_ep->fifo_size) / dpb),
-                                     core_ep->dpb_enable);
+                                    ((core_ep->fifo_size) / dpb),
+                                    core_ep->dpb_enable);
 
     MSS_USB_CIF_rx_ep_set_fifo_addr(core_ep->num,
-                                     core_ep->fifo_addr);
+                                    core_ep->fifo_addr);
 
     if (DPB_ENABLE == core_ep->dpb_enable)
     {
