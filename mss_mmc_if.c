@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
  * contained within the eMMC/SD interface driver are accessed through the
  * mss_mmc_if.h header file.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 #include "mss_mmc_if.h"
 #include "mss_mmc_regs.h"

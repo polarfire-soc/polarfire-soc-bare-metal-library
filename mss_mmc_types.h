@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
  * This eMMC Interface header file provides a subset of definitions from the eMMC
  * protocol JESD84-B51
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #ifndef __MSS_MMC_TYPE_H

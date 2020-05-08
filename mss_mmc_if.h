@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
  * used to configure and program the eMMC/SD device to allow data transfers
  * to be performed with the eMMC/SD Host.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #ifndef __MSS_MMC_IF_H
