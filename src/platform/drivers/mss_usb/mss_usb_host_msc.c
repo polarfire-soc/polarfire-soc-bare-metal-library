@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * Microchip PolarFire SoC MSS USB Driver Stack
+ * PolarFire SoC MSS USB Driver Stack
  *      USB Logical Layer (USB-LL)
  *          USBH-MSC class driver.
  *
@@ -15,8 +15,6 @@
  * V2.4 Naming convention change, other cosmetic changes.
  * V2.3 Host performance improvement changes
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #include "mss_usb_host_msc.h"

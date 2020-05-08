@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *
- * Microchip PolarFire SoC MSS USB Driver Stack
+ * PolarFire SoC MSS USB Driver Stack
  *
  * MSS USB Driver stack configuration parameters.
  * User must choose the constant definitions in this file to select the mode of
@@ -29,8 +29,6 @@
  * The constants defined in this file are used by MSS USB driver stack to
  * function as per configuration.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #ifndef __MSS_USB_CONFIG_H_
