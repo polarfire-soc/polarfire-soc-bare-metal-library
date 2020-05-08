@@ -1,12 +1,10 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
  * PolarFire SoC MSS eMMC SD driver API's for internal use cases.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 /*=========================================================================*//**
   Note: The MSS_MMC_pause_sdma_write_hpi(), MSS_MMC_resume_sdma_write_hpi(),
