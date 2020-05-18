@@ -1,12 +1,9 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
  * PoalrFire SoC Microprocessor Subsystem PDMA bare metal driver implementation.
- *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #include "mss_pdma.h"

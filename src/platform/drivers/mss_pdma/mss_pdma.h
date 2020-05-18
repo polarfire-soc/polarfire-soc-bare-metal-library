@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,6 @@
  * 
  * PolarFire SoC Microprocessor subsystem PDMA bare metal software driver public
  * APIs.
- *
- * SVN $Revision$
- * SVN $Date$
  */
  
 /*=========================================================================*//**
