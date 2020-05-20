@@ -1,22 +1,19 @@
  /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
  * Register bit offsets and masks definitions for PolarFire SoC MSS Timer
- *
- * SVN $Revision$
- * SVN $Date$
  */
 
-#ifndef __PSE_TIMER_REG_H_
-#define __PSE_TIMER_REG_H_
+#ifndef MSS_TIMER_REGS_H_
+#define MSS_TIMER_REGS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 /*----------------------------------------------------------------------------*/
-/*--------------------------PSE MSS Timer register map------------------------*/
+/*--------------------------MPFS MSS Timer register map------------------------*/
 /*----------------------------------------------------------------------------*/
 typedef struct
 {
@@ -60,4 +57,4 @@ typedef struct
 }
 #endif
 
-#endif  /* __PSE_TIMER_REG_H_ */
+#endif  /* MSS_TIMER_REGS_H_ */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,17 +21,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *
- * PolarFire microprocessor subsystem (MSS) Timer bare metal software driver
+ * PolarFire SoC Microprocessor Subsystem (MSS) Timer bare metal software driver
  * public API.
- *
- * SVN $Revision$
- * SVN $Date$
  */
 /*=========================================================================*//**
-  @mainpage PolarFire MSS Timer Bare Metal Driver.
+  @mainpage PolarFire SoC MSS Timer Bare Metal Driver.
 
   @section intro_sec Introduction
-  The PolarFire microprocessor Subsystem (MSS) includes a timer hardware
+  The PolarFire SoC Microprocessor Subsystem (MSS) includes a timer hardware
   block which can be used as two independent 32-bits timers or as a single
   64-bits timer in periodic or one-shot mode. 
 
@@ -42,7 +39,7 @@
   model is outside the scope of this driver.
   
   @section theory_op Theory of Operation
-  The PolarFire MSS Timer can be used in one of two mutually exclusive modes;
+  The PolarFire SoC MSS Timer can be used in one of two mutually exclusive modes;
   either as a single 64-bits timer or as two independent 32-bits timers. The MSS
   Timer can be used in either periodic mode or one-shot mode. A timer configured
   for periodic mode operations will generate an interrupt and reload its
@@ -61,6 +58,7 @@
     - MSS_TIM1_init()
     - MSS_TIM2_init()
     - MSS_TIM64_init()
+    
   The MSS Timer driver is initialized through calls to these functions and at
   least one of them must be called before any other MSS Timer driver functions
   can be called.
@@ -101,8 +99,9 @@
   The function prototypes for the timer interrupt handlers are:
     - void Timer1_IRQHandler( void )
     - void Timer2_IRQHandler( void )
-  Entries for these interrupt handlers are provided in the PolarFire RISC-V HAL
-  vector table. To add a Timer 1 interrupt handler, you must implement a
+    
+  Entries for these interrupt handlers are provided in the PolarFire SoC MPFS 
+  HAL vector table. To add a Timer 1 interrupt handler, you must implement a
   Timer1_IRQHandler( ) function as part of your application code. To add a
   Timer 2 interrupt handler, you must implement a Timer2_IRQHandler( ) function
   as part of your application code. When using the MSS Timer as a 64-bit timer,
@@ -111,8 +110,8 @@
   configured as a 64-bit timer.
   
  *//*=========================================================================*/
-#ifndef __PSE_TIMER_H_
-#define __PSE_TIMER_H_
+#ifndef MSS_TIMER_H_
+#define MSS_TIMER_H_
 
 #include "mpfs_hal/mss_plic.h"
 
@@ -747,4 +746,4 @@ static inline void MSS_TIM64_clear_irq(TIMER_TypeDef* timer)
 }
 #endif
 
-#endif /*__PSE_TIMER_H_*/
+#endif /*MSS_TIMER_H_*/
