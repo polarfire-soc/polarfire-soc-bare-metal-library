@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,11 +21,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *
- * PolarFire SoC micro processor subsystem system services bare metal driver
+ * PolarFire SoC Microprocessor Subsystem(MSS) system services bare metal driver
  * implementation.
- *
- * SVN $Revision$
- * SVN $Date$
  */
 
 /*=========================================================================*//**
@@ -2372,15 +2369,17 @@ MSS_SYS_debug_write_probe
                     ipseg_addr and iprow_addr parameters specifies the target
                     address of probe module.
   @param clear
-                    The clear parameter is used to clear the configurations of
-                    local channels a or b. If CLEAR is ‘1’, all local channel
-                    x (the applicable channel a or b) configurations are
-                    cleared before applying the new configuration
+                    The clear parameter(of size 1-bit) is used to clear the 
+					configurations of local channels a or b. If CLEAR is ‘1’, 
+					all local channel x (the applicable channel a or b) 
+					configurations are cleared before applying the new 
+					configuration
   @param ioen
-                    The ioen parameter is used to activate the probe output
-                    pad. If IOEN is ‘1’ then the corresponding live probe
-                    output pad is activated.  Note that setting IOEN to ‘0’
-                    does not disable the internal live probe configuration.
+                    The ioen parameter(of size 1-bit) is used to activate
+					the probe output pad. If IOEN is ‘1’ then the corresponding 
+					live probe output pad is activated.  Note that setting IOEN 
+					to ‘0’ does not disable the internal live probe 
+					configuration.
   @param mb_offset
                     The mb_offset parameter specifies the offset from the start
                     of mailbox where the data related to this service is

@@ -1,18 +1,14 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  * 
- * PSE microcontroller subsystem System Services bare metal driver
+ * PolarFire SoC Microprocessor Subsystem(MSS) System Services bare metal driver
  * implementation.
- *
- * SVN $Revision$
- * SVN $Date$
  */
 #include "drivers/mss_sys_services/mss_sys_services.h"
 #include "drivers/mss_sys_services/mss_sys_services_regs.h"
 #include "mpfs_hal/mss_hal.h"
-#include "hal/hal_assert.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -574,9 +570,9 @@ MSS_SYS_secure_nvm_write
     uint16_t index = 0;
     uint16_t status = MSS_SYS_PARAM_ERR;
 
-    HAL_ASSERT(!(NULL_BUFFER == p_data));
-    HAL_ASSERT(!(NULL_BUFFER == p_user_key));
-    HAL_ASSERT(!(snvm_module >= 221u));
+    ASSERT(!(NULL_BUFFER == p_data));
+    ASSERT(!(NULL_BUFFER == p_user_key));
+    ASSERT(!(snvm_module >= 221u));
 
     *p_frame = snvm_module; /*SNVMADDR - SNVM module*/
     p_frame += 4; /* Next 3 bytes RESERVED - For alignment */
@@ -681,11 +677,11 @@ MSS_SYS_secure_nvm_read
     uint16_t status = MSS_SYS_PARAM_ERR;
     uint8_t response[256] = {0x00};
 
-    HAL_ASSERT(!(NULL_BUFFER == p_data));
-    HAL_ASSERT(!(NULL_BUFFER == p_admin));
-    HAL_ASSERT(!(snvm_module > 221u));
+    ASSERT(!(NULL_BUFFER == p_data));
+    ASSERT(!(NULL_BUFFER == p_admin));
+    ASSERT(!(snvm_module > 221u));
 
-    HAL_ASSERT((data_len == 236u) || (data_len == 252u));
+    ASSERT((data_len == 236u) || (data_len == 252u));
 
     *p_frame = snvm_module; /*SNVMADDR - SNVM module*/
     p_frame += 4u; /* RESERVED - For alignment */
@@ -695,7 +691,7 @@ MSS_SYS_secure_nvm_read
     {
         for (index = 0u; index < 12u; index++)
         {
-            HAL_ASSERT(p_user_key !=  NULL_BUFFER);
+            ASSERT(p_user_key !=  NULL_BUFFER);
             *p_frame = p_user_key[index];
             p_frame++;
         }
@@ -944,7 +940,7 @@ MSS_SYS_authenticate_iap_image
 {
     uint16_t status = MSS_SYS_PARAM_ERR;
 
-    HAL_ASSERT(!(spi_idx == 1u));
+    ASSERT(!(spi_idx == 1u));
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
@@ -1030,7 +1026,7 @@ MSS_SYS_execute_iap
     if ((MSS_SYS_IAP_PROGRAM_BY_SPIIDX_CMD == iap_cmd)
     || (MSS_SYS_IAP_VERIFY_BY_SPIIDX_CMD == iap_cmd))
     {
-        HAL_ASSERT(!(1u == spiaddr));
+        ASSERT(!(1u == spiaddr));
     }
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
@@ -1183,14 +1179,13 @@ MSS_SYS_debug_write_probe
       * prb_addr*/
      uint32_t service_data = 0u;
 
-     service_data = iprow_addr;
-     service_data = service_data << 12u;
+     uint16_t ip_addr = iprow_addr;
+     ip_addr = ip_addr << 6u;
+     ip_addr += ipseg_addr;/* ip_addr is ipseg_addr + iprow_addr*/
 
-     uint16_t temp = ipseg_addr;
-     temp = temp << 6u;
-     temp += prb_addr;
-
-     service_data = service_data + temp;
+     service_data = ip_addr;
+     service_data = service_data << 16; /* 2 bytes space for prb_addr */
+     service_data += prb_addr;
 
      *(uint32_t *)mb_format       = service_data;
      *(uint32_t *)(mb_format + 4u) = pwmask;
@@ -1253,11 +1248,11 @@ MSS_SYS_debug_live_probe
     probe_addr = (probe_addr << 6u) + ipseg_addr;
 
     service_data = probe_addr;
-    service_data = (service_data << 11u) + channel_addr;
+    service_data = (service_data << 16u) + channel_addr;
 
     *(uint32_t*)mb_format = service_data;
-    mb_format[4] = clear;
-    mb_format[5] = ioen;
+    mb_format[4] = clear & 0x01u;
+    mb_format[5] = ioen & 0x01u;
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
@@ -1305,11 +1300,11 @@ MSS_SYS_debug_select_mem
     uint8_t mb_format[6] = {0};
     uint16_t service_data = 0u;
 
-    service_data = iprow_addr;
+    service_data = ipblk_addr;
 
-    uint16_t temp = ipseg_addr;
-    temp = ((temp << 3u) + ipblk_addr);
-    service_data = ((temp << 9u) + temp);
+    uint16_t temp = iprow_addr;
+    temp = ((temp << 6u) + ipseg_addr);
+    service_data = ((temp << 3u) + service_data);
 
     *(uint16_t *)mb_format = service_data;
     mb_format[2] = memtype;
@@ -1357,11 +1352,15 @@ MSS_SYS_debug_read_mem
 )
 {
     uint16_t status = MSS_SYS_PARAM_ERR;
-    uint8_t mb_format[16] = {0};
+    uint8_t mb_format[12] = {0};
 
     *(uint16_t*)(mb_format)     = mem_addr;
     *(uint16_t*)(mb_format + 2u) = n_words;
-    *(uint64_t*)(mb_format + 8u) = mss_addr;
+
+    for (uint8_t index  = 4u; index < 12u; index++)
+    {
+        mb_format[index] = (mss_addr >> (8u * (index - 4u)));
+    }
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
@@ -1404,11 +1403,15 @@ MSS_SYS_debug_write_mem
 )
 {
     uint16_t status = MSS_SYS_PARAM_ERR;
-    uint8_t mb_format[16] = {0};
-  
+    uint8_t mb_format[12] = {0};
+
     *(uint16_t*)(mb_format)     = mem_addr;
     *(uint16_t*)(mb_format + 2u) = n_words;
-    *(uint64_t*)(mb_format + 8u) = mss_addr;
+
+    for (uint8_t index  = 4u; index < 12u; index++)
+    {
+        mb_format[index] = (mss_addr >> (8u * (index - 4u)));
+    }
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
@@ -1454,7 +1457,7 @@ MSS_SYS_debug_read_apb
     uint8_t mb_format[24] = {0};
 
     *(uint32_t *)mb_format = apb_addr;
-    mb_format[5] = apb_wsize;
+    mb_format[4] = apb_wsize;
     *(uint16_t *)(mb_format + 8u)  = max_bytes;
     *(uint64_t *)(mb_format + 16u) = mss_addr;
 
@@ -1502,7 +1505,7 @@ MSS_SYS_debug_write_apb
     uint8_t mb_format[24] = {0};
 
     *(uint32_t *)mb_format = apb_addr;
-    mb_format[5] = apb_wsize;
+    mb_format[4] = apb_wsize;
     *(uint16_t *)(mb_format + 8u)  = max_bytes;
     *(uint64_t *)(mb_format + 16u) = mss_addr;
 
