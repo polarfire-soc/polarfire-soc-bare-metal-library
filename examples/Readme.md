@@ -19,7 +19,7 @@ installation:
     ./extras/workspace.empty
 
 ## Importing Example Projects Into Your SoftConsole Workspace
-SoftConsole example projects are include in the following folder of the of the
+SoftConsole example projects are included in the following folder of the of the
 Bare Metal Library: mpfs-bare-metal-library/examples
 
 - Select the File->Import menu to import an example project into your SoftConsole
