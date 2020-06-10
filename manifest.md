@@ -30,7 +30,7 @@
 | mss-mmc-examples | 1.5.101 | 2020-05-29 |
 | mss-ethernet-mac-examples | 1.5.104 | 2019-11-22 |
 | mss-gpio-examples | 1.5.101 | 2019-11-22 |
-| mss-i2c-examples | 1.5.101 | 2019-11-22 |
+| mss-i2c-examples | 1.6.102 | 2020-06-10 | 
 | mss-mmuart-examples | 1.5.104 | 2019-11-22 |
 | mss-mpfs-hal-examples | 1.6.102 | 2020-05-02 |
 | mss-qspi-examples | 1.5.101 | 2019-12-04 |
