@@ -9,7 +9,6 @@
  */
 
 #include "mss_i2c.h"
-#include "ASSERT.h"
 #include "mpfs_hal/mss_sysreg.h"
 #include "mpfs_hal/mss_plic.h"
 #include <string.h>
