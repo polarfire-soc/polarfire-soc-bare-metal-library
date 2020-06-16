@@ -38,6 +38,6 @@
 | mss-spi-examples | 1.5.101 | 2019-11-22 |
 | mss-sys-services-examples | 1.5.101 | 2019-12-02 |
 | mss-timer-examples | 1.5.102 | 2019-11-29 |
-| mss-usb-examples | 1.5.101 | 2020-01-02 |
+| mss-usb-examples | 1.6.101 | 2020-06-16 | 
 | mss-watchdog-examples | 1.5.102 | 2020-04-30 |
 | pf-pcie-examples | 3.0.101 | 2019-11-22 |
