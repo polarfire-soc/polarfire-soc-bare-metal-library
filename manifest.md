@@ -27,7 +27,7 @@
 |----------|:-------------:|------:|
 | mss-can-examples | 1.6.101 | 2020-06-17 | 
 | mss-pdma-examples | 1.5.102 | 2020-05-29 |
-| mss-mmc-examples | 1.5.101 | 2020-05-29 |
+| mss-mmc-examples | 1.6.100 | 2020-06-17 | 
 | mss-ethernet-mac-examples | 1.5.104 | 2019-11-22 |
 | mss-gpio-examples | 1.6.100 | 2020-06-17 | 
 | mss-i2c-examples | 1.6.102 | 2020-06-10 | 
