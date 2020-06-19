@@ -33,7 +33,7 @@
 | mss-i2c-examples | 1.6.102 | 2020-06-10 | 
 | mss-mmuart-examples | 1.6.100 | 2020-06-17 | 
 | mss-mpfs-hal-examples | 1.6.102 | 2020-05-02 |
-| mss-qspi-examples | 1.5.101 | 2019-12-04 |
+| mss-qspi-examples | 1.6.100 | 2020-06-19 | 
 | mss-rtc-examples | 1.5.100 | 2020-01-06 |
 | mss-spi-examples | 1.5.101 | 2019-11-22 |
 | mss-sys-services-examples | 1.5.101 | 2019-12-02 |
