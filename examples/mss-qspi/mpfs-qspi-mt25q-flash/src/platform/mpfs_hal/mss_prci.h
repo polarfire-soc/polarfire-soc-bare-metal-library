@@ -1,7 +1,7 @@
  /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: MIT 
  *
  * MPFS HAL Embedded Software
  *
@@ -9,11 +9,9 @@
 
 /*******************************************************************************
  * @file mss_prci.h
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief PRCI: Power, Reset, Clock, Interrupt
  *
- * SVN $Revision: 12187 $
- * SVN $Date: 2019-08-28 11:34:40 +0100 (Wed, 28 Aug 2019) $
  */
 
 #ifndef MSS_PRCI_H
@@ -26,7 +24,7 @@ extern "C" {
 /*==============================================================================
  * PRCI: Power, Reset, Clock, Interrupt
  */
-#define PRCI_BASE   0x10000000UL  /* FU540-C000 on unleashed board- 0x10000000UL  */
+#define PRCI_BASE   0x10000000UL	/* FU540-C000 on unleashed board- 0x10000000UL	*/
 
 
 #ifdef __cplusplus

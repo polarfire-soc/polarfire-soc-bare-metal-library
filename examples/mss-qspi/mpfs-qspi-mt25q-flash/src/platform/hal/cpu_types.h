@@ -1,16 +1,12 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
  * MPFS HAL Embedded Software
  *
  */
-/*******************************************************************************
- * 
- * SVN $Revision: 11865 $
- * SVN $Date: 2019-07-29 19:58:05 +0530 (Mon, 29 Jul 2019) $
- */
+
 #ifndef CPU_TYPES_H
 #define CPU_TYPES_H
 
@@ -25,14 +21,14 @@ extern "C" {
  * Used to specify the address of peripherals present in the processor's memory
  * map.
  */
-typedef unsigned int addr_t;
+typedef unsigned long addr_t;
 
 /*------------------------------------------------------------------------------
  * psr_t: processor state register.
  * Used by HAL_disable_interrupts() and HAL_restore_interrupts() to store the
  * processor's state between disabling and restoring interrupts.
  */
-typedef unsigned int psr_t;
+typedef unsigned long psr_t;
 
 #ifdef __cplusplus
 }

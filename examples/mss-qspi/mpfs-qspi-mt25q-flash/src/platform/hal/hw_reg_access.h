@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
  * The functions declared here are implemented using assembler as part of the 
  * processor/toolchain specific HAL.
  * 
- * SVN $Revision: 11865 $
- * SVN $Date: 2019-07-29 19:58:05 +0530 (Mon, 29 Jul 2019) $
  */
 #ifndef HW_REG_ACCESS
 #define HW_REG_ACCESS
@@ -23,7 +21,6 @@
 extern "C" {
 #endif
 
-#ifdef MACRO_METHOD_REG_ACCESS_REQUIED
 
 #include "cpu_types.h"
 /***************************************************************************//**
@@ -238,12 +235,13 @@ uint8_t HW_get_8bit_reg_field
     uint_fast8_t mask
 );
 
-#endif
+
 
 #ifdef __cplusplus
 }
 #endif
 
-
 #endif /* HW_REG_ACCESS */
+
+
 

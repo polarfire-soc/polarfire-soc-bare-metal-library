@@ -1,13 +1,11 @@
 /***************************************************************************//**
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * PolarFire SoC (MPFS) microprocessor subsystem QSPI bare metal software driver
+ * PolarFire SoC (MPFS) Microprocessor SubSystem QSPI bare metal software driver
  * implementation.
  *
- * SVN $Revision: 12540 $
- * SVN $Date: 2019-11-29 11:49:35 +0530 (Fri, 29 Nov 2019) $
  */
 
 #include "mss_qspi.h"

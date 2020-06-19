@@ -1,17 +1,12 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
+ * Code running on E51 
+ *
  * MSS QSPI driver example
- *
- */
-/******************************************************************************
- *
- * code running on E51
- *
- * SVN $Revision: 9661 $
- * SVN $Date: 2018-01-15 10:43:33 +0000 (Mon, 15 Jan 2018) $
+ * Please refer README.txt in the root folder of this example project
  */
 
 #include "mpfs_hal/mss_hal.h"

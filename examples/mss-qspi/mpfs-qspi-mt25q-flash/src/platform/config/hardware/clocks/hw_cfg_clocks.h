@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
  * Version based on requirements of MPFS MSS
  *
  */
- /*========================================================================*//**
+ /*=========================================================================*//**
   @mainpage Sample file detailing how hw_cfg_clocks.h should be constructed for
     the MPFS MSS
 

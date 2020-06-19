@@ -1,19 +1,16 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: MIT 
  *
  * MPFS HAL Embedded Software
  *
  */
 /*******************************************************************************
  * @file mss_mpu.h
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief PolarFire SoC MSS MPU driver APIS for configuring access regions for
  * the external masters.
- *
- * SVN $Revision: 11867 $
- * SVN $Date: 2019-07-29 19:26:04 +0100 (Mon, 29 Jul 2019) $
  */
 /*=========================================================================*//**
   
@@ -32,9 +29,9 @@ extern "C" {
 /***************************************************************************//**
 
  */
-#define MPU_MODE_READ_ACCESS       (1U << 0U)
-#define MPU_MODE_WRITE_ACCESS      (1U << 1U)
-#define MPU_MODE_EXEC_ACCESS       (1U << 2U)
+#define MPU_MODE_READ_ACCESS       (1u << 0u)
+#define MPU_MODE_WRITE_ACCESS      (1u << 1u)
+#define MPU_MODE_EXEC_ACCESS       (1u << 2u)
 
 typedef enum {
     MSS_MPU_FIC0    = 0x00,
@@ -98,12 +95,12 @@ typedef struct
 
 typedef struct
 {
-    MPUCFG_TypeDef               PMPCFG[16U];
+    MPUCFG_TypeDef               PMPCFG[16];
     __IO MPU_FailStatus_TypeDef  STATUS;
 } MPU_TypeDef;
 
 
-#define MSS_MPU(master)                ( (MPU_TypeDef*) (0x20005000UL + ((master) << 8U)))
+#define MSS_MPU(master)                ( (MPU_TypeDef*) (0x20005000UL + ((master) << 8u)))
 
 
 uint8_t MSS_MPU_configure(mss_mpu_mport_t master_port,
@@ -127,13 +124,11 @@ static inline uint8_t MSS_MPU_lock_region(mss_mpu_mport_t master_port,
 {
     if(pmp_region < num_pmp_lut[master_port])
     {
-        MSS_MPU(master_port)->PMPCFG[pmp_region].mode |= (0x1U << 7U);
-        return (0U);
+        MSS_MPU(master_port)->PMPCFG[pmp_region].mode |= (0x1u << 7u);
+        return (0);
     }
     else
-    {
-        return (1U);
-    }
+        return (1);
 }
 
 /*permission value could be bitwise or of:
@@ -149,12 +144,10 @@ static inline uint8_t MSS_MPU_set_permission(mss_mpu_mport_t master_port,
     if(pmp_region < num_pmp_lut[master_port])
     {
         MSS_MPU(master_port)->PMPCFG[pmp_region].mode |= permission;
-        return (0U);
+        return (0);
     }
     else
-    {
-        return (1U);
-    }
+        return (1);
 }
 
 static inline uint8_t MSS_MPU_get_permission(mss_mpu_mport_t master_port,
@@ -163,13 +156,11 @@ static inline uint8_t MSS_MPU_get_permission(mss_mpu_mport_t master_port,
 {
     if(pmp_region < num_pmp_lut[master_port])
     {
-        *permission = MSS_MPU(master_port)->PMPCFG[pmp_region].mode & 0x7U;
-        return (0U);
+        *permission = MSS_MPU(master_port)->PMPCFG[pmp_region].mode & 0x7;
+        return (0);
     }
     else
-    {
-        return (1U);
-    }
+        return (1);
 }
 
 /*read the Fail status register when there is a MPU access failure.

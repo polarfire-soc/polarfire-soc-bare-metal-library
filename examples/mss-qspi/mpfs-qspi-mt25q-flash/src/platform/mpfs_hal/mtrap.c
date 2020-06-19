@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,13 +10,14 @@
 /***************************************************************************
  *
  * @file mtrap.h
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief trap functions
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
-#include "mss_hal.h"
+#include "mss_ints.h"
+#include "mss_clint.h"
+#include "mss_plic.h"
+#include "mss_util.h"
 #include "config/hardware/hw_platform.h"
 #include "config/software/mpfs_hal/mss_sw_config.h"
 
@@ -24,7 +25,7 @@
 extern "C" {
 #endif
 
-static uint64_t g_systick_increment[5] = {0ULL,0ULL,0ULL,0ULL,0ULL};
+static uint64_t g_systick_increment[5] = {0,0,0,0,0};
 
 void handle_local_interrupt(uint8_t interrupt_no);
 void handle_m_soft_interrupt(void);
@@ -32,11 +33,12 @@ void handle_m_timer_interrupt(void);
 void illegal_insn_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
 void misaligned_store_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
 void misaligned_load_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
+void illegal_insn_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
 void pmp_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
 void trap_from_machine_mode(uintptr_t * regs, uintptr_t dummy, uintptr_t mepc);
 void bad_trap(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc);
 void reset_mtime(void);
-
+uint32_t SysTick_Config(void);
 
 void bad_trap(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc)
 {
@@ -45,7 +47,7 @@ void bad_trap(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc)
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
+       counter += counter + 1;
     }
 }
 
@@ -56,7 +58,7 @@ void misaligned_store_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
+       counter += counter + 1;
     }
 }
 
@@ -67,7 +69,7 @@ void misaligned_load_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
+       counter += counter + 1;
     }
 }
 
@@ -78,7 +80,7 @@ void illegal_insn_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
+       counter += counter + 1;
     }
 }
 
@@ -89,7 +91,7 @@ void pmp_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
+       counter += counter + 1;
     }
 }
 
@@ -109,7 +111,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   dma_ch1_DONE_IRQHandler,
   dma_ch1_ERR_IRQHandler,
   dma_ch2_DONE_IRQHandler,
-  dma_ch2_ERR_IRQHandler,
+  dma_ch2_ERR_IRQHandler,      //10
   dma_ch3_DONE_IRQHandler,
   dma_ch3_ERR_IRQHandler,
   gpio0_bit0_or_gpio2_bit13_plic_0_IRQHandler,
@@ -119,7 +121,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   gpio0_bit4_or_gpio2_bit13_plic_4_IRQHandler,
   gpio0_bit5_or_gpio2_bit13_plic_5_IRQHandler,
   gpio0_bit6_or_gpio2_bit13_plic_6_IRQHandler,
-  gpio0_bit7_or_gpio2_bit13_plic_7_IRQHandler,
+  gpio0_bit7_or_gpio2_bit13_plic_7_IRQHandler,    //20
   gpio0_bit8_or_gpio2_bit13_plic_8_IRQHandler,
   gpio0_bit9_or_gpio2_bit13_plic_9_IRQHandler,
   gpio0_bit10_or_gpio2_bit13_plic_10_IRQHandler,
@@ -131,7 +133,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   gpio1_bit1_or_gpio2_bit15_plic_15_IRQHandler,
   gpio1_bit2_or_gpio2_bit16_plic_16_IRQHandler,
   gpio1_bit3_or_gpio2_bit17_plic_17_IRQHandler,
-  gpio1_bit4_or_gpio2_bit18_plic_18_IRQHandler,
+  gpio1_bit4_or_gpio2_bit18_plic_18_IRQHandler,//30
   gpio1_bit5_or_gpio2_bit19_plic_19_IRQHandler,
   gpio1_bit6_or_gpio2_bit20_plic_20_IRQHandler,
   gpio1_bit7_or_gpio2_bit21_plic_21_IRQHandler,
@@ -142,7 +144,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   gpio1_bit12_or_gpio2_bit26_plic_26_IRQHandler,
   gpio1_bit13_or_gpio2_bit27_plic_27_IRQHandler,
 
-  gpio1_bit14_or_gpio2_bit28_plic_28_IRQHandler,
+  gpio1_bit14_or_gpio2_bit28_plic_28_IRQHandler,//40
   gpio1_bit15_or_gpio2_bit29_plic_29_IRQHandler,
   gpio1_bit16_or_gpio2_bit30_plic_30_IRQHandler,
   gpio1_bit17_or_gpio2_bit31_plic_31_IRQHandler,
@@ -154,7 +156,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   gpio1_bit22_plic_36_IRQHandler,
   gpio1_bit23_plic_37_IRQHandler,
 
-  gpio0_non_direct_plic_IRQHandler,
+  gpio0_non_direct_plic_IRQHandler,//50
   gpio1_non_direct_plic_IRQHandler,
   gpio2_non_direct_plic_IRQHandler,
 
@@ -165,7 +167,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   External_i2c0_main_plic_IRQHandler,
   External_i2c0_alert_plic_IRQHandler,
   i2c0_sus_plic_IRQHandler,
-  i2c1_main_plic_IRQHandler,
+  i2c1_main_plic_IRQHandler,//60
   i2c1_alert_plic_IRQHandler,
   i2c1_sus_plic_IRQHandler,
   mac0_int_plic_IRQHandler,
@@ -175,7 +177,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   mac0_emac_plic_IRQHandler,
   mac0_mmsl_plic_IRQHandler,
   mac1_int_plic_IRQHandler,
-  mac1_queue1_plic_IRQHandler,
+  mac1_queue1_plic_IRQHandler,//70
   mac1_queue2_plic_IRQHandler,
   mac1_queue3_plic_IRQHandler,
   mac1_emac_plic_IRQHandler,
@@ -185,7 +187,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   ecc_error_plic_IRQHandler,
   ecc_correct_plic_IRQHandler,
   rtc_wakeup_plic_IRQHandler,
-  rtc_match_plic_IRQHandler,
+  rtc_match_plic_IRQHandler,//10
   timer1_plic_IRQHandler,
   timer2_plic_IRQHandler,
   envm_plic_IRQHandler,
@@ -195,7 +197,7 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   mmc_main_plic_IRQHandler,
   mmc_wakeup_plic_IRQHandler,
   mmuart0_plic_77_IRQHandler,
-  mmuart1_plic_IRQHandler,
+  mmuart1_plic_IRQHandler,//90
   mmuart2_plic_IRQHandler,
   mmuart3_plic_IRQHandler,
   mmuart4_plic_IRQHandler,
@@ -306,7 +308,57 @@ uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void) =
   bus_error_unit_hart_4_plic_IRQHandler
 };
 
-#define E51_LOCAL_NUM_SOURCES 48U
+#define E51_LOCAL_NUM_SOURCES 48
+
+void maintenance_e51_local_IRQHandler_0(void);
+void usoc_smb_interrupt_e51_local_IRQHandler_1(void);
+void usoc_vc_interrupt_e51_local_IRQHandler_2(void);
+void g5c_message_e51_local_IRQHandler_3(void);
+void g5c_devrst_e51_local_IRQHandler_4(void);
+void wdog4_tout_e51_local_IRQHandler_5(void);
+void wdog3_tout_e51_local_IRQHandler_6(void);
+void wdog2_tout_e51_local_IRQHandler_7(void);
+void wdog1_tout_e51_local_IRQHandler_8(void);
+void wdog0_tout_e51_local_IRQHandler_9(void);
+void wdog0_mvrp_e51_local_IRQHandler_10(void);
+void mmuart0_e51_local_IRQHandler_11(void);
+void envm_e51_local_IRQHandler_12(void);
+void ecc_correct_e51_local_IRQHandler_13(void);
+void ecc_error_e51_local_IRQHandler_14(void);
+void scb_interrupt_e51_local_IRQHandler_15(void);
+void fabric_f2h_32_e51_local_IRQHandler_16(void);
+void fabric_f2h_33_e51_local_IRQHandler_17(void);
+void fabric_f2h_34_e51_local_IRQHandler_18(void);
+void fabric_f2h_35_e51_local_IRQHandler_19(void);
+void fabric_f2h_36_e51_local_IRQHandler_20(void);
+void fabric_f2h_37_e51_local_IRQHandler_21(void);
+void fabric_f2h_38_e51_local_IRQHandler_22(void);
+void fabric_f2h_39_e51_local_IRQHandler_23(void);
+void fabric_f2h_40_e51_local_IRQHandler_24(void);
+void fabric_f2h_41_e51_local_IRQHandler_25(void);
+void fabric_f2h_42_e51_local_IRQHandler_26(void);
+void fabric_f2h_43_e51_local_IRQHandler_27(void);
+void fabric_f2h_44_e51_local_IRQHandler_28(void);
+void fabric_f2h_45_e51_local_IRQHandler_29(void);
+void fabric_f2h_46_e51_local_IRQHandler_30(void);
+void fabric_f2h_47_e51_local_IRQHandler_31(void);
+void fabric_f2h_48_e51_local_IRQHandler_32(void);
+void fabric_f2h_49_e51_local_IRQHandler_33(void);
+void fabric_f2h_50_e51_local_IRQHandler_34(void);
+void fabric_f2h_51_e51_local_IRQHandler_35(void);
+void fabric_f2h_52_e51_local_IRQHandler_36(void);
+void fabric_f2h_53_e51_local_IRQHandler_37(void);
+void fabric_f2h_54_e51_local_IRQHandler_38(void);
+void fabric_f2h_55_e51_local_IRQHandler_39(void);
+void fabric_f2h_56_e51_local_IRQHandler_40(void);
+void fabric_f2h_57_e51_local_IRQHandler_41(void);
+void fabric_f2h_58_e51_local_IRQHandler_42(void);
+void fabric_f2h_59_e51_local_IRQHandler_43(void);
+void fabric_f2h_60_e51_local_IRQHandler_44(void);
+void fabric_f2h_61_e51_local_IRQHandler_45(void);
+void fabric_f2h_62_e51_local_IRQHandler_46(void);
+void fabric_f2h_63_e51_local_IRQHandler_47(void);
+
 
 
 void (*local_irq_handler_e51_table[E51_LOCAL_NUM_SOURCES])(void) =
@@ -364,6 +416,93 @@ void (*local_irq_handler_e51_table[E51_LOCAL_NUM_SOURCES])(void) =
     fabric_f2h_63_e51_local_IRQHandler_47
 };
 
+/* reference multiple interrupts */
+void spare_u54_local_IRQHandler_0(void);
+void spare_u54_local_IRQHandler_1(void);
+void spare_u54_local_IRQHandler_2(void);
+
+/* parse hart ID to discover which mac is the source */
+void mac_mmsl_u54_1_local_IRQHandler_3(void);
+void mac_emac_u54_1_local_IRQHandler_4(void);
+void mac_queue3_u54_1_local_IRQHandler_5(void);
+void mac_queue2_u54_1_local_IRQHandler_6(void);
+void mac_queue1_u54_1_local_IRQHandler_7(void);
+void mac_int_u54_1_local_IRQHandler_8(void);
+
+/* parse hart ID to discover which mac is the source */
+void mac_mmsl_u54_2_local_IRQHandler_3(void);
+void mac_emac_u54_2_local_IRQHandler_4(void);
+void mac_queue3_u54_2_local_IRQHandler_5(void);
+void mac_queue2_u54_2_local_IRQHandler_6(void);
+void mac_queue1_u54_2_local_IRQHandler_7(void);
+void mac_int_u54_2_local_IRQHandler_8(void);
+
+/* parse hart ID to discover which mac is the source */
+void mac_mmsl_u54_3_local_IRQHandler_3(void);
+void mac_emac_u54_3_local_IRQHandler_4(void);
+void mac_queue3_u54_3_local_IRQHandler_5(void);
+void mac_queue2_u54_3_local_IRQHandler_6(void);
+void mac_queue1_u54_3_local_IRQHandler_7(void);
+void mac_int_u54_3_local_IRQHandler_8(void);
+
+/* parse hart ID to discover which mac is the source */
+void mac_mmsl_u54_4_local_IRQHandler_3(void);
+void mac_emac_u54_4_local_IRQHandler_4(void);
+void mac_queue3_u54_4_local_IRQHandler_5(void);
+void mac_queue2_u54_4_local_IRQHandler_6(void);
+void mac_queue1_u54_4_local_IRQHandler_7(void);
+void mac_int_u54_4_local_IRQHandler_8(void);
+
+void wdog_tout_u54_h1_local_IRQHandler_9(void);
+void wdog_tout_u54_h2_local_IRQHandler_9(void);
+void wdog_tout_u54_h3_local_IRQHandler_9(void);
+void wdog_tout_u54_h4_local_IRQHandler_9(void);
+void mvrp_u54_local_IRQHandler_10(void);
+void mmuart_u54_h1_local_IRQHandler_11(void);
+void mmuart_u54_h2_local_IRQHandler_11(void);
+void mmuart_u54_h3_local_IRQHandler_11(void);
+void mmuart_u54_h4_local_IRQHandler_11(void);
+
+void spare_u54_local_IRQHandler_12(void);
+void spare_u54_local_IRQHandler_13(void);
+void spare_u54_local_IRQHandler_14(void);
+void spare_u54_local_IRQHandler_15(void);
+
+void fabric_f2h_0_u54_local_IRQHandler_16(void);
+void fabric_f2h_1_u54_local_IRQHandler_17(void);
+void fabric_f2h_2_u54_local_IRQHandler_18(void);
+void fabric_f2h_3_u54_local_IRQHandler_19(void);
+void fabric_f2h_4_u54_local_IRQHandler_20(void);
+void fabric_f2h_5_u54_local_IRQHandler_21(void);
+void fabric_f2h_6_u54_local_IRQHandler_22(void);
+void fabric_f2h_7_u54_local_IRQHandler_23(void);
+void fabric_f2h_8_u54_local_IRQHandler_24(void);
+void fabric_f2h_9_u54_local_IRQHandler_25(void);
+
+void fabric_f2h_10_u54_local_IRQHandler_26(void);
+void fabric_f2h_11_u54_local_IRQHandler_27(void);
+void fabric_f2h_12_u54_local_IRQHandler_28(void);
+void fabric_f2h_13_u54_local_IRQHandler_29(void);
+void fabric_f2h_14_u54_local_IRQHandler_30(void);
+void fabric_f2h_15_u54_local_IRQHandler_31(void);
+void fabric_f2h_16_u54_local_IRQHandler_32(void);
+void fabric_f2h_17_u54_local_IRQHandler_33(void);
+void fabric_f2h_18_u54_local_IRQHandler_34(void);
+void fabric_f2h_19_u54_local_IRQHandler_35(void);
+
+void fabric_f2h_20_u54_local_IRQHandler_36(void);
+void fabric_f2h_21_u54_local_IRQHandler_37(void);
+void fabric_f2h_22_u54_local_IRQHandler_38(void);
+void fabric_f2h_23_u54_local_IRQHandler_39(void);
+void fabric_f2h_24_u54_local_IRQHandler_40(void);
+void fabric_f2h_25_u54_local_IRQHandler_41(void);
+void fabric_f2h_26_u54_local_IRQHandler_42(void);
+void fabric_f2h_27_u54_local_IRQHandler_43(void);
+void fabric_f2h_28_u54_local_IRQHandler_44(void);
+void fabric_f2h_29_u54_local_IRQHandler_45(void);
+
+void fabric_f2h_30_u54_local_IRQHandler_46(void);
+void fabric_f2h_31_u54_local_IRQHandler_47(void);
 
 typedef void (*local_int_p_t)(void);
 
@@ -701,6 +840,7 @@ void handle_m_ext_interrupt(void)
        return;
     }
 
+
     uint8_t disable = EXT_IRQ_KEEP_ENABLED;
 #ifndef SIFIVE_HIFIVE_UNLEASHED
     disable = ext_irq_handler_table[int_num /* + OFFSET_TO_MSS_GLOBAL_INTS Think this was required in early bitfile */]();
@@ -725,7 +865,7 @@ void handle_local_interrupt(uint8_t interrupt_no)
 {
 #ifndef SIFIVE_HIFIVE_UNLEASHED    /* no local interrupts on unleashed */
     uint32_t mhart_id = read_csr(mhartid);
-    uint8_t local_interrupt_no = interrupt_no - 16U;
+    uint8_t local_interrupt_no = interrupt_no - 16;
     local_int_p_t *local_int_table = local_int_mux[mhart_id];
 
     (*local_int_table[local_interrupt_no])();
@@ -741,9 +881,9 @@ void handle_local_interrupt(uint8_t interrupt_no)
 void reset_mtime(void)
 {
 #if ROLLOVER_TEST
-    CLINT->MTIME = 0xFFFFFFFFFFFFF000ULL;
+    CLINT->MTIME = 0xFFFFFFFFFFFFF000U;
 #else
-    CLINT->MTIME = 0ULL;
+    CLINT->MTIME = 0U;
 #endif
 }
 
@@ -760,7 +900,7 @@ uint32_t SysTick_Config(void)
 
     g_systick_increment[mhart_id] = ((MSS_RTC_TOGGLE_CLK/1000U)  * tick_rate[mhart_id]);
 
-    if (g_systick_increment[mhart_id] > 0ULL)
+    if (g_systick_increment[mhart_id] > 0)
     {
 
         CLINT->MTIMECMP[mhart_id] = CLINT->MTIME + g_systick_increment[mhart_id];
@@ -802,31 +942,24 @@ void handle_m_timer_interrupt(void)
  */
 void handle_m_soft_interrupt(void)
 {
-    volatile uint32_t hart_id = read_csr(mhartid);
-    volatile uint32_t error_loop;
+    uint32_t hart_id = read_csr(mhartid);
 
     switch(hart_id)
     {
-        case 0U:
+        case 0:
             Software_h0_IRQHandler();
             break;
-        case 1U:
+        case 1:
             Software_h1_IRQHandler();
             break;
-        case 2U:
+        case 2:
             Software_h2_IRQHandler();
             break;
-        case 3U:
+        case 3:
             Software_h3_IRQHandler();
             break;
-        case 4U:
+        case 4:
             Software_h4_IRQHandler();
-            break;
-        default:
-            while (hart_id != 0U)
-            {
-                error_loop++;
-            }
             break;
     }
 
@@ -836,54 +969,49 @@ void handle_m_soft_interrupt(void)
 
 void trap_from_machine_mode(uintptr_t * regs, uintptr_t dummy, uintptr_t mepc)
 {
-    uintptr_t mcause = read_csr(mcause);
+  uintptr_t mcause = read_csr(mcause);
 
-    if (((mcause & MCAUSE_INT) == MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_EXT))
-    {
-        handle_m_ext_interrupt();
-    }
-    else if (((mcause & MCAUSE_INT) == MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  > 15U)&& ((mcause & MCAUSE_CAUSE)  < 64U))
-    {
-        handle_local_interrupt(mcause & MCAUSE_CAUSE);
-    }
-    else if (((mcause & MCAUSE_INT) == MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_TIMER))
-    {
-        handle_m_timer_interrupt();
-    }
-    else if (((mcause & MCAUSE_INT) == MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_SOFT))
-    {
-        handle_m_soft_interrupt();
-    }
-    else
-    {
-        uint32_t i;
-        while(1)
-        {
-            /* wait for watchdog */
-            i++;        /* added some code as SC debugger hangs if in loop doing nothing */
-            if(i == 0x1000U)
-            {
-                i = 0U;
-            }
-        }
-        switch(mcause)
-        {
+  if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_EXT))
+  {
+      handle_m_ext_interrupt();
+  }
+  else if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  > 15U)&& ((mcause & MCAUSE_CAUSE)  < 64U))
+  {
+      handle_local_interrupt(mcause & MCAUSE_CAUSE);
+  }
+  else if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_TIMER))
+  {
+      handle_m_timer_interrupt();
+  }
+  else if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_SOFT))
+  {
+      handle_m_soft_interrupt();
+  }
+  else
+  {
+		uint32_t i;
+		while(1)
+		{
+			/* wait for watchdog */
+			i++;        /* added some code as SC debugger hangs if in loop doing nothing */
+			if(i == 0x1000U)
+				i = 0U;
+		}
+		switch(mcause)
+		{
 
-            case CAUSE_LOAD_PAGE_FAULT:
-                break;
-            case CAUSE_STORE_PAGE_FAULT:
-                break;
-            case CAUSE_FETCH_ACCESS:
-                break;
-            case CAUSE_LOAD_ACCESS:
-                break;
-            case CAUSE_STORE_ACCESS:
-                break;
-            default:
-                bad_trap(regs, dummy, mepc);
-                break;
-        }
-    }
+			case CAUSE_LOAD_PAGE_FAULT:
+			case CAUSE_STORE_PAGE_FAULT:
+			case CAUSE_FETCH_ACCESS:
+			case CAUSE_LOAD_ACCESS:
+			case CAUSE_STORE_ACCESS:
+
+				break;
+			default:
+				bad_trap(regs, dummy, mepc);
+		}
+  }
+
 }
 
 #ifdef __cplusplus
