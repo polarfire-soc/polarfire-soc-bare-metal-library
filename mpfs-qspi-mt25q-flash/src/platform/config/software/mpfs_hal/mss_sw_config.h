@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,11 +66,11 @@
 /* define the required tick rate in Milliseconds */
 /* if this program is running on one hart only, only that particulars hart value
  * will be used */
-#define HART0_TICK_RATE_MS  5UL
-#define HART1_TICK_RATE_MS  5UL
-#define HART2_TICK_RATE_MS  5UL
-#define HART3_TICK_RATE_MS  5UL
-#define HART4_TICK_RATE_MS  5UL
+#define HART0_TICK_RATE_MS	5UL
+#define HART1_TICK_RATE_MS	5UL
+#define HART2_TICK_RATE_MS	5UL
+#define HART3_TICK_RATE_MS	5UL
+#define HART4_TICK_RATE_MS	5UL
 
 #define H2F_BASE_ADDRESS 0x20126000     /* or 0x28126000 */
 

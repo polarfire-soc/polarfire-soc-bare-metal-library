@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@
     #define DDR4_USER_INPUT_DDRPHY_MODE     ((1U<<26U)|(1U<<8U)|(1U<<5U)|(1U<<3U)|(2U<<0U))
     #define LPDDR4_USER_INPUT_DDRPHY_MODE   ((1U<<26U)|(1U<<8U)|(1U<<5U)|(0U<<3U)|(4U<<0U))
 
-    #define  DDR_MODE    DDR3_USER_INPUT_DDRPHY_MODE
+	#define	DDR_MODE		DDR3_USER_INPUT_DDRPHY_MODE
 
     /*
      * DPC_BITS setting
@@ -278,10 +278,10 @@
     #define DDRC_USER_CONFIG_MC_BASE2_CFG_WL_CFG_WL                                             0x00000009U     /*cfg wl Write latency, speciï¬ed in clocks_ */
 
 
-    #define DDRC_USER_CONFIG_MC_BASE2_CFG_AL_MODE_CFG_AL_MODE                                   0x00000000U     /*cfg al mode Additive latency mode */
+    #define DDRC_USER_CONFIG_MC_BASE2_CFG_AL_MODE_CFG_AL_MODE                                   0x00000000U  	/*cfg al mode Additive latency mode */
     #define DDRC_USER_CONFIG_MC_BASE2_CFG_BL_CFG_BL                                             0x00000000U
-    #define DDRC_USER_CONFIG_MC_BASE2_CFG_BL_MODE_CFG_BL_MODE                                   0x00000000U     /* chng /*cfg bl mode SDRAM burst length mode,cfg bl mode     0x0 - Fi */
-    #define DDRC_USER_CONFIG_REORDER_CFG_INTRAPORT_REORDER_EN_CFG_INTRAPORT_REORDER_EN          0x00000000U     /*cfg intraport reorder en Enable intra-port reordering,0 - Disabled */
+    #define DDRC_USER_CONFIG_MC_BASE2_CFG_BL_MODE_CFG_BL_MODE                                   0x00000000U 	/* chng /*cfg bl mode SDRAM burst length mode,cfg bl mode     0x0 - Fi */
+    #define DDRC_USER_CONFIG_REORDER_CFG_INTRAPORT_REORDER_EN_CFG_INTRAPORT_REORDER_EN          0x00000000U		/*cfg intraport reorder en Enable intra-port reordering,0 - Disabled */
 
 #endif /* HW_CFG_DDR_H_ */
 

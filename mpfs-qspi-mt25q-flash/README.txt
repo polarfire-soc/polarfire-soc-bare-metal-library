@@ -55,5 +55,5 @@ you use.
 
 ## Executing project on PolarFire SoC hardware
 Choose the Debug or Release configuration of the project, Build the project and 
-launch the launch the debug launcher for that configuration to download and
-execute the project on PolarFire SoC hardware platform.
+launch the mpfs-qspi-mt25q-flash hw-emulation all-harts debug.launch to 
+download and execute the project on PolarFire SoC hardware platform.

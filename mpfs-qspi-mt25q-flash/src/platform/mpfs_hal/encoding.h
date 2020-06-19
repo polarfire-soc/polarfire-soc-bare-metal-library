@@ -25,13 +25,6 @@
     MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
-/***********************************************************************************
- * Record of Microsemi changes
- * SVN $Revision: 11470 $
- * SVN $Date: 2019-06-18 17:20:19 +0100 (Tue, 18 Jun 2019) $
- */
-
-
 #ifndef RISCV_CSR_ENCODING_H
 #define RISCV_CSR_ENCODING_H
 

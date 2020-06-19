@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,9 @@
 
 /***************************************************************************
  * @file mss_util.h
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief MACROs defines and prototypes associated with utility functions
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
 #ifndef G5SOC_UTIL_H
 #define G5SOC_UTIL_H
@@ -31,13 +29,13 @@ extern "C" {
 /*
  * Useful macros 
  */
-#define WRITE_REG8(x, y) (*((volatile uint8_t *)(x)) = (y))
+#define WRITE_REG8(x, y) (*((volatile uint8_t *)(x)) = y)
 #define READ_REG8(x)     (*((volatile uint8_t *)(x)))
 
-#define WRITE_REG32(x, y) (*((volatile uint32_t *)(x)) = (y))
+#define WRITE_REG32(x, y) (*((volatile uint32_t *)(x)) = y)
 #define READ_REG32(x)     (*((volatile uint32_t *)(x)))
 
-#define WRITE_REG64(x, y) (*((volatile uint64_t *)(x)) = (y))
+#define WRITE_REG64(x, y) (*((volatile uint64_t *)(x)) = y)
 #define READ_REG64(x)     (*((volatile uint64_t *)(x)))
 
 uint64_t readmcycle(void);
@@ -70,4 +68,4 @@ void mss_release_mutex(uint64_t address);
 }
 #endif
 
-#endif  /* G5SOC_UTIL_H */
+#endif	/* G5SOC_UTIL_H */

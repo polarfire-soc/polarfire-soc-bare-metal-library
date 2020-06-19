@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,9 @@
 
 /***********************************************************************************
  * @file system_startup.h
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief Macros and APIs for the system_startup.c
-
- * SVN $Revision: 12118 $
- * SVN $Date: 2019-08-15 10:28:14 +0100 (Thu, 15 Aug 2019) $
+ *
  */
 
 #ifndef SYSTEM_STARTUP_H
@@ -22,6 +20,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void e51(void);
+void u54_1(void);
+void u54_2(void);
+void u54_3(void);
+void u54_4(void);
 
 typedef enum WFI_SM_
 {
@@ -56,20 +60,6 @@ extern unsigned int __bss_end;
 extern unsigned int __sdata_load;
 extern unsigned int __sdata_start;
 extern unsigned int __sdata_end;
-
-/*
- * Function Declarations
- */
-int main_first_hart(void);
-int main_other_hart(void);
-void e51(void);
-void u54_1(void);
-void u54_2(void);
-void u54_3(void);
-void u54_4(void);
-void init_memory( void);
-uint8_t init_mem_protection_unit(void);
-uint8_t init_bus_error_unit( void);
 
 #ifdef __cplusplus
 }

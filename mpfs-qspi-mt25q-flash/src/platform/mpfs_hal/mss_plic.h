@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: MIT 
  *
  * MPFS HAL Embedded Software
  *
@@ -10,13 +10,9 @@
 /*******************************************************************************
  *
  * @file mss_plic.h
- * @author Microsemi-PRO Embedded Systems Solutions
- * @brief MPFS PLIC and PRCI access data structures and functions.
+ * @author Microchip FPGA Embedded Systems Solutions
+ * @brief Definitions and functions associated with PLIC interrupts.
  *
- * Definitions and functions associated with PLIC interrupts.
- *
- * SVN $Revision: 12102 $
- * SVN $Date: 2019-08-12 16:27:38 +0100 (Mon, 12 Aug 2019) $
  */
 #ifndef MSS_PLIC_H
 #define MSS_PLIC_H
@@ -310,7 +306,7 @@ uint8_t MAC0_plic_53_IRQHandler(void);
 /* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
  * PLIC source Interrupt numbers:
  */
-#define OFFSET_TO_MSS_GLOBAL_INTS 13U  /* See G5SOC Corecomplex- v0p6.pdf, section 7.2 PLIC Interrupt Sources */
+#define OFFSET_TO_MSS_GLOBAL_INTS 13  /* See G5SOC Corecomplex- v0p6.pdf, section 7.2 PLIC Interrupt Sources */
 typedef enum
 {
 #ifndef SIFIVE_HIFIVE_UNLEASHED
@@ -853,10 +849,7 @@ static inline void PLIC_DisableIRQ(PLIC_IRQn_Type IRQn)
  */
 static inline void PLIC_SetPriority(PLIC_IRQn_Type IRQn, uint32_t priority)
 {
-    if((IRQn > INVALID_IRQn) && (IRQn < PLIC_NUM_SOURCES))
-    {
-        PLIC->SOURCE_PRIORITY[IRQn-1] = priority;
-    }
+    PLIC->SOURCE_PRIORITY[IRQn-1] = priority;
 }
 
 /* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -865,20 +858,13 @@ static inline void PLIC_SetPriority(PLIC_IRQn_Type IRQn, uint32_t priority)
  */
 static inline uint32_t PLIC_GetPriority(PLIC_IRQn_Type IRQn)
 {
-    uint32_t ret_val = 0U;
-
-    if((IRQn > INVALID_IRQn) && (IRQn < PLIC_NUM_SOURCES))
-    {
-        ret_val = PLIC->SOURCE_PRIORITY[IRQn-1];
-    }
-
-    return(ret_val);
+    return (PLIC->SOURCE_PRIORITY[IRQn-1]);
 }
 
 
 static inline uint32_t PLIC_pending(PLIC_IRQn_Type IRQn)
 {
-    return (PLIC->PENDING_ARRAY[IRQn/32U] & (0x01U<<(IRQn%32U)));
+    return (PLIC->PENDING_ARRAY[IRQn/32U] & (0x01<<(IRQn%32U)));
 }
 
 /* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

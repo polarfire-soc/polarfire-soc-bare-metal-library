@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,16 +9,13 @@
 
 /*******************************************************************************
  * @file newlib_stubs.c
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief Stubs for Newlib system calls.
  *  
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
 #include <sys/times.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include "mss_hal.h"
 
 /*==============================================================================
  * Redirection of standard output to a SmartFusion2 MSS UART.
@@ -227,7 +224,7 @@ caddr_t _sbrk(int incr)
     char * stack_ptr = NULL;
 #endif
     
-    if (heap_end == NULL)
+    if (heap_end == 0)
     {
       heap_end = &_end;
     }

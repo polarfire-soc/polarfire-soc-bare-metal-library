@@ -1,37 +1,17 @@
 /******************************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * PolarFire SoC MPFS HAL Start-up Code implementation
  */
 /***************************************************************************
  * @file system_startup.c
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief first C code called on startup. Will call user code created outside
  * the HAL.
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
-#include <stddef.h>
-#include <stdbool.h>
 #include "mss_hal.h"
 
 #ifdef __cplusplus
@@ -41,6 +21,14 @@ extern "C" {
 /*LDRA_INSPECTED 440 S MR:R.11.1,R.11.2,R.11.4,R.11.6,R.11.7  Have to allocate number (address) as point reference*/
 mss_sysreg_t*   SYSREG = ((mss_sysreg_t*) BASE32_ADDR_MSS_SYSREG);
 
+/*
+ * Function Declarations
+ */
+void init_memory( void);
+uint8_t init_mem_protection_unit(void);
+uint8_t init_bus_error_unit( void);
+int main_other_hart(void);
+int main_first_hart(void);
 
 /*==============================================================================
  * E51 startup.
@@ -51,14 +39,14 @@ mss_sysreg_t*   SYSREG = ((mss_sysreg_t*) BASE32_ADDR_MSS_SYSREG);
 __attribute__((weak)) int main_first_hart(void)
 {
     uint64_t hartid = read_csr(mhartid);
-    HLS_DATA* hls = NULL;
+    HLS_DATA* hls;
 
     if(hartid == MPFS_HAL_FIRST_HART)
     {
-        uint8_t hard_idx;
+        int hard_idx;
         init_memory();
-        (void)init_bus_error_unit();
-        (void)init_mem_protection_unit();
+        init_bus_error_unit();
+        init_mem_protection_unit();
 
         /*
          * Start the other harts. They are put in wfi in entry.S
@@ -73,7 +61,6 @@ __attribute__((weak)) int main_first_hart(void)
 
             switch(sm_check_thread)
             {
-                default:
                 case INIT_THREAD_PR:
                     hls = (HLS_DATA*)((uint8_t *)&__stack_bottom_h1$
                             + (((uint8_t *)&__stack_top_h1$ -
@@ -120,16 +107,16 @@ __attribute__((weak)) int main_first_hart(void)
             }
         }
 
-        (void)main_other_hart();
+        main_other_hart();
     }
 
     /* should never get here */
-    while(true)
+    while(1)
     {
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter = counter + 1U;
+       counter = counter + 1;
     }
 
     return (0);
@@ -179,12 +166,12 @@ __attribute__((weak)) int main_other_hart(void)
     }
 
     /* should never get here */
-    while(true)
+    while(1)
     {
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter = counter + 1U;
+       counter = counter + 1;
     }
 
   return (0);
@@ -200,6 +187,8 @@ __attribute__((weak)) int main_other_hart(void)
  */
  __attribute__((weak)) void e51(void)
  {
+    uint64_t hartid = read_csr(mhartid);
+
     /*Clear pending software interrupt in case there was any.
      Enable only the software interrupt so that other core can bring this core
      out of WFI by raising a software interrupt.
@@ -211,7 +200,7 @@ __attribute__((weak)) int main_other_hart(void)
     do
     {
         __asm("wfi");
-    }while(0UL == (read_csr(mip) & MIP_MSIP));
+    }while(0 == (read_csr(mip) & MIP_MSIP));
 
     /*The hart is out of WFI, clear the SW interrupt. Here onwards Application
      can enable and use any interrupts as required*/
@@ -219,12 +208,12 @@ __attribute__((weak)) int main_other_hart(void)
 
     __enable_irq();
 
-    while(true)
+    while(1)
     {
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter = counter + 1U;
+       counter = counter + 1;
     }
 }
 
@@ -237,6 +226,8 @@ __attribute__((weak)) int main_other_hart(void)
   */
  __attribute__((weak)) void u54_1(void)
  {
+     uint64_t hartid = read_csr(mhartid);
+
      /*Clear pending software interrupt in case there was any.
       Enable only the software interrupt so that other core can bring this core
       out of WFI by raising a software interrupt.
@@ -248,7 +239,7 @@ __attribute__((weak)) int main_other_hart(void)
      do
      {
          __asm("wfi");
-     }while(0UL == (read_csr(mip) & MIP_MSIP));
+     }while(0 == (read_csr(mip) & MIP_MSIP));
 
      /*The hart is out of WFI, clear the SW interrupt. Here onwards Application
       can enable and use any interrupts as required*/
@@ -256,12 +247,12 @@ __attribute__((weak)) int main_other_hart(void)
 
      __enable_irq();
 
-     while(true)
+     while(1)
      {
         volatile static uint64_t counter = 0U;
 
         /* Added some code as debugger hangs if in loop doing nothing */
-        counter = counter + 1U;
+        counter = counter + 1;
      }
  }
 
@@ -275,6 +266,8 @@ __attribute__((weak)) int main_other_hart(void)
  */
 __attribute__((weak)) void u54_2(void)
 {
+    uint64_t hartid = read_csr(mhartid);
+
     /*Clear pending software interrupt in case there was any.
      Enable only the software interrupt so that other core can bring this core
      out of WFI by raising a software interrupt.
@@ -286,7 +279,7 @@ __attribute__((weak)) void u54_2(void)
     do
     {
         __asm("wfi");
-    }while(0UL == (read_csr(mip) & MIP_MSIP));
+    }while(0 == (read_csr(mip) & MIP_MSIP));
 
     /*The hart is out of WFI, clear the SW interrupt. Here onwards Application
      can enable and use any interrupts as required*/
@@ -294,12 +287,12 @@ __attribute__((weak)) void u54_2(void)
 
     __enable_irq();
 
-    while(true)
+    while(1)
     {
        volatile static uint64_t counter = 0U;
 
        /* Added some code as debugger hangs if in loop doing nothing */
-       counter = counter + 1U;
+       counter = counter + 1;
     }
 }
 
@@ -312,6 +305,8 @@ __attribute__((weak)) void u54_2(void)
  */
  __attribute__((weak)) void u54_3(void)
  {
+     uint64_t hartid = read_csr(mhartid);
+
      /*Clear pending software interrupt in case there was any.
       Enable only the software interrupt so that other core can bring this core
       out of WFI by raising a software interrupt.
@@ -323,7 +318,7 @@ __attribute__((weak)) void u54_2(void)
      do
      {
          __asm("wfi");
-     }while(0UL == (read_csr(mip) & MIP_MSIP));
+     }while(0 == (read_csr(mip) & MIP_MSIP));
 
      /*The hart is out of WFI, clear the SW interrupt. Here onwards Application
       can enable and use any interrupts as required*/
@@ -331,12 +326,12 @@ __attribute__((weak)) void u54_2(void)
 
      __enable_irq();
 
-     while(true)
+     while(1)
      {
         volatile static uint64_t counter = 0U;
 
         /* Added some code as debugger hangs if in loop doing nothing */
-        counter = counter + 1U;
+        counter = counter + 1;
      }
 }
 
@@ -349,6 +344,8 @@ __attribute__((weak)) void u54_2(void)
  */
  __attribute__((weak)) void u54_4(void)
  {
+     uint64_t hartid = read_csr(mhartid);
+
      /*Clear pending software interrupt in case there was any.
       Enable only the software interrupt so that other core can bring this core
       out of WFI by raising a software interrupt.
@@ -360,7 +357,7 @@ __attribute__((weak)) void u54_2(void)
      do
      {
          __asm("wfi");
-     }while(0UL == (read_csr(mip) & MIP_MSIP));
+     }while(0 == (read_csr(mip) & MIP_MSIP));
 
      /*The hart is out of WFI, clear the SW interrupt. Here onwards Application
       can enable and use any interrupts as required*/
@@ -368,12 +365,12 @@ __attribute__((weak)) void u54_2(void)
 
      __enable_irq();
 
-     while(true)
+     while(1)
      {
         volatile static uint64_t counter = 0U;
 
         /* Added some code as debugger hangs if in loop doing nothing */
-        counter = counter + 1U;
+        counter = counter + 1;
      }
 }
 
@@ -408,7 +405,7 @@ static void copy_section(uint32_t * p_load, uint32_t * p_vma,
 
     while(p_zero < end)
     {
-         *p_zero = 0UL;
+         *p_zero = 0U;
          ++p_zero;
     }
 }
@@ -437,13 +434,13 @@ static void copy_section(uint32_t * p_load, uint32_t * p_vma,
 __attribute__((weak)) uint8_t init_bus_error_unit(void)
 {
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-    uint8_t hard_idx;
+    int hard_idx;
     /* Init BEU in all harts - enable local interrupt */
     for(hard_idx = MPFS_HAL_FIRST_HART; hard_idx <= MPFS_HAL_LAST_HART; hard_idx++)
     {
-        BEU->regs[hard_idx].ENABLE      = (uint64_t)BEU_ENABLE;
-        BEU->regs[hard_idx].PLIC_INT    = (uint64_t)BEU_PLIC_INT;
-        BEU->regs[hard_idx].LOCAL_INT   = (uint64_t)BEU_LOCAL_INT;
+        BEU->regs[hard_idx].ENABLE      = BEU_ENABLE;
+        BEU->regs[hard_idx].PLIC_INT    = BEU_PLIC_INT;
+        BEU->regs[hard_idx].LOCAL_INT   = BEU_LOCAL_INT;
     }
 #endif
     return (0U);

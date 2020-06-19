@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,12 +12,10 @@
  * @author Microsemi-PRO Embedded Systems Solutions
  * @brief Utility functions
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 14:30:02 +0100 (Mon, 30 Sep 2019) $
  */
-#include <stddef.h>
-#include <stdbool.h>
-#include "mss_hal.h"
+
+#include "mss_util.h"
+#include "mss_coreplex.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,10 +50,7 @@ void __enable_irq(void)
  */
 void __enable_local_irq(int8_t local_interrupt)
 {
-    if((local_interrupt > 0) && (local_interrupt <= LOCAL_INT_MAX))
-    {
-        set_csr(mie, (1LLU << (local_interrupt + 16U)));  /* mie Register- Machine Interrupt Enable Register */
-    }
+    set_csr(mie, (1LLU << (local_interrupt + 16)));  /* mie Register- Machine Interrupt Enable Register */
 }
 
 /*------------------------------------------------------------------------------
@@ -63,10 +58,7 @@ void __enable_local_irq(int8_t local_interrupt)
  */
 void __disable_local_irq(int8_t local_interrupt)
 {
-    if((local_interrupt > 0U) && (local_interrupt <= LOCAL_INT_MAX))
-    {
-        clear_csr(mie, (0x01U << (local_interrupt + 16U)));  /* mie Register- Machine Interrupt Enable Register */
-    }
+    clear_csr(mie, (0x01 << (local_interrupt + 16)));  /* mie Register- Machine Interrupt Enable Register */
 }
 
 /*
@@ -75,8 +67,8 @@ void __disable_local_irq(int8_t local_interrupt)
 uint64_t readmtime(void)
 {
     volatile uint64_t hartid = read_csr(mhartid);
-    volatile uint64_t * mtime_hart = NULL;
-    uint64_t mtime = 0ULL;
+    volatile uint64_t * mtime_hart = 0U;
+    uint64_t mtime = 0U;
 
     switch(hartid) {
     case 0:
@@ -100,7 +92,7 @@ uint64_t readmtime(void)
         break;
 
     default:
-        return (0ULL);
+        return (0U);
         break;
     }
 
@@ -136,10 +128,10 @@ void sleep_cycles(uint64_t ncycles)
 
 void exit_simulation(void) {
     uint64_t hartid = read_csr(mhartid);
-    volatile uint32_t * exit_simulation_p = (uint32_t *)0x60000000U;
+    volatile uint32_t * exit_simulation = (uint32_t *)0x60000000U;
 
 
-    *exit_simulation_p = 1U;
+    *exit_simulation = 1;
 }
 
 __attribute__((aligned(16))) uint64_t get_program_counter(void)
