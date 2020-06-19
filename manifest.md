@@ -35,7 +35,7 @@
 | mss-mpfs-hal-examples | 1.6.102 | 2020-05-02 |
 | mss-qspi-examples | 1.6.100 | 2020-06-19 | 
 | mss-rtc-examples | 1.6.100 | 2020-06-19 | 
-| mss-spi-examples | 1.5.101 | 2019-11-22 |
+| mss-spi-examples | 1.6.100 | 2020-06-19 | 
 | mss-sys-services-examples | 1.5.101 | 2019-12-02 |
 | mss-timer-examples | 1.5.102 | 2019-11-29 |
 | mss-usb-examples | 1.6.101 | 2020-06-16 | 
