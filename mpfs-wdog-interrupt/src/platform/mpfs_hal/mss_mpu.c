@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,10 @@
  */
 /*******************************************************************************
  * @file mss_mpu.c
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief PolarFire SoC MSS MPU driver for configuring access regions for the
  * external masters.
  *
- * SVN $Revision: 12296 $
- * SVN $Date: 2019-09-30 19:00:02 +0530 (Mon, 30 Sep 2019) $
  */
 /*=========================================================================*//**
   
@@ -28,7 +26,7 @@ extern "C" {
 
 static uint64_t pmp_get_napot_base_and_range(uint64_t reg, uint64_t *range);
 
-uint8_t num_pmp_lut[10U] = {16U,16U,8U,4U,8U,8U,4U,4U,8U,2U};
+uint8_t num_pmp_lut[10] = {16,16,8,4,8,8,4,4,8,2};
 
 /***************************************************************************//**
 */
@@ -48,15 +46,15 @@ uint8_t MSS_MPU_configure(mss_mpu_mport_t master_port,
     /*size must be minimum 4k
       Size must be power of 2
       different masters have different number of regions*/
-    if((size >= 4096ULL) && (0U == (size & (size - 1U))) && (pmp_region < num_pmp_lut[master_port]))
+    if((size >= 4096ULL) && (0u == (size & (size - 1))) && (pmp_region < num_pmp_lut[master_port]))
     {
-        while((0 == (temp & 0x01U)))
+        while((0 == (temp & 0x01)))
         {
             cnt++;
-            temp >>= 1U;
+            temp >>= 1;
         }
 
-        range = (1ULL << (cnt-1U))-1U;
+        range = (1ull << (cnt-1u))-1u;
 
         MSS_MPU(master_port)->PMPCFG[pmp_region].pmp = (base | range) >> 2U;
 
@@ -70,9 +68,7 @@ uint8_t MSS_MPU_configure(mss_mpu_mport_t master_port,
         return ((uint8_t)0);
     }
     else
-    {
         return ((uint8_t)1);
-    }
 }
 
 uint8_t MSS_MPU_get_config(mss_mpu_mport_t master_port,
@@ -92,16 +88,14 @@ uint8_t MSS_MPU_get_config(mss_mpu_mport_t master_port,
         *base = pmp_get_napot_base_and_range(reg, size);
 
         reg = MSS_MPU(master_port)->PMPCFG[pmp_region].mode;
-        *lock_en = ( reg >> 0x7U) & 0x1U;
+        *lock_en = ( reg >> 0x7u) & 0x1u;
         *matching_mode = (mss_mpu_addrm_t)( (reg >> 3ULL) & 0x3U);
-        *permission = reg & 0x7U;
+        *permission = reg & 0x7u;
 
         return ((uint8_t)0);
     }
     else
-    {
         return ((uint8_t)1);
-    }
 }
 
 static uint64_t pmp_get_napot_base_and_range(uint64_t reg, uint64_t *range)
@@ -112,10 +106,8 @@ static uint64_t pmp_get_napot_base_and_range(uint64_t reg, uint64_t *range)
     uint64_t numbits = (sizeof(uint64_t) * 8U) + 2U;
     mask = (mask - 1U) >> 1U;
 
-    while (mask)
-    {
-        if ((reg & mask) == mask)
-        {
+    while (mask) {
+        if ((reg & mask) == mask) {
             /* this is the mask to use */
             base = reg & ~mask;
             break;

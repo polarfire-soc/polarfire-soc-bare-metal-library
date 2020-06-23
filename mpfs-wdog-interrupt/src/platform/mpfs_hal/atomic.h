@@ -27,8 +27,6 @@
 
 /***********************************************************************************
  * Record of Microsemi changes
- * SVN $Revision: 11865 $
- * SVN $Date: 2019-07-29 19:58:05 +0530 (Mon, 29 Jul 2019) $
  */
 
 #ifndef RISCV_ATOMIC_H

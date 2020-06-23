@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: MIT 
  *
  * MPFS HAL Embedded Software
  *
@@ -10,7 +10,7 @@
 /***************************************************************************
  *
  * @file mss_seg.h
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief segmentation block defines
  *
  * These blocks allow the DDR memory to be allocated to cached, non-cached
@@ -25,8 +25,6 @@
  * ranges as the MPU blocks. Each one has seven 32-segmentation registers, but
  * only two in SEG0 and five in SEG1 are actually implemented.
  *
- * SVN $Revision: 11867 $
- * SVN $Date: 2019-07-29 23:56:04 +0530 (Mon, 29 Jul 2019) $
  */
 
 #ifndef MPFS_SEG_H
