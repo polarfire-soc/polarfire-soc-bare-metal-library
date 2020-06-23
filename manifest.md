@@ -11,7 +11,7 @@
 | mss_i2c driver | 1.6.102 | 2020-06-10 | 
 | mss_mmc driver | 1.6.100 | 2020-05-08 |
 | mss_mmuart driver | 1.6.102 | 2020-05-20 |
-| mss_mpfs_hal | driver | 1.6.101 | 
+| mss_mpfs_hal driver | 1.6.100 | 2020-05-20 | 
 | mss_pdma driver | 1.6.100 | 2020-05-18 |
 | mss_platform_config driver | 1.6.100 | 2020-04-24 |
 | mss_qspi driver | 1.6.100 | 2020-05-18 |
