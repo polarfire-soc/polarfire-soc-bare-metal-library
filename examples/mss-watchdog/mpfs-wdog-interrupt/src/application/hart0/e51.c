@@ -1,17 +1,13 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * MPFS HAL Embedded Software example
+ * Code running on E51 
  *
- */
-/*******************************************************************************
+ * Example project demonstrating the use of Watchdog interrupts.
+ * Please refer README.txt in the root folder of this example project
  *
- * Code running on E51 hart
- *
- * SVN $Revision: 10516 $
- * SVN $Date: 2018-11-08 18:09:23 +0000 (Thu, 08 Nov 2018) $
  */
 
 #include <stdio.h>

@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: MIT 
  *
  * MPFS HAL Embedded Software
  *
@@ -9,12 +9,8 @@
 
 /***************************************************************************
  * @file mss_mutex.S
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA Embedded Systems Solutions
  * @brief Mutex functions to help multiprocessor programming
-
- *
- * SVN $Revision: 11867 $
- * SVN $Date: 2019-07-29 23:56:04 +0530 (Mon, 29 Jul 2019) $
  */
   .text
   .align 3

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,12 +22,10 @@
  * IN THE SOFTWARE.
  *
  * 
- * PolarFire SoC (MPFS) microprocessor subsystem watchdog bare metal software
+ * PolarFire SoC (MPFS) Microprocessor Subsystem Watchdog bare metal software
  * driver public API.
  *
  *
- * SVN $Revision: 12731 $
- * SVN $Date: 2020-01-16 13:56:02 +0530 (Thu, 16 Jan 2020) $
  */
 /*=========================================================================*//**
   @mainpage PolarFire SoC MSS Watchdog Bare Metal Driver
@@ -35,7 +33,7 @@
   ==============================================================================
   Introduction
   ==============================================================================
-  The PolarFire SoC microprocessor subsystem (MSS) includes five instances of
+  The PolarFire SoC Microprocessor SubSystem (MSS) includes five instances of
   watchdog timer hardware blocks used to detect system lockups. This software
   driver provides a set of functions for controlling the MSS watchdog as part of
   a bare metal system where no operating system is available. The driver can be

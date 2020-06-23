@@ -52,5 +52,5 @@ must be connected to host PC. The host PC must connect to the serial port using
 a terminal emulator such as Tera Term or PuTTY.
 
 Build the project and launch the debug configuration named 
-mpfs-wdog-interrupt hw-emulation all-harts Debug.launch which is configured for 
+mpfs-wdog-interrupt hw-emulation all-harts debug.launch which is configured for 
 PolarFire SoC hardware platform.

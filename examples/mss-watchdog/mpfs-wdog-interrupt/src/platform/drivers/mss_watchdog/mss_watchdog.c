@@ -1,15 +1,14 @@
 /***************************************************************************//**
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * PolarFire SoC (MPFS) microprocessor subsystem watchdog bare metal software
+ * PolarFire SoC (MPFS) Microprocessor SubSystem Watchdog bare metal software
  * driver implementation.
  *
  *
- * SVN $Revision: 12726 $
- * SVN $Date: 2020-01-14 14:01:51 +0530 (Tue, 14 Jan 2020) $
  */
+ 
 #include "drivers/mss_watchdog/mss_watchdog.h"
 #include "mpfs_hal/mss_sysreg.h"
 #include "mpfs_hal/mss_hart_ints.h"

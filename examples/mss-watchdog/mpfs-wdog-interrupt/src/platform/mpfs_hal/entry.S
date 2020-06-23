@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,9 @@
 
 /***********************************************************************************
  * @file entry.S
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip FPGA  Embedded Systems Solutions
  * @brief entry functions.
-
- * SVN $Revision: 11865 $
- * SVN $Date: 2019-07-29 19:58:05 +0530 (Mon, 29 Jul 2019) $
+ *
  */
 #include "bits.h"
 #include "encoding.h"
