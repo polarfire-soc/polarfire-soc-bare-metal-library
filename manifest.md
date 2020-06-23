@@ -39,5 +39,5 @@
 | mss-sys-services examples | 1.6.100 | 2020-06-23 | 
 | mss-timer examples | 1.6.101 | 2020-06-23 | 
 | mss-usb examples | 1.6.101 | 2020-06-16 | 
-| mss-watchdog examples | 1.5.102 | 2020-04-30 |
+| mss-watchdog examples | 1.6.102 | 2020-06-23 | 
 | pf-pcie examples | 3.0.101 | 2019-11-22 |
