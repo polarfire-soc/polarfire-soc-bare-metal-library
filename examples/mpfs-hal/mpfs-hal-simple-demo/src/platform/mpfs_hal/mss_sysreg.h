@@ -3626,10 +3626,10 @@ typedef struct _mss_sysreg
      __IO uint32_t BOOT_FAIL_CR;
 
     /* Allows the CPU to fully reset the MSS.
-       When written to 16'hDEAD will cause a full MSS reset. The Reset wil clear
-       this register. The register may be writtent to any value but only a value
-       off 16'hDEAD will cause the reset to happen */
-     __I uint32_t MSS_RESET_CR;
+       When written to 16'hDEAD will cause a full MSS reset. The Reset will
+       clear this register. The register may be written to any value but
+       only a value off 16'hDEAD will cause the reset to happen */
+     __IO uint32_t MSS_RESET_CR;
 
     /*Configuration lock*/
      __IO uint32_t CONFIG_LOCK_CR;

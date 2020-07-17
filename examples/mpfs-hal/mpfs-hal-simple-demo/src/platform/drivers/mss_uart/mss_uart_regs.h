@@ -5,7 +5,6 @@
  * 
  * Register bit offsets and masks definitions for PolarFire SoC MSS MMUART
  * 
- *
  */
 
 #ifndef MSS_UART_REGS_H_

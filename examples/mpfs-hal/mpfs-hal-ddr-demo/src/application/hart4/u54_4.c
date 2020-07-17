@@ -23,6 +23,7 @@
 
 volatile uint32_t count_sw_ints_h4 = 0U;
 extern uint64_t uart_lock;
+extern mss_uart_instance_t *g_uart;
 
 /* Main function for the HART4(U54_4 processor).
  * Application code running on HART4 is placed here
@@ -32,7 +33,7 @@ extern uint64_t uart_lock;
  */
 void u54_4(void)
 {
-    uint8_t info_string[100];
+    char info_string[100];
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
 
@@ -55,8 +56,8 @@ void u54_4(void)
     __enable_irq();
 
     mss_take_mutex((uint64_t)&uart_lock);
-    MSS_UART_polled_tx_string(&g_mss_uart0_lo,
-                                    "Hello World from u54 core 4 - hart4.\r\n");
+    MSS_UART_polled_tx_string(g_uart,
+            (const uint8_t*)"Hello World from u54 core 4 - hart4.\r\n");
     mss_release_mutex((uint64_t)&uart_lock);
 
     while (1U)
@@ -65,9 +66,9 @@ void u54_4(void)
         if (0x7FFFFFFFU == icount)
         {
             icount = 0U;
-            sprintf(info_string,"Hart %d\r\n", hartid);
+            sprintf(info_string,"Hart %lu\r\n", hartid);
             mss_take_mutex((uint64_t)&uart_lock);
-            MSS_UART_polled_tx(&g_mss_uart0_lo, info_string, strlen(info_string));
+            MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string, (uint32_t)strlen(info_string));
             mss_release_mutex((uint64_t)&uart_lock);
         }
     }
@@ -77,6 +78,5 @@ void u54_4(void)
 /* HART4 Software interrupt handler */
 void Software_h4_IRQHandler(void)
 {
-    uint64_t hart_id = read_csr(mhartid);
     count_sw_ints_h4++;
 }
