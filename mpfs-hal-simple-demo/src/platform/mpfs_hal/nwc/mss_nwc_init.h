@@ -115,13 +115,35 @@ extern "C" {
 
 
 /***************************************************************************//**
-  MSS_NWC_init()
+  mss_nwc_init()
   Called on start-up, initializes clocks, sgmii, ddr, mssio
  */
 uint8_t
-MSS_NWC_init
+mss_nwc_init
 (
     void
+);
+
+
+/***************************************************************************//**
+  mtime_delay(x) delay function, passes microseconds
+  waits x microseconds
+  Assumption 1 is we have ensured clock is 1MHz
+  Assumption 2 is we have not setup tick timer when using this function. It is
+  only used by the startup code.
+
+  Example:
+  @code
+
+      mtime_delay(100UL);
+
+  @endcode
+
+ */
+void
+mtime_delay
+(
+    uint32_t microseconds
 );
 
 
