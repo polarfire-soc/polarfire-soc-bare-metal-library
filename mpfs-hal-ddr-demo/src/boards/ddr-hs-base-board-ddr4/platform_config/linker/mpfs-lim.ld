@@ -130,11 +130,11 @@ HEAP_SIZE           = 8k;               /* needs to be calculated for your appli
  * These are the stack sizes that will be allocated to each hart before starting
  * each hart's application function, e51(), u54_1(), u54_2(), u54_3(), u54_4().
  */
-STACK_SIZE_E51_APPLICATION = 1k;
-STACK_SIZE_U54_1_APPLICATION = 1k;
-STACK_SIZE_U54_2_APPLICATION = 1k;
-STACK_SIZE_U54_3_APPLICATION = 1k;
-STACK_SIZE_U54_4_APPLICATION = 1k;
+STACK_SIZE_E51_APPLICATION = 8k;
+STACK_SIZE_U54_1_APPLICATION = 8k;
+STACK_SIZE_U54_2_APPLICATION = 8k;
+STACK_SIZE_U54_3_APPLICATION = 8k;
+STACK_SIZE_U54_4_APPLICATION = 8k;
 
 SECTIONS
 {

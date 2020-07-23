@@ -92,6 +92,13 @@
 #endif
 
 /*
+ * We sometimes want to know which board we are compiling
+ * enable define for particular board you are using if you are using this switch
+ * in your application code
+ */
+#define DDR_BASE_BOARD
+
+/*
  * MPFS_HAL_HW_CONFIG
  * Conditional compile switch is used to determine if MPFS HAL will perform the
  * hardware configurations or not.
@@ -127,7 +134,7 @@
  * Following is defined for DDR4 only
  */
 #define SPECIAL_TRAINIG_RESET
-
+#define EN_RETRY_ON_FIRST_TRAIN_PASS    0  /* ddr3/4 needs this set to 0 */
 
 #endif /* USER_CONFIG_MSS_USER_CONFIG_H_ */
 
