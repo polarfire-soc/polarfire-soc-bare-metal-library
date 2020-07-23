@@ -18,7 +18,7 @@
 #include "mpfs_hal/mss_hal.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "../../middleware/ymodem/ymodem.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
@@ -54,12 +54,13 @@ This program can load a program to DDR using ymodem\r\n\
 and has option to run the image using hart1 \r\n\
 Type 0  Show this menu\r\n\
 Type 1  Not used\r\n\
-Type 2  Raise sw int hart 2\r\n\
-Type 3  Raise sw int hart 3\r\n\
-Type 4  Raise sw int hart 4\r\n\
+Type 2  Soft reset the MSS\r\n\
+Type 3  Not used\r\n\
+Type 4  Not used\r\n\
 Type 5  Print debug messages from hart0\r\n\
 Type 6  load image to DDR\r\n\
 Type 7  Start U54_1 running image in DDR\r\n\
+Type 8  Display MSS PLL registers\r\n\
 ";
 #endif
 
@@ -125,7 +126,7 @@ void jump_to_application( MEM_TYPE mem_area_choice)
             break;
     }
     __asm volatile("ret");
-    /*User application execution should now start and never return here.... */
+    /* User application execution should now start and never return here.... */
 }
 
 /* Main function for the HART0(E51 processor).
@@ -161,8 +162,8 @@ void e51(void)
             SUBBLK_CLOCK_CR_MMUART4_MASK |\
             SUBBLK_CLOCK_CR_CFM_MASK);
 
-    /*This mutex is used to serialize accesses to UART0 when all harts want to
-     * TX/RX on UART0. This mutex is shared across all harts.*/
+    /* This mutex is used to serialize accesses to UART0 when all harts want to
+     * TX/RX on UART0. This mutex is shared across all harts. */
     mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( g_uart,
@@ -211,7 +212,7 @@ void e51(void)
     SYSREG->MSS_RESET_CR = 0xdead;
 #endif
 
-    /* Start the other harts with appropriate UART input from user*/
+    /* Start the other harts with appropriate UART input from user */
     while (1)
     {
         mcycle_start = readmcycle();
@@ -251,7 +252,9 @@ void e51(void)
                     SYSREG->MSS_RESET_CR = 0xdead;
                     break;
                 case '3':
+#ifdef DEBUG_DDR_INIT
                     ddr_read_write_nc (twoGb);
+#endif
                     break;
                 case '4':
                     display_clocks();
@@ -380,7 +383,7 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Non Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)MSS_BASE_ADD_DRC_NC_AXI_NC,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE_SIZE,(uint32_t)no_access,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
@@ -388,7 +391,7 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)MSS_BASE_ADD_DRC_CACHE_AXI_L2,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");

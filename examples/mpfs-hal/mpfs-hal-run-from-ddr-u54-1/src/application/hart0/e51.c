@@ -17,7 +17,7 @@
 #include "mpfs_hal/mss_hal.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "ymodem/ymodem.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
@@ -62,8 +62,8 @@ void e51(void)
     /* Remove soft reset */
     SYSREG->SOFT_RESET_CR   &= ~SOFT_RESET_CR_MMUART1_MASK;
 
-    /*This mutex is used to serialize accesses to UART0 when all harts want to
-     * TX/RX on UART0. This mutex is shared across all harts.*/
+    /* This mutex is used to serialize accesses to UART0 when all harts want to
+       TX/RX on UART0. This mutex is shared across all harts. */
     mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( &g_mss_uart1_lo,
@@ -74,7 +74,7 @@ void e51(void)
 
     SysTick_Config();
 
-    /* Start the other harts with appropriate UART input from user*/
+    /* Start the other harts with appropriate UART input from user */
     while (1)
     {
       mcycle_start = readmcycle();

@@ -30,8 +30,7 @@
 #include "sf2_bl_options.h"
 #include "sf2_bl_defs.h"
 #else
-#include "drivers/mss_uart/mss_uart.h"
-#include "drivers/mss_gpio/mss_gpio.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #endif
 #include "ymodem.h"
 
@@ -251,13 +250,11 @@ static int32_t _getchar(int32_t timeout)
                 }
             }
 
-            if((g_10ms_count - start_time) >= timeout)
-//            if( start_time++ >= timeout)
+           if((g_10ms_count) >= start_time + timeout)
            {
                 /* Timed out so exit with ret_value == -1 */
                 done = 1;
-//                start_time=0;
-            }
+           }
         }
     }
     else /* one shot mode */
@@ -362,7 +359,7 @@ static int32_t receive_packet(uint8_t *data, int32_t *length)
     volatile int32_t index;
     int32_t rx_char;
     volatile int32_t return_val = 0; /* Assume everything is ok */
-    uint32_t packet_size;
+    uint32_t packet_size = 0U;
 
     *length = 0;
 
@@ -398,10 +395,12 @@ static int32_t receive_packet(uint8_t *data, int32_t *length)
                 return_val = -3; /* Signifies cancelled */
                 break;
             }
-
-            /* intentional fall through, CAN followed by not CAN is probably an
+            /* signal an error, CAN followed by not CAN is probably an
              * error on the line
              */
+            *length = -1;
+            return_val = -4; /* Signifies unexpected start of packet character */
+            break;
         default:
             /* This case could be the result of corruption on the first octet
             * of the packet, but it's more likely that it's the user banging
@@ -418,7 +417,7 @@ static int32_t receive_packet(uint8_t *data, int32_t *length)
         {
             *data = (uint8_t)rx_char; /* Store first character of packet */
 
-            for(index = 1; (index < (packet_size + PACKET_OVERHEAD)) && (0 == return_val); ++index)
+            for(index = 1; (index < (int32_t)(packet_size + PACKET_OVERHEAD)) && (0 == return_val); ++index)
             {
                 rx_char = _getchar(PACKET_TIMEOUT);
                 if (rx_char < 0)
@@ -433,8 +432,12 @@ static int32_t receive_packet(uint8_t *data, int32_t *length)
 
             /* Just a sanity check on the sequence number/complement value.
              * Caller should check for in-order arrival.
+             *
              */
-            if((0 == return_val) && (data[PACKET_SEQNO_INDEX] != ((data[PACKET_SEQNO_COMP_INDEX] ^ 0xff) & 0xff)))
+            int y = (0 == return_val);
+            uint8_t x = data[PACKET_SEQNO_INDEX];
+            uint8_t z = ((uint8_t)((data[PACKET_SEQNO_COMP_INDEX] ^ 0xffU) & 0xffU));
+            if(y && (x != z))
             {
                 return_val = 1;
             }
@@ -464,17 +467,16 @@ static int32_t receive_packet(uint8_t *data, int32_t *length)
  *
  */
 /* Returns the length of the file received, or 0 on error: */
-uint32_t ymodem_receive(uint8_t *buf, uint32_t length)
+uint32_t ymodem_receive(uint8_t *buf, uint32_t length, uint8_t *file_name)
 {
     static uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD]; /* Declare as static as 1K is a lot to put on our stack */
-    static uint8_t file_name[FILE_NAME_LENGTH + 1]; /* +1 for nul */
     uint8_t file_size[FILE_SIZE_LENGTH + 1];
     uint8_t *file_ptr;
     int32_t  packet_length;
     int32_t  index;
     int32_t  file_done;
     int32_t  session_done;
-    int32_t  crc_tries;
+
     int32_t  crc_nak;
     uint32_t packets_received;
     uint32_t errors;
@@ -491,7 +493,6 @@ uint32_t ymodem_receive(uint8_t *buf, uint32_t length)
 
     while(0 == session_done)
     {
-        crc_tries = 1;
         crc_nak   = 1;
 
         if(!first_try)

@@ -153,8 +153,8 @@
  * Libero
  * These are placed below here
  */
-
 #define SPECIAL_TRAINIG_RESET
+#define EN_RETRY_ON_FIRST_TRAIN_PASS    0  /* ddr3/4 needs this set to 0 */
 /* set to 6 for DDR3/DDR4 */
 #define SW_TRAING_BCLK_SCLK_OFFSET                  0x00000006UL
 
