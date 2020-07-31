@@ -383,7 +383,7 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Non Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE_SIZE,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
