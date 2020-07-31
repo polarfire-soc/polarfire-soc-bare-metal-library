@@ -1471,7 +1471,7 @@ static uint32_t ddr_setup(void)
             {
 #if (DDR_FULL_32BIT_NC_CHECK_EN == 1)
 #ifndef HSS
-                error = ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE_SIZE,\
+                error = ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE,\
                                      SW_CFG_NUM_READS_WRITES,\
                                          SW_CONFIG_PATTERN);
 #else
