@@ -31,7 +31,7 @@
 | mss-i2c examples | 1.6.102 | 2020-06-10 | 
 | mss-mmc examples | 1.6.100 | 2020-06-17 | 
 | mss-mmuart examples | develop-1.7.108 | 2020-07-21 | 
-| mss-mpfs-hal examples | develop-1.8.5 | 2020-07-23 | 
+| mss-mpfs-hal examples | develop-1.8.10 | 2020-07-31 | 
 | mss-pdma examples | 1.6.101 | 2020-06-18 | 
 | mss-qspi examples | 1.6.100 | 2020-06-19 | 
 | mss-rtc examples | 1.6.100 | 2020-06-19 | 
