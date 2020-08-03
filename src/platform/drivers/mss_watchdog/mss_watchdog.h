@@ -161,20 +161,15 @@
 extern "C" {
 #endif 
 
-#include "mpfs_hal/mss_util.h"
-#include "mpfs_hal/mss_sysreg.h"
-#include "mpfs_hal/mss_hart_ints.h"
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
+#include <stdint.h>
 
 /*
- The following constants can be used to configure the MSS Watchdog where a zero
-  or non-zero value such as enable or disable is to be provided as input
+  The following constants can be used to configure the MSS Watchdog where a 
+  zero or non-zero value such as enable or disable is to be provided as input
   parameter as shown below:
       wd0lo_config.forbidden_en = MSS_WDOG_DISABLE;
       MSS_WD_configure(MSS_WDOG0_LO, &wd0lo_config);
-
- */
+*/
 #define MSS_WDOG_ENABLE                     1u
 #define MSS_WDOG_DISABLE                    0u
 
