@@ -14,7 +14,7 @@
 | mss_mpfs_hal driver | 1.6.101 | 2020-06-23 | 
 | mss_pdma driver | 1.6.100 | 2020-05-18 |
 | mss_platform_config driver | 1.6.100 | 2020-04-24 |
-| mss_qspi driver | 1.6.100 | 2020-05-18 |
+| mss_qspi driver | 1.7.101 | 2020-08-02 | 
 | mss_rtc driver | 1.6.100 | 2020-05-08 |
 | mss_spi driver | 1.6.101 | 2020-05-08 |
 | mss_sys_services driver | 1.6.100 | 2020-05-21 |
