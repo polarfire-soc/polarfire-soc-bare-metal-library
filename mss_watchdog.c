@@ -9,11 +9,8 @@
  *
  */
  
-#include "drivers/mss_watchdog/mss_watchdog.h"
-#include "mpfs_hal/mss_sysreg.h"
-#include "mpfs_hal/mss_hart_ints.h"
-#include "mpfs_hal/mss_plic.h"
-#include "mpfs_hal/mss_util.h"
+#include "mpfs_hal/mss_hal.h"
+#include "mss_watchdog.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,9 +38,9 @@ uint8_t MSS_WD_configure
 {
     uint8_t error = 0u;
 
-    /*Note that the MSVP register value must always be <= TIMER register value.
-     After any write to register from offset 0x00 to 0x0c the TRIGGER,MSVP and
-     TIME registers are locked. Hence write them in proper sequence.
+    /* Note that the MSVP register value must always be <= TIMER register value.
+      After any write to register from offset 0x00 to 0x0c the TRIGGER,MSVP and
+      TIME registers are locked. Hence write them in proper sequence.
      */
     if (config->timeout_val <= MSS_WDOG_TRIGGER_MAX)
     {
