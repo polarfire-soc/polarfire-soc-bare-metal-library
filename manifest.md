@@ -20,7 +20,7 @@
 | mss_sys_services driver | 1.6.100 | 2020-05-21 |
 | mss_timer driver | 1.6.100 | 2020-05-20 |
 | mss_usb driver | 1.6.100 | 2020-05-08 |
-| mss_watchdog driver | 1.6.100 | 2020-05-20 |
+| mss_watchdog driver | 1.7.102 | 2020-08-02 | 
 | pf_pcie driver | 3.1.100 | 2020-05-08 |
 
 | Examples | Revision | time stamp (YYYY-MM-DD) |
