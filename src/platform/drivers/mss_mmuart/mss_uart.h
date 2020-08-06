@@ -52,8 +52,8 @@
   subsystem or the FPGA fabric. The MSS MMUART serial signals are routed through
   IOMUXs to the PolarFire SoC device external pins. The MSS MMUART serial 
   signals may also be routed through IOMUXs to the PolarFire SoC FPGA fabric. 
-  For more information on IOMUX, refer to the IOMUX section of the PolarFire SoC 
-  Microprocessor Subsystem (MSS) User's Guide.
+  For more information on IOMUX, refer to the I/O Configuration section of the
+  PolarFire SoC Microprocessor Subsystem (MSS) User's Guide.
 
   The IOMUXs are configured using the PolarFire SoC MSS configurator tool. You
   must ensure that the MSS MMUART peripherals are enabled and configured in the
@@ -209,7 +209,7 @@
   function has been sent to the MSS MMUART hardware transmitter. Data received
   by the MSS MMUART hardware receiver can be read by the MSS_UART_get_rx()
   function.
-  The MSS_UART_polled_tx_string() function is provided to transmit a NULL ('\0')
+  The MSS_UART_polled_tx_string() function is provided to transmit a NUL ('\0')
   terminated string in polled mode. This function is blocking, meaning that it
   will only return once the data passed to the function has been sent to the MSS
   MMUART hardware transmitter.
@@ -316,8 +316,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-#ifndef SIFIVE_HIFIVE_UNLEASHED
 
 #ifdef __cplusplus
 extern "C" {
@@ -696,70 +694,70 @@ typedef struct
 {
     union
     {
-        volatile const  uint8_t    RBR;
+        volatile const uint8_t    RBR;
         volatile uint8_t    THR;
         volatile uint8_t    DLR;
-             uint32_t   RESERVED0;
+        uint32_t RESERVED0;
     };
 
     union
     {
         volatile uint8_t  DMR;
         volatile uint8_t  IER;
-             uint32_t RESERVED1;
+        uint32_t RESERVED1;
     };
 
     union
     {
         volatile uint8_t  IIR;
         volatile uint8_t  FCR;
-             uint32_t RESERVED2;
+        uint32_t RESERVED2;
     };
 
     volatile uint8_t  LCR;
-         uint8_t  RESERVED3[3];
+    uint8_t  RESERVED3[3];
 
     volatile uint8_t  MCR;
-         uint8_t  RESERVED4[3];
+    uint8_t  RESERVED4[3];
 
     volatile const  uint8_t  LSR;
-         uint8_t  RESERVED5[3];
+    uint8_t  RESERVED5[3];
 
     volatile const  uint8_t  MSR;
-         uint8_t  RESERVED6[3];
+    uint8_t  RESERVED6[3];
 
     volatile uint8_t  SR;
-         uint8_t  RESERVED7[7];
+    uint8_t  RESERVED7[7];
 
     volatile uint8_t  IEM;
-         uint8_t  RESERVED8[3];
+    uint8_t  RESERVED8[3];
 
     volatile uint8_t  IIM;
-         uint8_t  RESERVED9[7];
+    uint8_t  RESERVED9[7];
 
     volatile uint8_t  MM0;
-         uint8_t  RESERVED10[3];
+    uint8_t  RESERVED10[3];
 
     volatile uint8_t  MM1;
-         uint8_t  RESERVED11[3];
+    uint8_t  RESERVED11[3];
 
     volatile uint8_t  MM2;
-         uint8_t  RESERVED12[3];
+    uint8_t  RESERVED12[3];
 
     volatile uint8_t  DFR;
-         uint8_t  RESERVED13[7];
+    uint8_t  RESERVED13[7];
 
     volatile uint8_t GFR;
-         uint8_t  RESERVED14[3];
+    uint8_t  RESERVED14[3];
 
     volatile uint8_t TTG;
-         uint8_t  RESERVED15[3];
+    uint8_t  RESERVED15[3];
 
     volatile uint8_t RTO;
-         uint8_t  RESERVED16[3];
+    uint8_t  RESERVED16[3];
 
     volatile uint8_t ADR;
-         uint8_t  RESERVED17[3];
+    uint8_t  RESERVED17[3];
 
 } MSS_UART_TypeDef;
 
@@ -1269,7 +1267,7 @@ MSS_UART_polled_tx
 );
 
 /***************************************************************************//**
-  The function MSS_UART_polled_tx_string() is used to transmit a NULL ('\0')
+  The function MSS_UART_polled_tx_string() is used to transmit a NUL ('\0')
   terminated string. It transfers the text string, from the buffer starting at
   the address pointed to by p_sz_string into the UART's hardware transmitter
   FIFO. It returns when the complete string has been transferred to the UART's
@@ -1298,8 +1296,8 @@ MSS_UART_polled_tx
     within the UART driver.
 
   @param p_sz_string
-    The p_sz_string parameter is a pointer to a buffer containing the NULL
-    ('\0') terminated string to be transmitted.
+    The p_sz_string parameter is a pointer to a buffer containing the NUL ('\0')
+    terminated string to be transmitted.
 
   @return
     This function does not return a value.
@@ -3335,4 +3333,3 @@ MSS_UART_enable_local_irq
 #endif
 
 #endif /* __MSS_UART_H_ */
-#endif

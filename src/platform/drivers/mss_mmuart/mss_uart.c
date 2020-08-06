@@ -7,12 +7,9 @@
  * implementation.
  *
  */
-
-#include "mss_uart.h"
+#include "mpfs_hal/mss_hal.h"
 #include "mss_uart_regs.h"
-#include "mpfs_hal/mss_plic.h"
-#include "mpfs_hal/mss_util.h"
-#include "config/hardware/hw_platform.h"
+#include "mss_uart.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -220,7 +217,7 @@ MSS_UART_smartcard_init
     /* Disable IrDA mode */
     this_uart->hw_reg->MM1 &= ~EIRD_MASK;
 
-    /* Enable SmartCard Mode : Only when data is 8-bit and 2 stop bits*/
+    /* Enable SmartCard Mode : Only when data is 8-bit and 2 stop bits */
     if ((MSS_UART_DATA_8_BITS | MSS_UART_TWO_STOP_BITS) ==
         (line_config & (MSS_UART_DATA_8_BITS | MSS_UART_TWO_STOP_BITS)))
     {
@@ -280,7 +277,7 @@ MSS_UART_polled_tx
                     char_idx++;
                 }
 
-                /* Calculate the number of bytes remaining(not transmitted yet)*/
+                /* find the number of bytes remaining(not transmitted yet) */
                 temp_tx_size -= size_sent;
             }
         }while (temp_tx_size);
@@ -356,7 +353,8 @@ MSS_UART_irq_tx
 
     if ((tx_size > 0u) && (pbuff != ((uint8_t*)0)))
     {
-        /*Initialize the transmit info for the UART instance with the arguments*/
+        /* Initialize the transmit info for the UART instance with the
+         * arguments */
         this_uart->tx_buffer = pbuff;
         this_uart->tx_buff_size = tx_size;
         this_uart->tx_idx = 0u;
@@ -452,7 +450,7 @@ MSS_UART_enable_irq
          * bit 3 - Modem Status Interrupt
          */
         this_uart->hw_reg->IER |= ((uint8_t)(((uint32_t)irq_mask &
-                                                            (uint32_t)IIRF_MASK)));
+                                                         (uint32_t)IIRF_MASK)));
 
 
         /* 
@@ -463,7 +461,7 @@ MSS_UART_enable_irq
          * bit 8 - LIN Sync detection interrupt
          */
         this_uart->hw_reg->IEM |= (uint8_t)(((uint32_t)irq_mask >> 4u) &
-                                                        ((uint32_t)IIRF_MASK));
+                                                         ((uint32_t)IIRF_MASK));
     }
 }
 
@@ -565,7 +563,7 @@ MSS_UART_set_loopback
             
             case MSS_UART_REMOTE_LOOPBACK_OFF:
             case MSS_UART_AUTO_ECHO_OFF:
-                /* Disable remote loopback & automatic echo*/
+                /* Disable remote loopback & automatic echo */
                 this_uart->hw_reg->MCR &= ~(RLOOP_MASK|ECHO_MASK);
             break;
             
@@ -661,7 +659,7 @@ uint8_t mmuart4_plic_IRQHandler(void)
     return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart0_e51_local_IRQHandler_11(void)
+void mmuart0_e51_local_IRQHandler_11(void)
 {
     if (g_uart_axi_pos & UART0_POSITION_MASK)
     {
@@ -671,11 +669,9 @@ uint8_t mmuart0_e51_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart0_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h1_local_IRQHandler_11(void)
+void mmuart_u54_h1_local_IRQHandler_11(void)
 {
     if (g_uart_axi_pos & UART1_POSITION_MASK)
     {
@@ -685,11 +681,9 @@ uint8_t mmuart_u54_h1_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart1_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h2_local_IRQHandler_11(void)
+void mmuart_u54_h2_local_IRQHandler_11(void)
 {
     if (g_uart_axi_pos & UART2_POSITION_MASK)
     {
@@ -699,11 +693,9 @@ uint8_t mmuart_u54_h2_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart2_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h3_local_IRQHandler_11(void)
+void mmuart_u54_h3_local_IRQHandler_11(void)
 {
     if (g_uart_axi_pos & UART3_POSITION_MASK)
     {
@@ -713,11 +705,9 @@ uint8_t mmuart_u54_h3_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart3_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h4_local_IRQHandler_11(void)
+void mmuart_u54_h4_local_IRQHandler_11(void)
 {
     if (g_uart_axi_pos & UART4_POSITION_MASK)
     {
@@ -727,8 +717,6 @@ uint8_t mmuart_u54_h4_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart4_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
 /***************************************************************************//**
@@ -1107,7 +1095,7 @@ MSS_UART_set_rx_endian
     {
         /* Configure MSB first / LSB first for receiver */
         ((MSS_UART_LITTLEEND == endian) ? (this_uart->hw_reg->MM1 &= ~E_MSB_RX_MASK) :
-                                          (this_uart->hw_reg->MM1 |= E_MSB_RX_MASK));
+                                     (this_uart->hw_reg->MM1 |= E_MSB_RX_MASK));
     }
 }
 
@@ -1127,7 +1115,7 @@ MSS_UART_set_tx_endian
     {
         /* Configure MSB first / LSB first for transmitter */
         ((MSS_UART_LITTLEEND == endian) ? (this_uart->hw_reg->MM1 &= ~E_MSB_TX_MASK) :
-                                          (this_uart->hw_reg->MM1 |= E_MSB_TX_MASK)) ;
+                                    (this_uart->hw_reg->MM1 |= E_MSB_TX_MASK));
     }
 }
 
@@ -1231,7 +1219,7 @@ MSS_UART_disable_rx_timeout
     mss_uart_instance_t * this_uart
 )
 {
-    /*Disable receiver time-out */
+    /* Disable receiver time-out */
     this_uart->hw_reg->MM0 &= ~ERTO_MASK;
 }
 
@@ -1248,7 +1236,7 @@ MSS_UART_enable_tx_time_guard
     /* Load the transmitter time guard value */
     this_uart->hw_reg->TTG = timeguard;
 
-    /*Enable transmitter time guard */
+    /* Enable transmitter time guard */
     this_uart->hw_reg->MM0 |= ETTG_MASK;
 }
 
@@ -1261,7 +1249,7 @@ MSS_UART_disable_tx_time_guard
     mss_uart_instance_t * this_uart
 )
 {
-    /*Disable transmitter time guard */
+    /* Disable transmitter time guard */
     this_uart->hw_reg->MM0 &= ~ETTG_MASK;
 }
 
@@ -1294,7 +1282,7 @@ MSS_UART_set_ready_mode
     {
         /* Configure mode 0 or mode 1 for TXRDY and RXRDY */
         ((MSS_UART_READY_MODE0 == mode) ? (this_uart->hw_reg->FCR &= ~RDYMODE_MASK) :
-                                 (this_uart->hw_reg->FCR |= RDYMODE_MASK) );
+                                     (this_uart->hw_reg->FCR |= RDYMODE_MASK) );
     }
 }
 
@@ -1329,12 +1317,12 @@ MSS_UART_enable_local_irq
     mss_uart_instance_t * this_uart
 )
 {
-	/*Make sure to disable interrupt on PLIC as it might have been enabled
-	 * when application registered an interrupt handler function or
-	 * used MSS_UART_enable_irq() to enable PLIC interrupt*/
-	disable_irq(this_uart);
+    /* Make sure to disable interrupt on PLIC as it might have been enabled
+     * when application registered an interrupt handler function or
+     * used MSS_UART_enable_irq() to enable PLIC interrupt */
+    disable_irq(this_uart);
 
-	this_uart->local_irq_enabled = 1u;
+    this_uart->local_irq_enabled = 1u;
 
     /* Enable local interrupt UART instance.
      * Local interrupt will be enabled on the HART on which the application
@@ -1344,7 +1332,7 @@ MSS_UART_enable_local_irq
 
 /*******************************************************************************
  * Local Functions
- *******************************************************************************/
+ ******************************************************************************/
 /*******************************************************************************
  * Global initialization for all modes
  */
@@ -1417,7 +1405,7 @@ static void global_init
     }
     else
     {
-        ASSERT(0); /*Comment to avoid LDRA warning*/
+        ASSERT(0); /* Comment to avoid LDRA warning */
     }
 
     /* disable interrupts */
@@ -1500,6 +1488,7 @@ static void global_init
     this_uart->sync_handler     = NULL_HANDLER;   
 
     this_uart->local_irq_enabled = 0u;
+
     /* Initialize the sticky status */
     this_uart->status = 0u;
 }
@@ -1522,8 +1511,7 @@ config_baud_divisors
 
     this_uart->baudrate = baudrate;
 
-    /* Use the system clock value from hw_platform.h */
-    pclk_freq = MSS_AXI_SWITCH_CLK;
+    pclk_freq = LIBERO_SETTING_MSS_APB_AHB_CLK;
 
     /*
      * Compute baud value based on requested baud rate and PCLK frequency.
@@ -1544,15 +1532,14 @@ config_baud_divisors
     {
         if (baud_value > 1u)
         {
-            /*
-             * Use Fractional baud rate divisors
-             */
+            /* Use Fractional baud rate divisors */
             /* set divisor latch */
             this_uart->hw_reg->LCR |= DLAB_MASK;
 
-            /* msb of baud value */
+            /* MSB of baud value */
             this_uart->hw_reg->DMR = (uint8_t)(baud_value >> 8);
-            /* lsb of baud value */
+
+            /* LSB of baud value */
             this_uart->hw_reg->DLR = (uint8_t)baud_value;
 
             /* reset divisor latch */
@@ -1567,16 +1554,14 @@ config_baud_divisors
         }
         else
         {
-            /*
-             * Do NOT use Fractional baud rate divisors.
-             */
+            /* Do NOT use Fractional baud rate divisors. */
             /* set divisor latch */
             this_uart->hw_reg->LCR |= DLAB_MASK;
 
-            /* msb of baud value */
+            /* MSB of baud value */
             this_uart->hw_reg->DMR = (uint8_t)(baud_value >> 8u);
 
-            /* lsb of baud value */
+            /* LSB of baud value */
             this_uart->hw_reg->DLR = (uint8_t)baud_value;
 
             /* reset divisor latch */
@@ -1711,7 +1696,7 @@ uart_isr
         }
         default:
         {
-            ASSERT(INVALID_INTERRUPT); /*Alternative case has been considered*/
+            ASSERT(INVALID_INTERRUPT); /* Comment to avoid LDRA warning */
         }
         break;
     }
@@ -1806,7 +1791,7 @@ enable_irq
         }
         else
         {
-            ASSERT(0); /*Alternative case has been considered*/
+            ASSERT(0); /* Comment to avoid LDRA warning */
         }
 
         /* Enable UART instance interrupt in PLIC. */
@@ -1844,7 +1829,7 @@ disable_irq
     }
     else
     {
-        ASSERT(0); /*Alternative case has been considered*/
+        ASSERT(0); /* Comment to avoid LDRA warning */
     }
 
     /* Disable UART instance interrupt in PLIC. */
