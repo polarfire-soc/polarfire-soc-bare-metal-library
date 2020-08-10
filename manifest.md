@@ -10,7 +10,7 @@
 | mss_hal driver | 1.5.107 | 2019-10-11 |
 | mss_i2c driver | 1.6.102 | 2020-06-10 | 
 | mss_mmc driver | 1.6.100 | 2020-05-08 |
-| mss_mmuart driver | 1.6.102 | 2020-05-20 |
+| mss_mmuart driver | 1.7.105 | 2020-08-10 | 
 | mss_mpfs_hal driver | 1.6.101 | 2020-06-23 | 
 | mss_pdma driver | 1.6.100 | 2020-05-18 |
 | mss_platform_config driver | 1.6.100 | 2020-04-24 |
