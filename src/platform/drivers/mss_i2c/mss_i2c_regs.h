@@ -33,7 +33,6 @@ extern "C" {
 #define STO_MASK                    (uint8_t)(0x10)
 #define STA_MASK                    (uint8_t)(0x20)
 
-
 #define ENS1_MASK                   (uint8_t)(0x40)
 #define CR2_MASK                    (uint8_t)(0x80)
 #define DATA_DIR                    (uint8_t)0u
