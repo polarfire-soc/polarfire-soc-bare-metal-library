@@ -15,7 +15,7 @@
 | mss_pdma driver | 1.6.100 | 2020-05-18 |
 | mss_platform_config driver | 1.6.100 | 2020-04-24 |
 | mss_qspi driver | 1.7.101 | 2020-08-02 | 
-| mss_rtc driver | 1.6.100 | 2020-05-08 |
+| mss_rtc driver | 1.7.102 | 2020-08-13 | 
 | mss_spi driver | 1.6.101 | 2020-05-08 |
 | mss_sys_services driver | 1.6.100 | 2020-05-21 |
 | mss_timer driver | 1.6.100 | 2020-05-20 |
