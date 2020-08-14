@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,15 @@
  * application source code.
  * Inclusion of mss_ethernet_mac.h inherits these types.
  * 
- * SVN $Revision$
- * SVN $Date$
  */
 #ifndef MSS_ETHERNET_MAC_TYPES_H_
 #define MSS_ETHERNET_MAC_TYPES_H_
 #include <stdint.h>
+
+#if defined(TARGET_G5_SOC)
+#include "drivers/mss_gpio/mss_gpio_regs.h"
+#include "drivers/mss_gpio/mss_gpio.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +40,25 @@ typedef enum
 } mss_mac_speed_t;
 
 /*******************************************************************************
+ * MAC interface Speed MODE
+ * This enumeration specifies the various interface speed mode to use. Anything
+ * other than MSS_MAC_SPEED_AN results in a fixed speed/duplex configuration and
+ * the link partner must be configured the same way for proper communications to
+ * be achieved.
+ */
+typedef enum
+{
+    MSS_MAC_SPEED_AN   = 0x00,
+    MSS_MAC_10_HDX     = 0x01,
+    MSS_MAC_10_FDX     = 0x02,
+    MSS_MAC_100_HDX    = 0x03,
+    MSS_MAC_100_FDX    = 0x04,
+    MSS_MAC_1000_HDX   = 0x05,
+    MSS_MAC_1000_FDX   = 0x06,
+    INVALID_SPEED_MODE = 0x07
+} mss_mac_speed_mode_t;
+
+/*******************************************************************************
  * MAC RX interrupt control
  * This enumeration indicates the action to take in relation to the RX
  * interrupt when configuring an RX buffer with MSS_MAC_receive_pkt().
@@ -47,6 +69,16 @@ typedef enum
     MSS_MAC_INT_DISABLE =  0, /* Disable interrupts on exit */
     MSS_MAC_INT_ENABLE  =  1, /* Leave interrupts enabled on exit */
 } mss_mac_rx_int_ctrl_t;
+
+/*******************************************************************************
+ * MAC PHY Reset type
+ * This enumeration specifies the type of reset signal to act on.
+ */
+typedef enum
+{
+    MSS_MAC_SOFT_RESET = 0,
+    MSS_MAC_HARD_RESET = 1
+} mss_mac_phy_reset_t;
 
 /*******************************************************************************
   PolarFire SoC MSS Ethernet MAC Configuration Structure.
@@ -82,6 +114,7 @@ typedef enum
   phy_init
   phy_set_link_speed
   phy_autonegotiate
+  phy_autonegotiate_mac
   phy_get_link_status
   phy_extended_read
   phy_init_extended_write
@@ -95,11 +128,28 @@ typedef enum
     This array of values of length MSS_MAC_QUEUE_COUNT, indicates which queues
     are to be enabled. 0 in an entry indicates disabled and 1 indicates enabled.
 
+  speed_mode
+    The speed_mode configuration parameter specifies the mode of operation for
+    the Ethernet interface. The following values are supported:
+
+      MSS_MAC_SPEED_AN
+      MSS_MAC_10_HDX
+      MSS_MAC_10_FDX
+      MSS_MAC_100_HDX
+      MSS_MAC_100_FDX
+      MSS_MAC_1000_HDX
+      MSS_MAC_1000_FDX
+
+    If MSS_MAC_SPEED_AN is selected then the speed_duplex_select configuration
+    parameter indicates the allowed speed combinations. For all other modes,
+    the link autonegotiation is disabled.
+
   speed_duplex_select
     The speed_duplex_select configuration parameter specifies the allowed link
-    speeds. It is a bit-mask of the various link speed and duplex modes. The
-    speed_duplex_select configuration can be set to a bitmask of the following
-    defines to specify the allowed link speed and duplex mode:
+    speeds when autonegotiation is enabled. It is a bit-mask of the various link
+    speed and duplex modes. The speed_duplex_select configuration can be set to
+    a bitmask of the following defines to specify the allowed link speed and
+    duplex mode:
 
       MSS_MAC_ANEG_10M_FD
       MSS_MAC_ANEG_10M_HD
@@ -125,6 +175,31 @@ typedef enum
     for hidden SGMII type interfaces such as that in the G5 SoC emulation
     platform.
 
+  phy_soft_reset_gpio
+    Identifies the MSS GPIO device that the PHY soft reset pin is connected to.
+    A Value of NULL indicates the soft reset signal is not available for control
+    via an MSS GPIO pin.
+
+  phy_soft_reset_pin
+    Identifies the MSS GPIO pin that the PHY soft reset pin is connected to.
+
+  phy_hard_reset_gpio
+    Identifies the MSS GPIO device that the PHY hard reset pin is connected to.
+    A Value of NULL indicates the hard reset signal is not available for control
+    via an MSS GPIO pin.
+
+  phy_hard_reset_pin
+    Identifies the MSS GPIO pin that the PHY hard reset pin is connected to.
+
+  phy_controller
+    Pointer to the MAC instance structure to which the PHY is connected. This
+    supports the use of multi-port PHY devices which may be connected to a
+    single MAC device or configurations where only a single MDIO interface is
+    exposed to the outside world. If NULL, the current MAC device is used.
+
+    In configurations that use this feature, it is important that the MAC device
+    that the PHY is connected to is initialized first.
+
   tx_edc_enable 
     The tx_edc_enable parameter specifies enable or disable error detection and
     correction for tx FIFOs. The allowed values for the tx_edc_enable
@@ -143,6 +218,7 @@ typedef enum
 
       MSS_MAC_ERR_DET_CORR_ENABLE
       MSS_MAC_ERR_DET_CORR_DISABLE
+
     The MSS_MAC_cfg_struct_def_init() function sets this configuration parameter
     to MSS_MAC_ERR_DET_CORR_DISABLE.
 
@@ -324,18 +400,19 @@ typedef enum
  *     phy_addr – address of PHY on MDIO interface.
  *
  */
-typedef void (*mss_mac_phy_init_t)(/* mss_mac_instance_t*/ const void *this_mac, uint8_t phy_addr);
+typedef void (*mss_mac_phy_init_t)(/* mss_mac_instance_t */ const void *this_mac, uint8_t phy_addr);
 
 
 /*******************************************************************************
  * Pointer to PHY set link speed function
  *
- * void MSS_MAC_phy_set_link_speed(mss_mac_instance_t *this_mac, uint32_t speed_duplex_select);
+ * void MSS_MAC_phy_set_link_speed(mss_mac_instance_t *this_mac, uint32_t speed_duplex_select, mss_mac_speed_mode_t speed_mode);
  *
  *     this_mac - pointer to global structure for the MAC in question.
- *     speed_duplex_select – Combined and duplex options mask.
+ *     speed_duplex_select – Combined duplex options mask.
+ *     speed_mode - selects fixed vs autonegotiation speed modes
  */
-typedef void (*mss_mac_phy_set_speed_t)(/* mss_mac_instance_t*/ const void *this_mac, uint32_t speed_duplex_select);
+typedef void (*mss_mac_phy_set_speed_t)(/* mss_mac_instance_t */ void *this_mac, uint32_t speed_duplex_select, mss_mac_speed_mode_t speed_mode);
 
 
 /*******************************************************************************
@@ -345,7 +422,7 @@ typedef void (*mss_mac_phy_set_speed_t)(/* mss_mac_instance_t*/ const void *this
  *
  *     this_mac - pointer to global structure for the MAC in question.
  */
-typedef void (*mss_mac_phy_autonegotiate_t)(/* mss_mac_instance_t*/ const void *this_mac);
+typedef void (*mss_mac_phy_autonegotiate_t)(/* mss_mac_instance_t */ const void *this_mac);
 
 
 /*******************************************************************************
@@ -379,7 +456,7 @@ typedef uint8_t (*mss_mac_phy_get_link_status_t)
  *     this_mac - pointer to global structure for the MAC in question.
  *     reg – the register to read from.
  */
-typedef uint16_t (*mss_mac_phy_extended_read_t)(/* mss_mac_instance_t*/ const void *this_mac, uint16_t reg);
+typedef uint16_t (*mss_mac_phy_extended_read_t)(/* mss_mac_instance_t */ const void *this_mac, uint16_t reg);
 
 
 /*******************************************************************************
@@ -391,11 +468,13 @@ typedef uint16_t (*mss_mac_phy_extended_read_t)(/* mss_mac_instance_t*/ const vo
  *     reg – the register to write to.
  *     data – the value to write to the register.
  */
-typedef void (*mss_mac_phy_extended_write_t)(/* mss_mac_instance_t*/ const void *this_mac, uint16_t reg, uint16_t data);
+typedef void (*mss_mac_phy_extended_write_t)(/* mss_mac_instance_t */ const void *this_mac, uint16_t reg, uint16_t data);
 #endif
 
 
-/*
+/*******************************************************************************
+ * Configuration structure for the MSS MAC driver.
+ *
  * Note: Even though most of these values are small, we use uint32_t for most values
  * here as they will be used in calculations that are based on uint32_t values and
  * this avoids having to put casts everywhere...
@@ -408,16 +487,26 @@ typedef struct
     mss_mac_phy_init_t            phy_init;
     mss_mac_phy_set_speed_t       phy_set_link_speed;
     mss_mac_phy_autonegotiate_t   phy_autonegotiate;
+    mss_mac_phy_autonegotiate_t   phy_mac_autonegotiate;
     mss_mac_phy_get_link_status_t phy_get_link_status;
 #if MSS_MAC_USE_PHY_DP83867
     mss_mac_phy_extended_read_t   phy_extended_read;
     mss_mac_phy_extended_write_t  phy_extended_write;
 #endif
     uint32_t queue_enable[MSS_MAC_QUEUE_COUNT]; /* Enables for additional queues */
-    uint32_t speed_duplex_select;       /* Link speed and duplex mode allowed to setup a link. */
+    mss_mac_speed_mode_t speed_mode;    /* Link speed mode of operation */
+    uint32_t speed_duplex_select;       /* Link speed and duplex mode allowed to setup a link when autonegotiation is enabled. */
     uint8_t  mac_addr[6];               /* Station's MAC address */
     uint32_t phy_addr;                  /* Address of Ethernet PHY on MII management interface. */
     uint32_t pcs_phy_addr;              /* Address of SGMII interface controller on MII management interface. */
+#if defined(TARGET_G5_SOC)
+    GPIO_TypeDef  *phy_soft_reset_gpio; /* GPIO device soft reset for PHY is connected to */
+    mss_gpio_id_t  phy_soft_reset_pin;  /* GPIO pin soft reset for PHY is connected to */
+    GPIO_TypeDef  *phy_hard_reset_gpio; /* GPIO device hard reset for PHY is connected to */
+    mss_gpio_id_t  phy_hard_reset_pin;  /* GPIO pin hard reset for PHY is connected to */
+#endif
+    /* Use struct instead of typedef as compiler gets confused otherwise... */
+    struct mss_mac_instance *phy_controller; /* Which MAC structure PHY is connected to */
     uint32_t tx_edc_enable;             /* Enable / disable error detection and correction for tx FIFOs */
     uint32_t rx_edc_enable;             /* Enable / disable error detection and correction for rx FIFOs */
     uint32_t jumbo_frame_enable;        /* Enable / disable jumbo frame support: default is disable 0 */
@@ -845,7 +934,7 @@ typedef struct mss_mac_queue mss_mac_queue_t;
  * A local record of this type "g_mac" will be created and maintained by the
  * driver.
  */
-typedef struct
+typedef struct mss_mac_instance
 {
     uint32_t          is_emac;    /* 0 for primary MAC and non zero for eMAC */
     MAC_TypeDef       *mac_base;  /* Register start address - NULL if eMAC */
@@ -872,14 +961,29 @@ typedef struct
     uint32_t phy_type;                  /* PHY device type associated with this GEM */
     uint32_t phy_addr;                  /* Address of Ethernet PHY on MII management interface. */
     uint32_t pcs_phy_addr;              /* Address of SGMII interface controller on MII management interface. */
+#if defined(TARGET_G5_SOC)
+    GPIO_TypeDef  *phy_soft_reset_gpio; /* GPIO device soft reset for PHY is connected to */
+    mss_gpio_id_t  phy_soft_reset_pin;  /* GPIO pin soft reset for PHY is connected to */
+    uint32_t       phy_soft_reset_done; /* Flag to indicate soft reset is done so multi-port devices
+                                         * can avoid additional resets - set by phy driver */
+    GPIO_TypeDef  *phy_hard_reset_gpio; /* GPIO device hard reset for PHY is connected to */
+    mss_gpio_id_t  phy_hard_reset_pin;  /* GPIO pin hard reset for PHY is connected to */
+    uint32_t       phy_hard_reset_done; /* Flag to indicate hard reset is done so multi-port devices
+                                         * can avoid additional resets - set by phy driver */
+#endif
+    /* Use struct instead of typedef as compiler gets confused otherwise... */
+    struct mss_mac_instance *phy_controller; /* Which MAC structure PHY is connected to */
     uint32_t use_hi_address;            /* Non 0 means use upper address range for this device */
     uint32_t use_local_ints;            /* non 0 meams use local interrupts for MAC instead of PLIC */
     uint8_t  mac_addr[6];               /* Station's MAC address */
+    mss_mac_speed_mode_t speed_mode;    /* Link speed mode of operation */
+    uint32_t speed_duplex_select;       /* Link speed and duplex mode allowed to setup a link when autonegotiation is enabled. */
 
     /* PHY interface functions */
     mss_mac_phy_init_t            phy_init;
     mss_mac_phy_set_speed_t       phy_set_link_speed;
     mss_mac_phy_autonegotiate_t   phy_autonegotiate;
+    mss_mac_phy_autonegotiate_t   phy_mac_autonegotiate;
     mss_mac_phy_get_link_status_t phy_get_link_status;
 #if MSS_MAC_USE_PHY_DP83867
     mss_mac_phy_extended_read_t   phy_extended_read;

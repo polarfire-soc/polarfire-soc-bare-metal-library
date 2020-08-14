@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,6 @@
  * of the MAC as it helps to catch errors if we try to program registers not
  * present on the eMAC.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 #ifndef MSS_ETHERNET_MAC_REGISTERS_H_
 #define MSS_ETHERNET_MAC_REGISTERS_H_
