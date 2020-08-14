@@ -16,7 +16,8 @@
 #include "mpfs_hal/mss_hal.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_mmuart/mss_uart.h"
+#include "drivers/mss_uart/mss_uart.h"
+#include "mpfs_hal/mss_ints.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
@@ -37,9 +38,9 @@ void u54_1(void)
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
 
-    /* Clear pending software interrupt in case there was any.
-       Enable only the software interrupt so that the E51 core can bring this
-       core out of WFI by raising a software interrupt. */
+    /*Clear pending software interrupt in case there was any.
+      Enable only the software interrupt so that the E51 core can bring this
+      core out of WFI by raising a software interrupt.*/
     clear_soft_interrupt();
     set_csr(mie, MIP_MSIP);
 
@@ -51,8 +52,8 @@ void u54_1(void)
     }while(0 == (read_csr(mip) & MIP_MSIP));
 #endif
 
-    /* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
-       can enable and use any interrupts as required */
+    /*The hart is out of WFI, clear the SW interrupt. Hear onwards Application
+     * can enable and use any interrupts as required*/
     clear_soft_interrupt();
 
     __enable_irq();
@@ -62,8 +63,8 @@ void u54_1(void)
     /* Remove soft reset */
     SYSREG->SOFT_RESET_CR   &= ~SOFT_RESET_CR_MMUART1_MASK;
 
-    /* This mutex is used to serialize accesses to UART0 when all harts want to
-       TX/RX on UART0. This mutex is shared across all harts. */
+    /*This mutex is used to serialize accesses to UART0 when all harts want to
+     * TX/RX on UART0. This mutex is shared across all harts.*/
     //fixme:does not like being called twice- to resolve  mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( &g_mss_uart1_lo,

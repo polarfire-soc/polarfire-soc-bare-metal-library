@@ -16,7 +16,7 @@
 #include "mpfs_hal/mss_hal.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_mmuart/mss_uart.h"
+#include "drivers/mss_uart/mss_uart.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
@@ -37,20 +37,20 @@ void u54_2(void)
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
 
-    /* Clear pending software interrupt in case there was any.
-      Enable only the software interrupt so that the E51 core can bring this
-      core out of WFI by raising a software interrupt. */
+    /*Clear pending software interrupt in case there was any.
+     Enable only the software interrupt so that the E51 core can bring this core
+     out of WFI by raising a software interrupt.*/
     clear_soft_interrupt();
     set_csr(mie, MIP_MSIP);
 
-    /* put this hart into WFI.*/
+    /*put this hart into WFI.*/
     do
     {
         __asm("wfi");
     }while(0 == (read_csr(mip) & MIP_MSIP));
 
-    /* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
-       can enable and use any interrupts as required */
+    /*The hart is out of WFI, clear the SW interrupt. Hear onwards Application
+     *can enable and use any interrupts as required*/
     clear_soft_interrupt();
 
     __enable_irq();
