@@ -1,21 +1,25 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
  * PolarFire SoC 10/100/1000 Mbps Ethernet MAC bare metal software driver implementation.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include "mpfs_hal/mss_hal.h"
 #include "mpfs_hal/mss_plic.h"
 #include "mpfs_hal/mss_util.h"
 #include "mpfs_hal/mss_ints.h"
 #include "config/hardware/hw_platform.h"
+
+#if defined(TARGET_G5_SOC)
+#include "drivers/mss_gpio/mss_gpio_regs.h"
+#include "drivers/mss_gpio/mss_gpio.h"
+#endif
 
 #include "drivers/mss_mac/mss_ethernet_registers.h"
 #include "drivers/mss_mac/mss_ethernet_mac_regs.h"
@@ -31,12 +35,27 @@
 #include "hal/hal_assert.h"
 #include "mpfs_hal/mss_sysreg.h"
 
+
 #if defined (TI_PHY)
 #include "mss_gpio.h"
 #endif
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if (defined(MSS_MAC_VSC8662_NWC_25) || defined(MSS_MAC_VSC8662_NWC_125))
+
+#include "mpfs_hal\nwc\mss_pll.h"
+
+extern PLL_TypeDef *MSS_SCB_MSS_PLL;
+extern  PLL_TypeDef *MSS_SCB_DDR_PLL;
+extern  PLL_TypeDef *MSS_SCB_SGMII_PLL;
+extern IOSCB_CFM_MSS *MSS_SCB_CFM_MSS_MUX;
+extern IOSCB_CFM_SGMII *MSS_SCB_CFM_SGMII_MUX;
+extern IOSCB_IO_CALIB_STRUCT *IOSCB_IO_CALIB_SGMII;
+extern  IOSCB_IO_CALIB_STRUCT *IOSCB_IO_CALIB_DDR;
+
 #endif
 
 /**************************************************************************/
@@ -151,7 +170,9 @@ static uint8_t probe_phy(const mss_mac_instance_t *this_mac);
 static void instances_init(mss_mac_instance_t *this_mac, mss_mac_cfg_t *cfg);
 
 static void msgmii_init(const mss_mac_instance_t *this_mac);
-static void msgmii_autonegotiate(const mss_mac_instance_t *this_mac);
+
+/* PMCS: Made non static for now for test program use... */
+void msgmii_autonegotiate(const mss_mac_instance_t *this_mac);
 
 /**************************************************************************/
 /* Public Functions                                                       */
@@ -226,25 +247,36 @@ MSS_MAC_init
 
     if(0U == this_mac->is_emac)
     {
-        this_mac->mac_base->USER_IO = 1U;
+/*                this_mac->mac_base->USER_IO = 1U; */
+                this_mac->mac_base->USER_IO = 0U;
     }
 
     if((cfg != NULL_POINTER) && ((this_mac == &g_mac0) || (this_mac == &g_mac1) || (this_mac == &g_emac0) || (this_mac == &g_emac1)))
 #endif /* defined(TARGET_G5_SOC) */
     {
-        this_mac->phy_addr            = cfg->phy_addr;
-        this_mac->pcs_phy_addr        = cfg->pcs_phy_addr;
-        this_mac->interface_type      = cfg->interface_type;
-        this_mac->jumbo_frame_enable  = cfg->jumbo_frame_enable;
-        this_mac->phy_type            = cfg->phy_type;
-        this_mac->phy_autonegotiate   = cfg->phy_autonegotiate;
-        this_mac->phy_get_link_status = cfg->phy_get_link_status;
-        this_mac->phy_init            = cfg->phy_init;
-        this_mac->phy_set_link_speed  = cfg->phy_set_link_speed;
-        this_mac->append_CRC          = cfg->append_CRC;
+        this_mac->phy_addr              = cfg->phy_addr;
+        this_mac->pcs_phy_addr          = cfg->pcs_phy_addr;
+        this_mac->interface_type        = cfg->interface_type;
+        this_mac->jumbo_frame_enable    = cfg->jumbo_frame_enable;
+        this_mac->phy_type              = cfg->phy_type;
+        this_mac->phy_autonegotiate     = cfg->phy_autonegotiate;
+        this_mac->phy_mac_autonegotiate = cfg->phy_mac_autonegotiate;
+        this_mac->phy_get_link_status   = cfg->phy_get_link_status;
+        this_mac->phy_init              = cfg->phy_init;
+        this_mac->phy_set_link_speed    = cfg->phy_set_link_speed;
+        this_mac->append_CRC            = cfg->append_CRC;
+#if defined(TARGET_G5_SOC)
+        this_mac->phy_soft_reset_gpio   = cfg->phy_soft_reset_gpio;
+        this_mac->phy_soft_reset_pin    = cfg->phy_soft_reset_pin;
+        this_mac->phy_hard_reset_gpio   = cfg->phy_hard_reset_gpio;
+        this_mac->phy_hard_reset_pin    = cfg->phy_hard_reset_pin;
+#endif
+        this_mac->phy_controller        = cfg->phy_controller;
+        this_mac->speed_mode            = cfg->speed_mode;
+        this_mac->speed_duplex_select   = cfg->speed_duplex_select;
 #if MSS_MAC_USE_PHY_DP83867
-        this_mac->phy_extended_read   = cfg->phy_extended_read;
-        this_mac->phy_extended_write  = cfg->phy_extended_write;
+        this_mac->phy_extended_read     = cfg->phy_extended_read;
+        this_mac->phy_extended_write    = cfg->phy_extended_write;
 #endif
 
 #if defined(TARGET_G5_SOC)
@@ -332,8 +364,27 @@ MSS_MAC_init
             this_mac->phy_addr = 0U;
 #endif
 
-            this_mac->phy_init(this_mac, 0U);
-            this_mac->phy_set_link_speed(this_mac, cfg->speed_duplex_select);
+            this_mac->phy_init(this_mac, (uint8_t)this_mac->phy_addr);
+
+#if (defined(MSS_MAC_VSC8662_NWC_25) || defined(MSS_MAC_VSC8662_NWC_125))
+            /* 0U => configure using scb, 1U => NVMAP reset */
+                pre_configure_sgmii_and_ddr_pll_via_scb(1U);
+            {
+                volatile uint32_t timer_out=0x00000FFFU;
+                while(((MSS_SCB_SGMII_PLL->PLL_CTRL & ((0x01U) << 25U))) == 0U)
+                {
+                #ifdef RENODE_DEBUG
+                    break;
+                #endif
+                    if (timer_out == 0U)
+                    {
+                        timer_out--;
+                    }
+                }
+            }
+
+#endif
+            this_mac->phy_set_link_speed(this_mac, this_mac->speed_duplex_select, this_mac->speed_mode);
             this_mac->phy_autonegotiate(this_mac);
 
             if(TBI == this_mac->interface_type)
@@ -376,7 +427,7 @@ MSS_MAC_init
                             GEM_RX_USED_BIT_READ | GEM_RECEIVE_COMPLETE | GEM_RESP_NOT_OK_INT;
                 }
 
-#if 1 /* PMCS - set this to 0 if you want to check for un-handled interrupt conditions */
+#if 0 /* PMCS - set this to 1 if you want to check for un-handled interrupt conditions */
                 *this_mac->queue[queue_no].int_enable |= GEM_PAUSE_FRAME_TRANSMITTED | GEM_PAUSE_TIME_ELAPSED |
                         GEM_PAUSE_FRAME_WITH_NON_0_PAUSE_QUANTUM_RX | GEM_LINK_CHANGE |
                         GEM_TX_LOCKUP_DETECTED | GEM_RX_LOCKUP_DETECTED |
@@ -675,50 +726,58 @@ MSS_MAC_cfg_struct_def_init
     {
         (void)memset(cfg, 0, sizeof(mss_mac_cfg_t)); /* Start with clean slate */
 
-        cfg->speed_duplex_select = MSS_MAC_ANEG_ALL_SPEEDS;
+        cfg->speed_duplex_select   = MSS_MAC_ANEG_ALL_SPEEDS;
+        cfg->speed_mode            = MSS_MAC_SPEED_AN;
 #if defined(TARGET_ALOE)
-        cfg->phy_addr            = 0U;
+        cfg->phy_addr              = 0U;
 #endif
 #if defined(TARGET_G5_SOC)
-        cfg->phy_addr            = PHY_NULL_MDIO_ADDR;
+        cfg->phy_addr              = PHY_NULL_MDIO_ADDR;
+        cfg->phy_soft_reset_gpio   = (GPIO_TypeDef *)0UL;
+        cfg->phy_soft_reset_pin    = MSS_GPIO_0;
+        cfg->phy_hard_reset_gpio   = (GPIO_TypeDef *)0UL;
+        cfg->phy_hard_reset_pin    = MSS_GPIO_0;
 #endif
-        cfg->tx_edc_enable       = MSS_MAC_ERR_DET_CORR_DISABLE;
-        cfg->rx_edc_enable       = MSS_MAC_ERR_DET_CORR_DISABLE;
-        cfg->jumbo_frame_enable  = MSS_MAC_JUMBO_FRAME_DISABLE;
-        cfg->jumbo_frame_default = MSS_MAC_MAX_PACKET_SIZE;
-        cfg->length_field_check  = MSS_MAC_LENGTH_FIELD_CHECK_ENABLE;
-        cfg->append_CRC          = MSS_MAC_CRC_ENABLE;
-        cfg->loopback            = MSS_MAC_LOOPBACK_DISABLE;
-        cfg->rx_flow_ctrl        = MSS_MAC_RX_FLOW_CTRL_ENABLE;
-        cfg->tx_flow_ctrl        = MSS_MAC_TX_FLOW_CTRL_ENABLE;
-        cfg->ipg_multiplier      = MSS_MAC_IPG_DEFVAL;
-        cfg->ipg_divisor         = MSS_MAC_IPG_DEFVAL;
-        cfg->phyclk              = MSS_MAC_DEF_PHY_CLK;
-        cfg->mac_addr[0]         = 0x00U;
-        cfg->mac_addr[1]         = 0x00U;
-        cfg->mac_addr[2]         = 0x00U;
-        cfg->mac_addr[3]         = 0x00U;
-        cfg->mac_addr[4]         = 0x00U;
-        cfg->mac_addr[5]         = 0x00U;
-        cfg->queue_enable[0]     = MSS_MAC_QUEUE_DISABLE;
-        cfg->queue_enable[1]     = MSS_MAC_QUEUE_DISABLE;
-        cfg->queue_enable[2]     = MSS_MAC_QUEUE_DISABLE;
-        cfg->phy_type            = MSS_MAC_DEV_PHY_NULL;
-        cfg->interface_type      = NULL_PHY;
-        cfg->phy_autonegotiate   = MSS_MAC_NULL_phy_autonegotiate;
-        cfg->phy_get_link_status = MSS_MAC_NULL_phy_get_link_status;
-        cfg->phy_init            = MSS_MAC_NULL_phy_init;
-        cfg->phy_set_link_speed  = MSS_MAC_NULL_phy_set_link_speed;
-        cfg->use_hi_address      = MSS_MAC_DISABLE;
-        cfg->use_local_ints      = MSS_MAC_DISABLE;
-        cfg->queue0_int_priority = 7U; /* Give them highest priority by default */
-        cfg->queue1_int_priority = 7U;
-        cfg->queue2_int_priority = 7U;
-        cfg->queue3_int_priority = 7U;
-        cfg->mmsl_int_priority   = 7U;
+        cfg->phy_controller        = (mss_mac_instance_t *)0UL;
+        cfg->tx_edc_enable         = MSS_MAC_ERR_DET_CORR_DISABLE;
+        cfg->rx_edc_enable         = MSS_MAC_ERR_DET_CORR_DISABLE;
+        cfg->jumbo_frame_enable    = MSS_MAC_JUMBO_FRAME_DISABLE;
+        cfg->jumbo_frame_default   = MSS_MAC_MAX_PACKET_SIZE;
+        cfg->length_field_check    = MSS_MAC_LENGTH_FIELD_CHECK_ENABLE;
+        cfg->append_CRC            = MSS_MAC_CRC_ENABLE;
+        cfg->loopback              = MSS_MAC_LOOPBACK_DISABLE;
+        cfg->rx_flow_ctrl          = MSS_MAC_RX_FLOW_CTRL_ENABLE;
+        cfg->tx_flow_ctrl          = MSS_MAC_TX_FLOW_CTRL_ENABLE;
+        cfg->ipg_multiplier        = MSS_MAC_IPG_DEFVAL;
+        cfg->ipg_divisor           = MSS_MAC_IPG_DEFVAL;
+        cfg->phyclk                = MSS_MAC_DEF_PHY_CLK;
+        cfg->mac_addr[0]           = 0x00U;
+        cfg->mac_addr[1]           = 0x00U;
+        cfg->mac_addr[2]           = 0x00U;
+        cfg->mac_addr[3]           = 0x00U;
+        cfg->mac_addr[4]           = 0x00U;
+        cfg->mac_addr[5]           = 0x00U;
+        cfg->queue_enable[0]       = MSS_MAC_QUEUE_DISABLE;
+        cfg->queue_enable[1]       = MSS_MAC_QUEUE_DISABLE;
+        cfg->queue_enable[2]       = MSS_MAC_QUEUE_DISABLE;
+        cfg->queue_enable[3]       = MSS_MAC_QUEUE_DISABLE;
+        cfg->phy_type              = MSS_MAC_DEV_PHY_NULL;
+        cfg->interface_type        = NULL_PHY;
+        cfg->phy_autonegotiate     = MSS_MAC_NULL_phy_autonegotiate;
+        cfg->phy_mac_autonegotiate = MSS_MAC_NULL_phy_mac_autonegotiate;
+        cfg->phy_get_link_status   = MSS_MAC_NULL_phy_get_link_status;
+        cfg->phy_init              = MSS_MAC_NULL_phy_init;
+        cfg->phy_set_link_speed    = MSS_MAC_NULL_phy_set_link_speed;
+        cfg->use_hi_address        = MSS_MAC_DISABLE;
+        cfg->use_local_ints        = MSS_MAC_DISABLE;
+        cfg->queue0_int_priority   = 7U; /* Give them highest priority by default */
+        cfg->queue1_int_priority   = 7U;
+        cfg->queue2_int_priority   = 7U;
+        cfg->queue3_int_priority   = 7U;
+        cfg->mmsl_int_priority     = 7U;
 #if MSS_MAC_USE_PHY_DP83867
-        cfg->phy_extended_read   = NULL_ti_read_extended_regs;
-        cfg->phy_extended_write  = NULL_ti_write_extended_regs;
+        cfg->phy_extended_read     = NULL_ti_read_extended_regs;
+        cfg->phy_extended_write    = NULL_ti_write_extended_regs;
 #endif
     }
 }
@@ -949,7 +1008,6 @@ static void config_mac_hw(mss_mac_instance_t *this_mac, const mss_mac_cfg_t * cf
     /* Check for validity of configuration parameters */
     HAL_ASSERT( IS_STATE(cfg->tx_edc_enable) );
     HAL_ASSERT( IS_STATE(cfg->rx_edc_enable) );
-    HAL_ASSERT( MSS_MAC_PREAMLEN_MAXVAL >= cfg->preamble_length );
     HAL_ASSERT( IS_STATE(cfg->jumbo_frame_enable) );
     HAL_ASSERT( IS_STATE(cfg->length_field_check) );
     HAL_ASSERT( IS_STATE(cfg->append_CRC) );
@@ -963,7 +1021,8 @@ static void config_mac_hw(mss_mac_instance_t *this_mac, const mss_mac_cfg_t * cf
     /*--------------------------------------------------------------------------
      * Configure MAC Network Control register
      */
-    temp_net_control = GEM_MAN_PORT_EN | GEM_CLEAR_ALL_STATS_REGS | GEM_PFC_ENABLE;
+/*    temp_net_control = GEM_MAN_PORT_EN | GEM_CLEAR_ALL_STATS_REGS | GEM_PFC_ENABLE; */
+    temp_net_control = GEM_MAN_PORT_EN | GEM_CLEAR_ALL_STATS_REGS | GEM_PFC_ENABLE | GEM_ALT_SGMII_MODE;
 #if 0
     temp_net_control |= GEM_LOOPBACK_LOCAL; /* PMCS: Enable this to force local loop back */
 #endif
@@ -1087,7 +1146,6 @@ static void config_mac_hw(mss_mac_instance_t *this_mac, const mss_mac_cfg_t * cf
         this_mac->mac_base->DMA_CONFIG = GEM_DMA_ADDR_BUS_WIDTH_1 |  (MSS_MAC_RX_BUF_VALUE << GEM_RX_BUF_SIZE_SHIFT) |
                                          GEM_TX_PBUF_SIZE | (((uint32_t)(0x3UL)) << GEM_RX_PBUF_SIZE_SHIFT) | ((uint32_t)(16UL)) |
                                          GEM_TX_BD_EXTENDED_MODE_EN | GEM_RX_BD_EXTENDED_MODE_EN;
-
         /* Record TS for all packets by default */
         this_mac->mac_base->TX_BD_CONTROL = GEM_BD_TS_MODE;
         this_mac->mac_base->RX_BD_CONTROL = GEM_BD_TS_MODE;
@@ -1166,7 +1224,7 @@ static void config_mac_hw(mss_mac_instance_t *this_mac, const mss_mac_cfg_t * cf
 void
 MSS_MAC_write_phy_reg
 (
-    const mss_mac_instance_t *this_mac, 
+    const mss_mac_instance_t *this_mac_in,
     uint8_t phyaddr,
     uint8_t regaddr,
     uint16_t regval
@@ -1174,9 +1232,21 @@ MSS_MAC_write_phy_reg
 {
     volatile uint32_t phy_op;
     psr_t lev;
+    const mss_mac_instance_t *this_mac;
 
     HAL_ASSERT(MSS_MAC_PHYADDR_MAXVAL >= phyaddr);
     HAL_ASSERT(MSS_MAC_PHYREGADDR_MAXVAL >= regaddr);
+
+    /* Check to see which MAC is actually in charge of PHY interface */
+    if((struct mss_mac_instance *)0UL != this_mac_in->phy_controller)
+    {
+        this_mac = (const mss_mac_instance_t *)this_mac_in->phy_controller;
+    }
+    else
+    {
+        this_mac = this_mac_in;
+    }
+
     /* 
      * Write PHY address in MII Mgmt address register.
      * Makes previous register address 0 & invalid.
@@ -1209,22 +1279,36 @@ MSS_MAC_write_phy_reg
 }
 
 
+
+
 /******************************************************************************
  * See mss_ethernet_mac.h for details of how to use this function.
  */
 uint16_t
 MSS_MAC_read_phy_reg
 (
-    const mss_mac_instance_t *this_mac, 
+    const mss_mac_instance_t *this_mac_in,
     uint8_t phyaddr,
     uint8_t regaddr
 )
 {
     volatile uint32_t phy_op;
     psr_t lev;
+    const mss_mac_instance_t *this_mac;
 
     HAL_ASSERT(MSS_MAC_PHYADDR_MAXVAL >= phyaddr);
     HAL_ASSERT(MSS_MAC_PHYREGADDR_MAXVAL >= regaddr);
+
+    /* Check to see which MAC is actually in charge of PHY interface */
+    if((struct mss_mac_instance *)0UL != this_mac_in->phy_controller)
+    {
+        this_mac = (const mss_mac_instance_t *)this_mac_in->phy_controller;
+    }
+    else
+    {
+        this_mac = this_mac_in;
+    }
+
     /* 
      * Write PHY address in MII Mgmt address register.
      * Makes previous register address 0 & invalid.
@@ -1268,6 +1352,51 @@ MSS_MAC_read_phy_reg
     }
 
     return((uint16_t)phy_op);
+}
+
+
+/******************************************************************************
+ * See mss_ethernet_mac.h for details of how to use this function.
+ */
+void
+MSS_MAC_phy_reset
+(
+    const mss_mac_instance_t *this_mac,
+    mss_mac_phy_reset_t reset_type,
+    bool     reset_state
+)
+{
+#if defined(TARGET_G5_SOC)
+    /* Reset pointer to base MAC structure */
+    if(&g_emac0 == this_mac)
+    {
+        this_mac = &g_mac0;
+    }
+
+    if(&g_emac1 == this_mac)
+    {
+        this_mac = &g_mac1;
+    }
+
+    if(MSS_MAC_SOFT_RESET == reset_type)
+    {
+        if((GPIO_TypeDef *)0UL != this_mac->phy_soft_reset_gpio)
+        {
+            MSS_GPIO_set_output(this_mac->phy_soft_reset_gpio, this_mac->phy_soft_reset_pin, reset_state);
+        }
+    }
+    else
+    {
+        if((GPIO_TypeDef *)0UL != this_mac->phy_hard_reset_gpio)
+        {
+            MSS_GPIO_set_output(this_mac->phy_hard_reset_gpio, this_mac->phy_hard_reset_pin, reset_state);
+        }
+    }
+#else
+    (void)this_mac;
+    (void)reset_type;
+    (void)reset_state;
+#endif
 }
 
 
@@ -1337,7 +1466,7 @@ MSS_MAC_read_stat
         GEM_REG_OFFSET(AUTO_FLUSHED_PKTS)
     };
     
-    ASSERT(MSS_MAC_LAST_STAT > stat);
+    HAL_ASSERT(MSS_MAC_LAST_STAT > stat);
     
     if((MSS_MAC_LAST_STAT > stat) && (MSS_MAC_AVAILABLE == this_mac->mac_available))
     {
@@ -1620,18 +1749,34 @@ MSS_MAC_send_pkt
             this_mac->queue[queue_no].tx_desc_tab[0].addr_high = (uint32_t)((uint64_t)tx_buffer >> 32);
             this_mac->queue[queue_no].tx_desc_tab[0].unused    = 0U;
 #endif
+
             this_mac->queue[queue_no].tx_caller_info[0] = p_user_data;
 
             if(0U != this_mac->is_emac)
             {
-                this_mac->emac_base->NETWORK_CONTROL |= GEM_ENABLE_TRANSMIT | GEM_TRANSMIT_HALT;
+                volatile int delay;
+
+                this_mac->emac_base->NETWORK_CONTROL       &= ~GEM_ENABLE_TRANSMIT;
                 this_mac->emac_base->TRANSMIT_Q_PTR   = (uint32_t)((uint64_t)this_mac->queue[queue_no].tx_desc_tab);
-                this_mac->emac_base->NETWORK_CONTROL |= GEM_TRANSMIT_START;
+                /*
+                 * When transmitting at 10M, this delay is needed or transmission
+                 * may fail - 625MHz cpu clock, executing from LIM - YMMV
+                 */
+                for(delay = 0; delay != 8; delay++)
+                    ;
+                this_mac->emac_base->NETWORK_CONTROL       |= GEM_ENABLE_TRANSMIT;
+                this_mac->emac_base->NETWORK_CONTROL       |= GEM_TRANSMIT_START;
             }
             else
             {
-                this_mac->mac_base->NETWORK_CONTROL       |= GEM_ENABLE_TRANSMIT | GEM_TRANSMIT_HALT;
+                volatile int delay;
+
+                this_mac->mac_base->NETWORK_CONTROL       &= ~GEM_ENABLE_TRANSMIT;
                 *this_mac->queue[queue_no].transmit_q_ptr  = (uint32_t)((uint64_t)this_mac->queue[queue_no].tx_desc_tab);
+                /* When transmitting at 10M, this delay is needed, 625MHz cpu clock - YMMV */
+                for(delay = 0; delay != 8; delay++)
+                    ;
+                this_mac->mac_base->NETWORK_CONTROL       |= GEM_ENABLE_TRANSMIT;
                 this_mac->mac_base->NETWORK_CONTROL       |= GEM_TRANSMIT_START;
             }
 
@@ -2563,6 +2708,91 @@ void MSS_MAC_set_rx_callback
     if(MSS_MAC_AVAILABLE == this_mac->mac_available)
     {
         this_mac->queue[queue_no].pckt_rx_callback = rx_callback;
+    }
+}
+
+
+/******************************************************************************
+ * See mss_ethernet_mac.h for details of how to use this function.
+ */
+void MSS_MAC_change_speed
+(
+    mss_mac_instance_t *this_mac, uint32_t speed_duplex_select, mss_mac_speed_mode_t speed_mode
+)
+{
+    uint32_t temp_cr;
+
+    if(MSS_MAC_AVAILABLE == this_mac->mac_available)
+    {
+        /* Only change HW settings if there is a change in status */
+        if((this_mac->speed_duplex_select |= speed_duplex_select) || (this_mac->speed_mode != speed_mode))
+        {
+            this_mac->speed_duplex_select = speed_duplex_select;
+            this_mac->speed_mode = speed_mode;
+
+            /* Apply settings to the PHY */
+            this_mac->phy_set_link_speed(this_mac, this_mac->speed_duplex_select, speed_mode);
+            this_mac->phy_autonegotiate(this_mac); /* Do this in case it is needed */
+            if(MSS_MAC_SPEED_AN == speed_mode) /* Apply results of AN to MAC */
+            {
+                update_mac_cfg(this_mac);
+            }
+            else
+            {
+                if(0U != this_mac->is_emac)
+                {
+                    temp_cr = this_mac->emac_base->NETWORK_CONFIG;
+                }
+                else
+                {
+                    temp_cr = this_mac->mac_base->NETWORK_CONFIG;
+                }
+
+                temp_cr &= ~(GEM_GIGABIT_MODE_ENABLE | GEM_SPEED | GEM_FULL_DUPLEX);
+
+                if((MSS_MAC_1000_HDX == this_mac->speed_mode) || (MSS_MAC_1000_FDX == this_mac->speed_mode))
+                {
+    #if defined(TARGET_ALOE)
+                    *GEMGXL_tx_clk_sel = (uint32_t)0U;
+                    *GEMGXL_speed_mode = (uint32_t)2U;
+    #endif
+                    temp_cr |= GEM_GIGABIT_MODE_ENABLE;
+                }
+                else
+                {
+                    if((MSS_MAC_100_HDX == this_mac->speed_mode) || (MSS_MAC_100_FDX == this_mac->speed_mode))
+                    {
+    #if defined(TARGET_ALOE)
+                    *GEMGXL_tx_clk_sel = (uint32_t)1U;
+                    *GEMGXL_speed_mode = (uint32_t)1U;
+    #endif
+                    temp_cr |= (uint32_t)GEM_SPEED;
+                    }
+    #if defined(TARGET_ALOE)
+                    else
+                    {
+                        *GEMGXL_tx_clk_sel = (uint32_t)1U;
+                        *GEMGXL_speed_mode = (uint32_t)0U;
+                    }
+    #endif
+                }
+
+                /* Configure duplex mode */
+                if((MSS_MAC_10_FDX == this_mac->speed_mode) || (MSS_MAC_100_FDX == this_mac->speed_mode) || (MSS_MAC_1000_FDX == this_mac->speed_mode))
+                {
+                    temp_cr |= GEM_FULL_DUPLEX;
+                }
+
+                if(0U != this_mac->is_emac)
+                {
+                    this_mac->emac_base->NETWORK_CONFIG = temp_cr;
+                }
+                else
+                {
+                    this_mac->mac_base->NETWORK_CONFIG = temp_cr;
+                }
+            }
+        }
     }
 }
 
@@ -4249,6 +4479,9 @@ txpkt_handler
      * Simple single packet TX queue where only the one packet buffer is needed
      * but two descriptors are required to stop DMA engine running over itself...
      */
+
+    *this_mac->queue[queue_no].transmit_q_ptr  = 1; /* Disable the TX queue */
+
     if(NULL_POINTER != this_queue->pckt_tx_callback)
     {
         this_queue->pckt_tx_callback(this_mac, queue_no, this_queue->tx_desc_tab, this_queue->tx_caller_info[0]);
@@ -4257,48 +4490,7 @@ txpkt_handler
     this_queue->nb_available_tx_desc = MSS_MAC_TX_RING_SIZE; /* Release transmit queue... */
 
 #else    
-    uint32_t empty_flag;
-    uint32_t index;
-    uint32_t completed = 0U;
-    HAL_ASSERT(g_mac.first_tx_index != INVALID_INDEX);
-    HAL_ASSERT(g_mac.last_tx_index != INVALID_INDEX);
-    /* TBD PMCS multi packet tx queue not implemented yet */
-    index = g_mac.first_tx_index;
-    do
-    {
-        ++g_mac.nb_available_tx_desc;
-        /* Call packet Tx completion handler if it exists. */
-        if(NULL_POINTER != g_mac.pckt_tx_callback)
-        {
-            g_mac.pckt_tx_callback(g_mac.tx_desc_tab[index].caller_info);
-        }
-        
-        if(index == g_mac.last_tx_index)
-        {
-            /* all pending tx packets sent. */
-            g_mac.first_tx_index = INVALID_INDEX;
-            g_mac.last_tx_index = INVALID_INDEX;
-            completed = 1U;
-        }
-        else
-        {
-            /* Move on to next transmit descriptor. */
-            ++index;
-            index %= MSS_MAC_TX_RING_SIZE;
-            g_mac.first_tx_index = index;
-            /* Check if we reached a descriptor still pending tx. */
-            empty_flag = g_mac.tx_desc_tab[index].pkt_size & DMA_DESC_EMPTY_FLAG_MASK;
-            if(0U == empty_flag)
-            {
-                completed = 1U;
-            }
-        }
-        
-        
-        /* Clear the tx packet sent interrupt. Please note that this must be
-         * done for every packet sent as it decrements the TXPKTCOUNT. */
-        set_bit_reg32(&MAC->DMA_TX_STATUS, DMA_TXPKTSENT);
-    } while(0U == completed);
+#error "Multi packet TX not implemented!"
 #endif
 }
 
@@ -4480,7 +4672,7 @@ static void msgmii_init(const mss_mac_instance_t *this_mac)
 /*******************************************************************************
  *
  */
- static void msgmii_autonegotiate(const mss_mac_instance_t *this_mac)
+void msgmii_autonegotiate(const mss_mac_instance_t *this_mac)
  {
     uint16_t phy_reg;
     uint16_t autoneg_complete;

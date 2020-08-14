@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,6 @@
  * PolarFire SoC Microcontroller Subsystem 10/100/1000 Mbps Ethernet MAC bare
  * metal software driver public API.
  *
- * SVN $Revision$
- * SVN $Date$
  */
 /*=========================================================================*//**
   @mainpage PolarFire SoC MSS Ethernet MAC Bare Metal Driver.
@@ -403,9 +401,9 @@ extern "C" {
 #define MSS_MAC_BY128_PHY_CLK                       (6U)
 #define MSS_MAC_BY224_PHY_CLK                       (7U)
 #if defined(TARGET_ALOE)
-#define MSS_MAC_DEF_PHY_CLK                         MSS_MAC_BY224_PHY_CLK /* Good for up to 540MHz */
+#define MSS_MAC_DEF_PHY_CLK                         MSS_MAC_BY224_PHY_CLK /* Good for up to 560MHz */
 #else
-#define MSS_MAC_DEF_PHY_CLK                         MSS_MAC_BY32_PHY_CLK /* Good for up to 80MHz */
+#define MSS_MAC_DEF_PHY_CLK                         MSS_MAC_BY96_PHY_CLK /* Good for up to 240MHz */
 #endif
 
 /* Default & Maximum PHY addresses */
@@ -743,6 +741,48 @@ void MSS_MAC_set_rx_callback
     mss_mac_instance_t *this_mac,
     uint32_t queue_no,
     mss_mac_receive_callback_t rx_callback
+);
+
+/***************************************************************************//**
+  The MSS_MAC_change_speed() function sets the speed for the link and if
+  autonegotiation is selected as the speed mode, also sets the speeds to
+  advertise.
+
+  @param this_mac
+    This parameter is a pointer to one of the global mss_mac_instance_t
+    structures which identifies the MAC that the function is to operate on.
+    There are between 1 and 4 such structures identifying pMAC0, eMAC0, pMAC1
+    and eMAC1.
+
+  @param speed_duplex_select
+    This parameter identifies the speed and duplex options to advertise to the
+    link partner if autonegotiation is selected as the speed mode..
+
+  @param speed_mode
+    This parameter selects between autonegotiation and one of the six speed and
+    duplex options. Valid values are:
+
+      MSS_MAC_SPEED_AN
+      MSS_MAC_10_HDX
+      MSS_MAC_10_FDX
+      MSS_MAC_100_HDX
+      MSS_MAC_100_FDX
+      MSS_MAC_1000_HDX
+      MSS_MAC_1000_FDX
+
+    if MSS_MAC_SPEED_AN is selected when previously there was a static speed
+    selection or if the autonegotiation advertisement select is changed then an
+    autonegotiation operation is kicked off via the PHY which may cause
+    temporary link loss.
+
+    Note: Selecting MSS_MAC_1000_HDX or MSS_MAC_1000_FDX is not recommended, if
+    fixed 1G operation is required, the recommended approach is to use the
+    MSS_MAC_SPEED_AN option as the PHY and/or link partner may not be able to
+    honor the request otherwise.
+ */
+void MSS_MAC_change_speed
+(
+    mss_mac_instance_t *this_mac, uint32_t speed_duplex_select, mss_mac_speed_mode_t speed_mode
 );
 
 /***************************************************************************//**
@@ -1144,6 +1184,56 @@ MSS_MAC_write_phy_reg
     uint8_t phyaddr,
     uint8_t regaddr,
     uint16_t regval
+);
+
+/***************************************************************************//**
+  The MSS_MAC_phy_reset function provides a mechanism for resetting the PHY
+  device attached to a given MSS MAC peripheral. Both soft and hard reset
+  signals can be controlled via this function.
+
+  This function is used by the Ethernet PHY drivers provided alongside the
+  Ethernet MAC driver. You only need to use this function if writing your own
+  Ethernet PHY driver.
+
+  This function always accesses the pMAC structure data as the same PHY is
+  shared by both eMAC and pMAC.
+
+  @param this_mac
+    This parameter is a pointer to one of the global mss_mac_instance_t
+    structures which identifies the MAC that the function is to operate on.
+    There are between 1 and 4 such structures identifying pMAC0, eMAC0, pMAC1
+    and eMAC1.
+
+  @param reset_type
+    This parameter selects between hard and soft reset
+
+  @param reset_state
+    This parameter is the state to set the reset pin to. For active low resets
+    this should be set to false to reset the PHY and true to release the PHY
+    from reset and the opposite for active high resets. It is the responsibility
+    of the PHY driver to select the correct values for the hardware involved.
+
+  @return
+    This function does not return a value.
+
+  Example:
+  @code
+    #include "mss_ethernet_mac.h"
+
+    void reset_phy(void)
+    {
+        MSS_MAC_phy_reset(&g_mac0, MSS_MAC_SOFT_RESET, false);
+        // delay for a bit
+        MSS_MAC_phy_reset(&g_mac0, MSS_MAC_SOFT_RESET, true);
+    }
+  @endcode
+ */
+void
+MSS_MAC_phy_reset
+(
+    const mss_mac_instance_t *this_mac,
+    mss_mac_phy_reset_t reset_type,
+    bool     reset_state
 );
 
 /***************************************************************************//**

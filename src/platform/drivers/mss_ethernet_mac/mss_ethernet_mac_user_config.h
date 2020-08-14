@@ -1,14 +1,11 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
  * This file contains system specific definitions for the PolarFire SoC MSS
  * Ethernet MAC device driver.
  * 
- * SVN $Revision$
- * SVN $Date$
- *
  */
 
 #ifndef MICROSEMI__FIRMWARE__POLARFIRE_SOC_MSS_ETHERNET_MAC_DRIVER__1_5_101_CONFIGURATION_HEADER
@@ -45,6 +42,7 @@
 #define MSS_MAC_DEV_PHY_VSC8541         (0x0004U)
 #define MSS_MAC_DEV_PHY_DP83867         (0x0008U)
 #define MSS_MAC_DEV_PHY_VSC8575_LITE    (0x0010U) /* Uses Lite VTSS API */
+#define MSS_MAC_DEV_PHY_VSC8662         (0x0020U)
 
 
 /*
@@ -69,6 +67,12 @@
 #define MSS_MAC_DESIGN_EMUL_TBI_TI         (10) /* G5 SoC Emulation Platform DP83867 designs with TBI to SGMII bridge GEM0            */
 #define MSS_MAC_DESIGN_EMUL_TBI_GEM1_TI    (11) /* G5 SoC Emulation Platform DP83867 designs with TBI to SGMII bridge GEM1            */
 #define MSS_MAC_DESIGN_EMUL_GMII_LOCAL     (12) /* G5 SoC Emulation Platform VSC8575 design with GMII to SGMII bridge with local ints */
+#define MSS_MAC_DESIGN_RENODE              (13) /* Renode */
+#define MSS_MAC_DESIGN_SVG_SGMII_GEM0      (14) /* Silicon validation board GEM0 */
+#define MSS_MAC_DESIGN_SVG_SGMII_GEM1      (15) /* Silicon validation board GEM1 */
+#define MSS_MAC_DESIGN_SVG_DUAL_GEM        (16) /* Silicon validation board both GEMS */
+#define MSS_MAC_DESIGN_SVG_GMII_GEM0       (17) /* Silicon validation board GEM0 */
+#define MSS_MAC_DESIGN_SVG_GMII_GEM1       (18) /* Silicon validation board GEM1 */
 
 #if defined(TARGET_ALOE)
 #define MSS_MAC_PHY_INTERFACE GMII /* Only one option allowed here... */
@@ -78,12 +82,21 @@
 #define MSS_MAC_HW_PLATFORM MSS_MAC_DESIGN_ALOE
 #endif
 
+/*
+ * Define one of these macros if using the VSC8662 PHY recovered clock through
+ * the NWC at 25MHZ or 125MHZ. You will need to configure the SGMII PLL Mux as
+ * well.
+ *
+ * #define MSS_MAC_VSC8662_NWC_25
+ * #define MSS_MAC_VSC8662_NWC_125
+ *
+ */
 
 #if defined(TARGET_G5_SOC)
-#define MSS_MAC_PHYS (MSS_MAC_DEV_PHY_NULL | MSS_MAC_DEV_PHY_VSC8575_LITE | MSS_MAC_DEV_PHY_DP83867)
+#define MSS_MAC_PHYS (MSS_MAC_DEV_PHY_NULL | MSS_MAC_DEV_PHY_VSC8575_LITE | MSS_MAC_DEV_PHY_DP83867 | MSS_MAC_DEV_PHY_VSC8662 | MSS_MAC_DEV_PHY_VSC8541)
 
-#define MSS_MAC_HW_PLATFORM MSS_MAC_DESIGN_EMUL_DUAL_EXTERNAL
-
+#define MSS_MAC_HW_PLATFORM MSS_MAC_DESIGN_SVG_SGMII_GEM1
+//#define MSS_MAC_HW_PLATFORM MSS_MAC_DESIGN_EMUL_DUAL_EX_VTS
 //#define MSS_MAC_RX_RING_SIZE (16U)
 #define MSS_MAC_RX_RING_SIZE (9U)
 #define MSS_MAC_TX_RING_SIZE (4U) /* PMCS should be 2 but want to be able to force duplicate
@@ -95,6 +108,7 @@
 #define MSS_MAC_USE_PHY_VSC8541      (0U != (MSS_MAC_PHYS & MSS_MAC_DEV_PHY_VSC8541))
 #define MSS_MAC_USE_PHY_DP83867      (0U != (MSS_MAC_PHYS & MSS_MAC_DEV_PHY_DP83867))
 #define MSS_MAC_USE_PHY_NULL         (0U != (MSS_MAC_PHYS & MSS_MAC_DEV_PHY_NULL))
+#define MSS_MAC_USE_PHY_VSC8662      (0U != (MSS_MAC_PHYS & MSS_MAC_DEV_PHY_VSC8662))
 
 #define MSS_MAC_TIME_STAMPED_MODE      (0) /* Enable time stamp support */ */
 

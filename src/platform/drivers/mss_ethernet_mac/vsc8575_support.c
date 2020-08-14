@@ -1,13 +1,10 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
  * Support routines for the VTS API for the Microsemi VSC8575 PHY interface
  * to support the peripheral daughter board for the G5 SoC Emulation Platform.
- *
- * SVN $Revision$
- * SVN $Date$
  *
  */
 #include <stdio.h>
