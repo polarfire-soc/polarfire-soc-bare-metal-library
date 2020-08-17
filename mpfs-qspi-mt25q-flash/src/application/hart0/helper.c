@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
+ *
  *
  * Implementation of helper functions for UART terminal interactions.
  *
  */
 
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "helper.h"
 
 static const uint8_t g_separator[] =

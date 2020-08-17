@@ -8,8 +8,8 @@
  *
  */
 
+#include "mpfs_hal/mss_hal.h"
 #include "mss_qspi.h"
-#include "mpfs_hal/mss_plic.h"
 
 #ifdef __cplusplus
 extern "C" {
