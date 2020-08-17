@@ -33,7 +33,7 @@
 | mss-mmuart examples | 1.6.100 | 2020-08-14 | 
 | mss-mpfs-hal examples | 1.6.102 | 2020-08-14 | 
 | mss-pdma examples | 1.6.101 | 2020-06-18 | 
-| mss-qspi examples | 1.6.100 | 2020-06-19 | 
+| mss-qspi examples | 1.7.104 | 2020-08-17 | 
 | mss-rtc examples | 1.6.100 | 2020-06-19 | 
 | mss-spi examples | 1.6.100 | 2020-06-19 | 
 | mss-sys-services examples | 1.6.100 | 2020-06-23 | 
