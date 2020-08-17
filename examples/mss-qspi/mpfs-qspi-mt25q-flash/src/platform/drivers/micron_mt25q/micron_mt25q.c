@@ -14,8 +14,6 @@
 #include "drivers/micron_mt25q/micron_mt25q.h"
 #include "mpfs_hal/mss_plic.h"
 
-#include "drivers/mss_uart/mss_uart.h"
-
 /*Following constant must be defined if you want to use the interrupt mode 
   transfers provided by the MSS QSPI driver. Comment this out to use the polling
   mode transfers.*/
