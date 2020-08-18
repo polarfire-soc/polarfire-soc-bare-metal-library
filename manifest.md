@@ -30,7 +30,7 @@
 | mss-gpio examples | 1.6.100 | 2020-06-17 | 
 | mss-i2c examples | 1.6.102 | 2020-06-10 | 
 | mss-mmc examples | 1.6.100 | 2020-06-17 | 
-| mss-mmuart examples | 1.6.100 | 2020-08-14 | 
+| mss-mmuart examples | 1.7.109 | 2020-08-18 | 
 | mss-mpfs-hal examples | 1.6.102 | 2020-08-14 | 
 | mss-pdma examples | 1.6.101 | 2020-06-18 | 
 | mss-qspi examples | 1.7.104 | 2020-08-17 | 
