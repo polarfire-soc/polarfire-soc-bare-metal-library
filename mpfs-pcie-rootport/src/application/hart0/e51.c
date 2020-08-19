@@ -3,25 +3,21 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * MPFS PCIe RootPort example
- *
- */
-/******************************************************************************
- *
- * Code running on e51
+ * Application code running on E51
  *
  */
 
-#include "config/hardware/hw_platform.h"
 #include "drivers/pf_pcie/pf_pcie.h"
 
-/******************************************************************************
- *
+#define PCIE_APB_BASE_ADDR              0x50000000UL
+
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
  */
 void e51(void)
 {
-    pf_pcie_slave_atr_cfg_t  p_cfg;
-    pf_pcie_ebuff_t  * p_pcie_enum_data;
+    pf_pcie_slave_atr_cfg_t p_cfg;
+    pf_pcie_ebuff_t * p_pcie_enum_data;
     pf_pcie_bar_info_t * p_pcie_bar_data;
 
     uint8_t slv_table_no = 0u;
@@ -51,9 +47,12 @@ void e51(void)
 
     if (p_pcie_enum_data->no_of_devices_attached != 0u)
     {
-        /* Allocate memory - EndPoint connected to RootPort with bus-1 device-0 fun-0
-         * ecam = 0x60100000UL - AXI slave address= 0x60000000UL, bus num = 1, device = 0, fun num = 0
-         * allocate addr = 0x60000000UL */
+        /* Allocate memory - EndPoint connected to RootPort with
+         * bus-1 device-0 fun-0
+         * ecam = 0x60100000UL - AXI slave address= 0x60000000UL, bus num = 1,
+         * device = 0, fun num = 0
+         * allocate addr = 0x60000000UL 
+         */
         p_pcie_bar_data = PF_PCIE_allocate_memory(0x60100000UL, 0x60000000UL);
 
         p_pcie_end_point = (uint8_t *)((uintptr_t)(p_pcie_bar_data->bar2_address));
@@ -73,8 +72,9 @@ void e51(void)
             }
         }
     }
-    while (1)
+    while (1u)
     {
 
     }
+    /* Never return */
 }
