@@ -26,7 +26,7 @@
 */
 
 /***********************************************************************************
- * Record of Microsemi changes
+ * Record of Microchip changes
  */
 
 #ifndef RISCV_ATOMIC_H

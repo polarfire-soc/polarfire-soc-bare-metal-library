@@ -164,7 +164,8 @@
 #ifndef __MSS_MMC_H
 #define __MSS_MMC_H
 
-#include "hal/cpu_types.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -261,6 +262,12 @@ extern "C"
 #define MSS_MMC_DATA_WIDTH_4BIT         0x01u
 #define MSS_MMC_DATA_WIDTH_8BIT         0x02u
 
+/* eMMC bus voltage */
+/* 1.8v */
+#define MSS_MMC_1_8V_BUS_VOLTAGE     18u
+/* 3.3v */
+#define MSS_MMC_3_3V_BUS_VOLTAGE      33u
+
 #define MSS_SDIO_FUNCTION_NUMBER_0      0u
 #define MSS_SDIO_FUNCTION_NUMBER_1      1u
 #define MSS_SDIO_FUNCTION_NUMBER_2      2u
@@ -323,7 +330,8 @@ typedef enum
     MSS_MMC_DEVICE_NOT_SUPPORT_HPI,
     MSS_MMC_DEVICE_IS_NOT_IN_HPI_MODE,
     MSS_MMC_DEVICE_HPI_NOT_DISABLED,
-    MSS_MMC_DATA_SIZE_IS_NOT_MULTI_BLOCK
+    MSS_MMC_DATA_SIZE_IS_NOT_MULTI_BLOCK,
+    MSS_MMC_DEVICE_ERROR
 } mss_mmc_status_t;
 
 /*-------------------------------------------------------------------------*//**
@@ -344,6 +352,8 @@ typedef struct
      uint8_t data_bus_width;
     /* Specifies the bus speed mode of the eMMC/SD/SDIO */ 
      uint8_t bus_speed_mode;
+     /* Specifies the bus voltage for eMMC only */
+     uint8_t bus_voltage; 
 } mss_mmc_cfg_t;
 
 /*-------------------------------------------------------------------------*//**
@@ -393,7 +403,8 @@ typedef void (*mss_mmc_handler_t)(uint32_t status);
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
-    
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
+
     ret_status = MSS_MMC_init(&g_mmc0);
     if (MSS_MMC_INIT_SUCCESS == ret_status)
     {
@@ -448,6 +459,7 @@ MSS_MMC_init
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -514,7 +526,8 @@ MSS_MMC_single_block_write
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
-    
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
+
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
         tx_data_buffer[loop_count] = 0x45 + loop_count;
@@ -594,7 +607,8 @@ MSS_MMC_single_block_read
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
-    
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
+
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
         data_buffer[loop_count] = 0x45 + loop_count;
@@ -670,6 +684,7 @@ MSS_MMC_sdma_write
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -747,6 +762,7 @@ MSS_MMC_sdma_read
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -823,6 +839,7 @@ MSS_MMC_adma2_write
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
 
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -849,24 +866,26 @@ MSS_MMC_adma2_read
 );
 /*-------------------------------------------------------------------------*//**
   The MSS_MMC_sdio_single_block_write() function is used to transfer a single
-  block of data from the host controller to the SDIO device. The size of the
-  block of data transferred by this function is 512 bytes.
+  block of data from the host controller to the SDIO device function 1
+  code storage area(CSA). The size of the block of data transferred by this
+  function is 1 to 512 bytes.
   
   Note: This function is a blocking function and will not return until the
   write operation is successful or an error occurs.
   
-  @param function_num
-  Specifies the SDIO standard function number.
-
   @param src_addr
   This parameter is a pointer to a buffer containing the data to be stored in
   the SDIO device. The buffer to which this parameter points must be declared
-  with a minimum size of 512 bytes.
+  with a minimum size in the range of 1 to 512 bytes.
 
   @param dst_addr
-  Specifies the function register address in the SDIO device where the data is
-  to be stored.
+  Specifies the function 1 code storage area(CSA) address in the SDIO device
+  where the data is to be stored.
 
+  @param data_size
+  Specifies the dat_size in bytes of the requested transfer. The value of size must
+  be in the range of 1 to 512 bytes but not greater than 512.
+  
   @return
   This function returns a value of type mss_mmc_status_t which specifies the
   transfer status of the operation.
@@ -877,9 +896,8 @@ MSS_MMC_adma2_read
   
   @code
 
-    #define BUFFER_SIZE 512u
-    #define REG_NUM 0x00000001u
-    #define SDIO_FUN_NUM 0x00000001u
+    #define BUFFER_SIZE 4
+    #define REG_NUM 0x1118u
     
     mss_mmc_cfg_t g_mmc0;
     mss_mmc_status_t ret_status;
@@ -887,10 +905,10 @@ MSS_MMC_adma2_read
     uint8_t data_buffer[BUFFER_SIZE];
     uint32_t loop_count;
     
-    g_mmc0.clk_rate = MSS_MMC_CLOCK_12MHZ;
+    g_mmc0.clk_rate = MSS_MMC_CLOCK_25MHZ;
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_SDIO;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
-    g_mmc0.bus_speed_mode = MSS_SDCARD_MODE_DEFAULT_SPEED;
+    g_mmc0.bus_speed_mode = MSS_SDCARD_MODE_HIGH_SPEED;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -900,8 +918,9 @@ MSS_MMC_adma2_read
     ret_status = MSS_MMC_init(&g_mmc0);
     if (MSS_MMC_INIT_SUCCESS == ret_status)
     {
-        ret_status = MSS_MMC_sdio_single_block_write(SDIO_FUN_NUM, data_buffer,
-                                                                     REG_NUM);
+        ret_status = MSS_MMC_sdio_single_block_write(data_buffer, 
+                                                    REG_NUM,
+                                                    BUFFER_SIZE);
         if (MSS_MMC_TRANSFER_SUCCESS == ret_status)
         {
             //...
@@ -912,30 +931,33 @@ MSS_MMC_adma2_read
 mss_mmc_status_t
 MSS_MMC_sdio_single_block_write
 (
-    uint8_t function_num,
     const uint32_t * src_addr,
-    uint32_t dst_addr
+    uint32_t dst_addr,
+    uint16_t data_size
 );
 
 /*-------------------------------------------------------------------------*//**
   The MSS_MMC_sdio_single_block_read() function is used to read a single block
-  of data from the the SDIO device to host controller. The size of the block of
-  data transferred by this function is set to 512 bytes.
+  of data from the the SDIO device function 1 code storage area(CSA) to host
+  controller. The size of the block of data transferred by this function
+  is set to in the range of 1 to 512 bytes.
+
   Note: This function is a blocking function and will not return until the
   write operation is successful or an error occurs.
   
-  @param function_num
-  Specifies the SDIO standard function number.
-
   @param src_addr
-  Specifies the SDIO function number space register address in the SDIO device
-  from where the 512 bytes block of data will be read.
+  Specifies the function 1 code storage area(CSA) address in the SDIO device
+  from where the 1 to 512 bytes of data will be read.
 
   @param dst_addr
   This parameter is a pointer to a buffer where the data read from the SDIO
   device will be stored. The buffer to which this parameter points must be
-  declared with a minimum size of 512 bytes.
+  declared with a minimum size in the range of 1 to 512 bytes.
 
+  @param data_size
+  Specifies the dat_size in bytes of the requested transfer. The value of size must
+  be in the range of 1 to 512 bytes but not greater than 512.
+  
   @return
   This function returns a value of type mss_mmc_status_t which specifies the
   transfer status of the operation.
@@ -947,23 +969,23 @@ MSS_MMC_sdio_single_block_write
   @code
 
     #define BUFFER_SIZE 512u
-    #define REG_NUM 0x00000001u
-    #define SDIO_FUN_NUM 0x00000001u
+    #define REG_NUM 0x000C0000u
     
     mss_mmc_cfg_t g_mmc0;
     mss_mmc_status_t ret_status;
     uint8_t data_buffer[BUFFER_SIZE];
     
-    g_mmc0.clk_rate = MSS_MMC_CLOCK_12MHZ;
+    g_mmc0.clk_rate = MSS_MMC_CLOCK_25MHZ;
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_SDIO;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
-    g_mmc0.bus_speed_mode = MSS_SDCARD_MODE_DEFAULT_SPEED;
+    g_mmc0.bus_speed_mode = MSS_SDCARD_MODE_HIGH_SPEED;
     
     ret_status = MSS_MMC_init(&g_mmc0);
     if (MSS_MMC_INIT_SUCCESS == ret_status)
     {
-        ret_status = MSS_MMC_sdio_single_block_read(SDIO_FUN_NUM, REG_NUM,
-                                                                 data_buffer);
+        ret_status = MSS_MMC_sdio_single_block_read(REG_NUM,
+                                                    data_buffer
+                                                    BUFFER_SIZE);
         if (MSS_MMC_TRANSFER_SUCCESS == ret_status)
         {
             //...
@@ -974,9 +996,9 @@ MSS_MMC_sdio_single_block_write
 mss_mmc_status_t
 MSS_MMC_sdio_single_block_read
 (
-    uint8_t function_num,
     uint32_t src_addr,
-    uint8_t *dst_addr
+    uint32_t *dst_addr,
+    uint16_t data_size
 );
 
 /*-------------------------------------------------------------------------*//**
@@ -1051,6 +1073,7 @@ mss_mmc_status_t MSS_MMC_get_transfer_status(void);
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -1161,6 +1184,7 @@ mss_mmc_status_t MSS_MMC_cq_init(void);
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {
@@ -1244,6 +1268,7 @@ MSS_MMC_cq_write
     g_mmc0.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc0.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
     g_mmc0.bus_speed_mode = MSS_MMC_MODE_LEGACY;
+    g_mmc0.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
     
     for (loop_count = 0; loop_count < (BUFFER_SIZE); loop_count++)
     {

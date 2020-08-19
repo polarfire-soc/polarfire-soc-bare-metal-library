@@ -1,6 +1,9 @@
 /*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
+ * SPDX-License-Identifier: MIT
+ *
+ *  
  */
 
 #ifndef COMMON_H_
@@ -10,9 +13,9 @@
 
 typedef enum COMMAND_TYPE_
 {
-	CLEAR_COMMANDS        				= 0x00,       /*!< 0 default behavior */
-	START_HART1_U_MODE        			= 0x01,       /*!< 1 u mode */
-	START_HART2_S_MODE        			= 0x02,       /*!< 2 s mode */
+    CLEAR_COMMANDS                      = 0x00,       /*!< 0 default behaviour */
+    START_HART1_U_MODE                  = 0x01,       /*!< 1 u mode */
+    START_HART2_S_MODE                  = 0x02,       /*!< 2 s mode */
 } COMMAND_TYPE;
 
 

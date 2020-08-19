@@ -3,20 +3,15 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * code running on e51
+ * Application code running on E51
  *
  */
-#include <stdint.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 
+#include <stdio.h>
+#include <string.h>
 #include "mpfs_hal/mss_hal.h"
-#include "mpfs_hal/mss_mpu.h"
+
 #include "drivers/mss_mmc/mss_mmc.h"
-#include "drivers/mss_mmc/mss_mmc_internal_api.h"
 
 #define ERROR_INTERRUPT         0x8000u
 #define TRANSFER_COMPLETE       0x2u
@@ -30,8 +25,8 @@ uint8_t g_mmc_tx_buff[BUFFER_A_SIZE];
 static uint8_t verify_write(uint8_t* write_buff, uint8_t* read_buff, uint32_t size);
 void transfer_complete_handler(uint32_t status);
 
-/******************************************************************************
- *
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
  */
 void e51(void)
 {
@@ -145,6 +140,7 @@ void e51(void)
     g_mmc.card_type = MSS_MMC_CARD_TYPE_MMC;
     g_mmc.bus_speed_mode = MSS_MMC_MODE_SDR;
     g_mmc.data_bus_width = MSS_MMC_DATA_WIDTH_4BIT;
+    g_mmc.bus_voltage = MSS_MMC_3_3V_BUS_VOLTAGE;
 
     ret_status = MSS_MMC_init(&g_mmc);
     if (ret_status == MSS_MMC_INIT_SUCCESS)
