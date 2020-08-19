@@ -14,11 +14,12 @@
 #ifndef __MSS_MMC_IF_H
 #define __MSS_MMC_IF_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C"
 #endif
-
-#include "hal/cpu_types.h"
 
 /***************************************************************************//**
  * Macro Definitions

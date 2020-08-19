@@ -12,14 +12,6 @@ the system:
 
 MSS_MMC_INTERNAL_APIS     - Define this to enable all internal APIs
 
-The following software configuration is required to set in this project for
-single hart or all harts debug session.
-
-platform/config/software/mpfs_hal/mss_sw_config
-
-Single hart(e51 hart0) -    MPFS_HAL_LAST_HART   0 - default
-
-All harts -                 MPFS_HAL_LAST_HART   4
 --------------------------------------------------------------------------------
                             How to use this example
 --------------------------------------------------------------------------------
@@ -31,28 +23,37 @@ g_mmc_rx_buff buffer.
 --------------------------------------------------------------------------------
                                 Target hardware
 --------------------------------------------------------------------------------
-This example project is targeted PolarFire SoC FPGA family hardware platforms
-with the eMMC SD host controller.
+This example project can be used on the PolarFire SoC FPGA family hardware
+platforms. 
 
-There are configurations that needs to be set for this example project. The
-configurations are categorized into hardware and software configurations and 
-are respectively located in the following folders
-    platform/config/hardware/hw_config
-    platform/config/software/mpfs_hal/mss_sw_config
+There are configurations that need to be set for this example project. The
+configurations are categorized into hardware and software configurations.
+The hardware configurations are located in ./src/boards/<target_board> folder.
+The default software configurations are stored under 
+.src/platform/platform_config_reference folder.
 
-The "hw_config" defines the hardware configurations such as clocks. You must 
-make sure that the configurations in this example project match the actual 
-configurations of your target design you are using to test this example project.
+The include files in the "./src/boards/<target_board>/soc_config" folder define 
+the hardware configurations such as clocks. You must make sure that the 
+configurations in this example project match the actual configurations of your 
+target Libero design that you are using to test this example project.
 
-The "sw_config" folder defines the software configurations such as HART 
-configurations. These configurations have no dependency on the hardware
-configurations that you use. If you change these configurations, you may have 
-to change the software code to work according to the new configurations that 
-you use.
+If you need to change the software configurations, you are advised to create a 
+new folder to replicate this folder under the ./src/boards directory and do the 
+modifications there. It would look like 
+./src/boards/<target_board>/platform_config
+
+The include files in the "platform_config" folder define the software 
+configurations such as how many harts are being used in the software, what is 
+the tick rate of the internal timer of each hart. These configurations have no 
+dependency on the hardware configurations in "soc_config" folder. Note that 
+changing these software configurations may require a change in your application 
+code.
 
 ## Executing project on PolarFire SoC hardware
 
-Build the project and launch the debug configuration named 
-"mpfs-emmc-hpi hw-emulation hart0 Debug.launch" which is configured for 
-PolarFire SoC hardware platform.
+This application can be used on PolarFire hardware platform as well e.g. Icicle 
+Kit.
 
+Build the project and launch the debug configuration named 
+mpfs-emmc-hpi hw all-harts debug.launch which is configured for 
+PolarFire SoC hardware platform.

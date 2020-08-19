@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT 
+ * SPDX-License-Identifier: MIT
  *
  * MPFS HAL Embedded Software
  *
@@ -10,8 +10,10 @@
 /*******************************************************************************
  *
  * @file mss_plic.h
- * @author Microchip FPGA Embedded Systems Solutions
- * @brief Definitions and functions associated with PLIC interrupts.
+ * @author Microchip-FPGA Embedded Systems Solutions
+ * @brief MPFS PLIC and PRCI access data structures and functions.
+ *
+ * Definitions and functions associated with PLIC interrupts.
  *
  */
 #ifndef MSS_PLIC_H
@@ -19,16 +21,15 @@
 
 #include <stdint.h>
 #include "encoding.h"
-
-#define ASSERT(CHECK)
+#include "mss_assert.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*
- *Return value from External IRQ handler. This will be used to disable the External
- *interrupt.
+ *Return value from External IRQ handler. This will be used to disable the
+ *Return External interrupt.
  */
 #define EXT_IRQ_KEEP_ENABLED                                0U
 #define EXT_IRQ_DISABLE                                     1U
@@ -156,8 +157,6 @@ uint8_t  wdog4_tout_plic_IRQHandler(void);
 uint8_t  g5c_mss_spi_plic_IRQHandler(void);
 uint8_t  volt_temp_alarm_plic_IRQHandler(void);
 
-uint8_t  g5c_mss_spi_plic_IRQHandler(void);
-uint8_t  volt_temp_alarm_plic_IRQHandler(void);
 uint8_t  athena_complete_plic_IRQHandler(void);
 uint8_t  athena_alarm_plic_IRQHandler(void);
 uint8_t  athena_bus_error_plic_IRQHandler(void);
@@ -303,10 +302,11 @@ uint8_t MAC0_plic_53_IRQHandler(void);
 
 #endif
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+/***************************************************************************//**
  * PLIC source Interrupt numbers:
  */
-#define OFFSET_TO_MSS_GLOBAL_INTS 13U  /* See G5SOC Corecomplex- v0p6.pdf, section 7.2 PLIC Interrupt Sources */
+/* See section on PLIC Interrupt Sources in User Guide */
+#define OFFSET_TO_MSS_GLOBAL_INTS 13U
 typedef enum
 {
 #ifndef SIFIVE_HIFIVE_UNLEASHED
@@ -323,7 +323,8 @@ typedef enum
     DMA_CH2_ERR_IRQn             = 10,
     DMA_CH3_DONE_IRQn            = 11,
     DMA_CH3_ERR_IRQn             = 12,
-    GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0         = 0 + OFFSET_TO_MSS_GLOBAL_INTS,    /* see -G5_MSS_TOP_MAS.doc- Table 68 GPIO Interrupt Multiplexing */
+    /* see GPIO Interrupt Multiplexing in the User Guide */
+    GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0         = 0 + OFFSET_TO_MSS_GLOBAL_INTS,
     GPIO0_BIT1_or_GPIO2_BIT1_PLIC_1         = 1 + OFFSET_TO_MSS_GLOBAL_INTS,
     GPIO0_BIT2_or_GPIO2_BIT2_PLIC_2         = 2 + OFFSET_TO_MSS_GLOBAL_INTS,
     GPIO0_BIT3_or_GPIO2_BIT3_PLIC_3         = 3 + OFFSET_TO_MSS_GLOBAL_INTS,
@@ -415,7 +416,8 @@ typedef enum
     g5c_MESSAGE_PLIC             = 83 + OFFSET_TO_MSS_GLOBAL_INTS,
     USOC_VC_INTERRUPT_PLIC       = 84 + OFFSET_TO_MSS_GLOBAL_INTS,
     USOC_SMB_INTERRUPT_PLIC      = 85 + OFFSET_TO_MSS_GLOBAL_INTS,
-    E51_0_MAINTENACE_PLIC        = 86 + OFFSET_TO_MSS_GLOBAL_INTS,     /* contains multiple interrupts- */
+    /* contains multiple interrupts- */
+    E51_0_MAINTENACE_PLIC        = 86 + OFFSET_TO_MSS_GLOBAL_INTS,
 
     WDOG0_MRVP_PLIC              = 87 + OFFSET_TO_MSS_GLOBAL_INTS,
     WDOG1_MRVP_PLIC              = 88 + OFFSET_TO_MSS_GLOBAL_INTS,
@@ -580,12 +582,17 @@ typedef enum
 
 } PLIC_IRQn_Type;
 
+#ifndef SIFIVE_HIFIVE_UNLEASHED
+#define MAX_PLIC_INT BUS_ERROR_UNIT_HART_4
+#else
+#define MAX_PLIC_INT ethernet_PLIC_53
+#endif
 
-
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
- * E51-0 is Maintenance Interrupt, CPU needs to read status register to determine exact cause:
- * This structure added here for clarity, need to replay with status register defines
- * for determining interrupt cause
+/***************************************************************************//**
+ * E51-0 is Maintenance Interrupt, CPU needs to read status register to
+ * determine exact cause:
+ * This structure added here for clarity, need to replay with status register
+ * defines for determining interrupt cause
  */
 typedef enum
 {
@@ -614,18 +621,19 @@ typedef struct
 } Target_Enables_Type;
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#define PLIC_SET_UP_REGISTERS 6
+#define PLIC_SET_UP_REGISTERS 6U
 #else
-#define PLIC_SET_UP_REGISTERS 2
+#define PLIC_SET_UP_REGISTERS 2U
 #endif
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#define PLIC_NUM_SOURCES 187
+#define PLIC_NUM_SOURCES 187U
 #else
-#define PLIC_NUM_SOURCES 54    /* 53 actual, source 0 is not used */
+#define PLIC_NUM_SOURCES 54U    /* 53 actual, source 0 is not used */
 #endif
 
-#define PLIC_NUM_PRIORITIES 7
+#define PLIC_NUM_PRIORITIES 7U
+#define NUM_CLAIM_REGS      9U
 
 
 /* The FU540-C000 has 53 interrupt sources. */
@@ -670,7 +678,9 @@ typedef struct
     volatile uint32_t RESERVED8[(0x0C200000 - 0x0C002480)/4];
 
     /*--- Target Priority threshold and claim/complete---------*/
-    IRQ_Target_Type TARGET[9];   /* See PLIC Register Map or TARGET_OFFSET defines below for offset details */
+    IRQ_Target_Type TARGET[NUM_CLAIM_REGS];   /* See PLIC Register Map or 
+												 TARGET_OFFSET defines below 
+                                                 for offset details */
 
 } PLIC_Type;
 
@@ -684,14 +694,14 @@ typedef struct
 #define TARGET_OFFSET_HART4_M 7U
 #define TARGET_OFFSET_HART4_S 8U
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+/***************************************************************************//**
  * PLIC: Platform Level Interrupt Controller
  */
-#define PLIC_BASE_ADDR 0x0C000000UL         /* FU540-C000/Emulation PLIC base address  = 0x0C00_0000:  */
+#define PLIC_BASE_ADDR 0x0C000000UL
 
 #define PLIC    ((PLIC_Type *)PLIC_BASE_ADDR)
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+/*-------------------------------------------------------------------------*//**
  * The function PLIC_init() initializes the PLIC controller and enables the
  * global external interrupt bit.
  */
@@ -711,6 +721,15 @@ static inline void PLIC_init(void)
             {
                 PLIC->HART0_MMODE_ENA[inc] = 0U;
             }
+
+            /* Set the threshold to zero.
+             * PLIC provides context based threshold register for the settings of a
+             * interrupt priority threshold of each context. The threshold register
+             * is a WARL field. The PLIC will mask all PLIC interrupts of a priority
+             * less than or equal to threshold. For example, a threshold value of zero
+             * permits all interrupts with non-zero priority.*/
+
+            PLIC->TARGET[TARGET_OFFSET_HART0_M].PRIORITY_THRESHOLD  = 0U;
             break;
         case 1:
             for(inc = 0UL; inc < PLIC_SET_UP_REGISTERS; inc++)
@@ -718,6 +737,10 @@ static inline void PLIC_init(void)
                 PLIC->HART1_MMODE_ENA[inc] = 0U;
                 PLIC->HART1_SMODE_ENA[inc] = 0U;
             }
+
+            PLIC->TARGET[TARGET_OFFSET_HART1_M].PRIORITY_THRESHOLD  = 0U;
+            /* Disable supervisor level */
+            PLIC->TARGET[TARGET_OFFSET_HART1_S].PRIORITY_THRESHOLD  = 7U;
             break;
         case 2:
             for(inc = 0UL; inc < PLIC_SET_UP_REGISTERS; inc++)
@@ -725,6 +748,10 @@ static inline void PLIC_init(void)
                 PLIC->HART2_MMODE_ENA[inc] = 0U;
                 PLIC->HART2_SMODE_ENA[inc] = 0U;
             }
+
+            PLIC->TARGET[TARGET_OFFSET_HART2_M].PRIORITY_THRESHOLD  = 0U;
+            /* Disable supervisor level */
+            PLIC->TARGET[TARGET_OFFSET_HART2_S].PRIORITY_THRESHOLD  = 7U;
             break;
         case 3:
             for(inc = 0UL; inc < PLIC_SET_UP_REGISTERS; inc++)
@@ -732,6 +759,10 @@ static inline void PLIC_init(void)
                 PLIC->HART3_MMODE_ENA[inc] = 0U;
                 PLIC->HART3_SMODE_ENA[inc] = 0U;
             }
+
+            PLIC->TARGET[TARGET_OFFSET_HART3_M].PRIORITY_THRESHOLD  = 0U;
+            /* Disable supervisor level */
+            PLIC->TARGET[TARGET_OFFSET_HART3_S].PRIORITY_THRESHOLD  = 7U;
             break;
         case 4:
             for(inc = 0UL; inc < PLIC_SET_UP_REGISTERS; inc++)
@@ -739,13 +770,14 @@ static inline void PLIC_init(void)
                 PLIC->HART4_MMODE_ENA[inc] = 0U;
                 PLIC->HART4_SMODE_ENA[inc] = 0U;
             }
+
+            PLIC->TARGET[TARGET_OFFSET_HART4_M].PRIORITY_THRESHOLD  = 0U;
+            /* Disable supervisor level */
+            PLIC->TARGET[TARGET_OFFSET_HART4_S].PRIORITY_THRESHOLD  = 7U;
             break;
         default:
             break;
     }
-
-    /* Set the threshold to zero. */
-    PLIC->TARGET[hart_id].PRIORITY_THRESHOLD  = 0U;
 
     /* Enable machine external interrupts. */
     set_csr(mie, MIP_MEIP);
@@ -753,9 +785,9 @@ static inline void PLIC_init(void)
 
 
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
- * The function PLIC_EnableIRQ() enables the external interrupt for the interrupt
- * number indicated by the parameter IRQn.
+/***************************************************************************//**
+ * The function PLIC_EnableIRQ() enables the external interrupt for the
+ * interrupt number indicated by the parameter IRQn.
  */
 static inline void PLIC_EnableIRQ(PLIC_IRQn_Type IRQn)
 {
@@ -794,17 +826,18 @@ static inline void PLIC_EnableIRQ(PLIC_IRQn_Type IRQn)
     }
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
- * The function PLIC_DisableIRQ() disables the external interrupt for the interrupt
- * number indicated by the parameter IRQn.
+/***************************************************************************//**
+ * The function PLIC_DisableIRQ() disables the external interrupt for the
+ * interrupt number indicated by the parameter IRQn.
 
  * NOTE:
  *     This function can be used to disable the external interrupt from outside
  *     external interrupt handler function.
- *     This function MUST NOT be used from within the External Interrupt handler.
+ *     This function MUST NOT be used from within the External Interrupt
+ *     handler.
  *     If you wish to disable the external interrupt while the interrupt handler
- *     for that external interrupt is executing then you must use the return value
- *     EXT_IRQ_DISABLE to return from the extern interrupt handler.
+ *     for that external interrupt is executing then you must use the return
+ *     value EXT_IRQ_DISABLE to return from the extern interrupt handler.
  */
 static inline void PLIC_DisableIRQ(PLIC_IRQn_Type IRQn)
 {
@@ -843,7 +876,7 @@ static inline void PLIC_DisableIRQ(PLIC_IRQn_Type IRQn)
     }
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+/***************************************************************************//**
  * The function PLIC_SetPriority() sets the priority for the external interrupt
  * for the interrupt number indicated by the parameter IRQn.
  */
@@ -855,9 +888,9 @@ static inline void PLIC_SetPriority(PLIC_IRQn_Type IRQn, uint32_t priority)
     }
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
- * The function PLIC_GetPriority() returns the priority for the external interrupt
- * for the interrupt number indicated by the parameter IRQn.
+/***************************************************************************//**
+ * The function PLIC_GetPriority() returns the priority for the external
+ * interrupt for the interrupt number indicated by the parameter IRQn.
  */
 static inline uint32_t PLIC_GetPriority(PLIC_IRQn_Type IRQn)
 {
@@ -877,54 +910,56 @@ static inline uint32_t PLIC_pending(PLIC_IRQn_Type IRQn)
     return (PLIC->PENDING_ARRAY[IRQn/32U] & (0x01U<<(IRQn%32U)));
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+/***************************************************************************//**
  * The function PLIC_ClaimIRQ() claims the interrupt from the PLIC controller.
  */
 static inline uint32_t PLIC_ClaimIRQ(void)
 {
     uint64_t hart_id  = read_csr(mhartid);
 
-    const unsigned long lookup[5] = {0, 1, 3, 5, 7};
+    const unsigned long lookup[5U] = {0U, 1U, 3U, 5U, 7U};
 
     return (PLIC->TARGET[lookup[hart_id]].CLAIM_COMPLETE);
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
- * The function PLIC_CompleteIRQ() indicates to the PLIC controller the interrupt
- * is processed and claim is complete.
+/***************************************************************************//**
+ * The function PLIC_CompleteIRQ() indicates to the PLIC controller the
+ * interrupt is processed and claim is complete.
  */
 static inline void PLIC_CompleteIRQ(uint32_t source)
 {
     uint64_t hart_id  = read_csr(mhartid);
 
-    const unsigned long lookup[5] = {0, 1, 3, 5, 7};
+    const unsigned long lookup[5U] = {0U, 1U, 3U, 5U, 7U};
 
-    ASSERT(source < = BUS_ERROR_UNIT_HART_4);
+    ASSERT(source <= MAX_PLIC_INT);
 
     PLIC->TARGET[lookup[hart_id]].CLAIM_COMPLETE  = source;
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
- * The function PLIC_SetPriority_Threshold() sets the threshold for a particular hart
- * The default threshold on reset is 0
+/***************************************************************************//**
  *
- * The G5SoC Core Complex supports setting of a interrupt priority threshold via the threshold
- * register. The threshold is a WARL field, where the G5SoC Core Complex supports a maximum
- * threshold of 7.
- * The G5SoC Core Complex will mask all PLIC interrupts of a priority less than or equal to
- * threshold. For example, a threshold value of zero permits all interrupts with non-zero priority,
- * whereas a value of 7 masks all interrupts.
+ * The function PLIC_SetPriority_Threshold() sets the threshold for a particular
+ * hart. The default threshold on reset is 0.
+ * The PFSoC Core Complex supports setting of an interrupt priority threshold
+ * via the threshold register. The threshold is a WARL field, where the PFSoC
+ * Core Complex supports a maximum threshold of 7.
+ * The PFSoC Core Complex will mask all PLIC interrupts of a priority less than
+ * or equal to threshold. For example, a threshold value of zero permits all
+ * interrupts with non-zero priority, whereas a value of 7 masks all
+ * interrupts.
  */
 static inline void PLIC_SetPriority_Threshold(uint32_t threshold)
 {
     uint64_t hart_id  = read_csr(mhartid);
+    const unsigned long lookup[5U] = {0U, 1U, 3U, 5U, 7U};
 
-    ASSERT(threshold < = 7);
+    ASSERT(threshold <= 7);
 
-    PLIC->TARGET[hart_id].PRIORITY_THRESHOLD  = threshold;
+    PLIC->TARGET[lookup[hart_id]].PRIORITY_THRESHOLD  = threshold;
 }
 
-/*
+/***************************************************************************//**
  *  PLIC_ClearPendingIRQ(void)
  *  This is only called by the startup hart and only once
  *  Clears any pending interrupts as PLIC can be in unknown state on startup
@@ -932,22 +967,21 @@ static inline void PLIC_SetPriority_Threshold(uint32_t threshold)
 static inline void PLIC_ClearPendingIRQ(void)
 {
     volatile uint32_t int_num  = PLIC_ClaimIRQ();
+    volatile int32_t wait_possible_int;
 
     while ( int_num != INVALID_IRQn)
     {
-        uint8_t disable = EXT_IRQ_KEEP_ENABLED;
-
         PLIC_CompleteIRQ(int_num);
-        int_num  = PLIC_ClaimIRQ(); /* clear the interrupt */
-        volatile int32_t wait_possible_int = 0xFU;
+        wait_possible_int = 0xFU;
         while (wait_possible_int)
         {
             wait_possible_int--;
         }
+        int_num  = PLIC_ClaimIRQ(); /* obtain interrupt, auto clears  */
     }
 }
 
-/**
+/***************************************************************************//**
  * This function is only called from one hart on startup
  */
 static inline void PLIC_init_on_reset(void)
@@ -957,8 +991,16 @@ static inline void PLIC_init_on_reset(void)
     /* default all priorities so effectively disabled */
     for(inc = 0U; inc < PLIC_NUM_SOURCES; ++inc)
     {
-        PLIC->SOURCE_PRIORITY[inc]  = 7U; /* priority must be greater than threshold to be enabled, so setting to 7 disables */
+        /* priority must be greater than threshold to be enabled, so setting to
+         * 7 disables */
+        PLIC->SOURCE_PRIORITY[inc]  = 0U;
     }
+
+    for(inc = 0U; inc < NUM_CLAIM_REGS; ++inc)
+    {
+        PLIC->TARGET[inc].PRIORITY_THRESHOLD  = 7U;
+    }
+
     /* and clear all the enables */
     for(inc = 0UL; inc < PLIC_SET_UP_REGISTERS; inc++)
     {
@@ -973,7 +1015,8 @@ static inline void PLIC_init_on_reset(void)
         PLIC->HART4_SMODE_ENA[inc] = 0U;
     }
 
-    PLIC_ClearPendingIRQ(); /* clear any pending interrupts- in case already there */
+    /* clear any pending interrupts- in case already there */
+    PLIC_ClearPendingIRQ();
 }
 
 #ifdef __cplusplus

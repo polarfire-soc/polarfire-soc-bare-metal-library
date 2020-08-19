@@ -17,8 +17,6 @@
 extern "C"
 #endif
 
-#include "hal/cpu_types.h"
-
 /***************************************************************************//**
  * Macro Definitions
  */
