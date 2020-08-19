@@ -40,4 +40,4 @@
 | mss-timer examples | 1.6.101 | 2020-06-23 | 
 | mss-usb examples | 1.6.101 | 2020-06-16 | 
 | mss-watchdog examples | 1.6.102 | 2020-06-23 | 
-| pf-pcie examples | 3.1.100 | 2020-06-23 | 
+| pf-pcie examples | 3.2.2 | 2020-08-19 | 
