@@ -9,17 +9,41 @@
 
 /***************************************************************************
  * @file mss_util.c
- * @author Microsemi-PRO Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief Utility functions
  *
  */
-
-#include "mss_util.h"
-#include "mss_coreplex.h"
+#include <stddef.h>
+#include <stdbool.h>
+#include "mss_hal.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*------------------------------------------------------------------------------
+ *
+ */
+void enable_interrupts(void) {
+    __enable_irq();
+}
+
+/*------------------------------------------------------------------------------
+ *
+ */
+uint64_t disable_interrupts(void) {
+    uint64_t psr;
+    psr = read_csr(mstatus);
+    __disable_irq();
+    return(psr);
+}
+
+/*------------------------------------------------------------------------------
+ *
+ */
+void restore_interrupts(uint64_t saved_psr) {
+    write_csr(mstatus, saved_psr);
+}
 
 /*------------------------------------------------------------------------------
  * Disable all interrupts.
@@ -48,17 +72,23 @@ void __enable_irq(void)
 /*------------------------------------------------------------------------------
  * Enable particular local interrupt
  */
-void __enable_local_irq(int8_t local_interrupt)
+void __enable_local_irq(uint8_t local_interrupt)
 {
-    set_csr(mie, (1LLU << (local_interrupt + 16)));  /* mie Register- Machine Interrupt Enable Register */
+    if((local_interrupt > (int8_t)0) && (local_interrupt <= LOCAL_INT_MAX))
+    {
+        set_csr(mie, (0x1LLU << (int8_t)(local_interrupt + 16U)));  /* mie Register- Machine Interrupt Enable Register */
+    }
 }
 
 /*------------------------------------------------------------------------------
  * Disable particular local interrupt
  */
-void __disable_local_irq(int8_t local_interrupt)
+void __disable_local_irq(uint8_t local_interrupt)
 {
-    clear_csr(mie, (0x01 << (local_interrupt + 16)));  /* mie Register- Machine Interrupt Enable Register */
+    if((local_interrupt > (int8_t)0) && (local_interrupt <= LOCAL_INT_MAX))
+    {
+        clear_csr(mie, (0x1LLU << (int8_t)(local_interrupt + 16U)));  /* mie Register- Machine Interrupt Enable Register */
+    }
 }
 
 /*
@@ -67,8 +97,8 @@ void __disable_local_irq(int8_t local_interrupt)
 uint64_t readmtime(void)
 {
     volatile uint64_t hartid = read_csr(mhartid);
-    volatile uint64_t * mtime_hart = 0U;
-    uint64_t mtime = 0U;
+    volatile uint64_t * mtime_hart = NULL;
+    uint64_t mtime = 0ULL;
 
     switch(hartid) {
     case 0:
@@ -92,7 +122,7 @@ uint64_t readmtime(void)
         break;
 
     default:
-        return (0U);
+        return (0ULL);
         break;
     }
 
@@ -128,10 +158,11 @@ void sleep_cycles(uint64_t ncycles)
 
 void exit_simulation(void) {
     uint64_t hartid = read_csr(mhartid);
-    volatile uint32_t * exit_simulation = (uint32_t *)0x60000000U;
+    volatile uint32_t * exit_simulation_p = (uint32_t *)0x60000000U;
 
 
-    *exit_simulation = 1;
+    *exit_simulation_p = 1U;
+	(void)hartid; /* use hartid to avoid compiler warning */
 }
 
 __attribute__((aligned(16))) uint64_t get_program_counter(void)

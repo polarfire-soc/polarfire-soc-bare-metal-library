@@ -9,8 +9,8 @@
  *
  */
 
+#include "mpfs_hal/mss_hal.h"
 #include "mss_gpio.h"
-#include "mpfs_hal/mss_plic.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +37,7 @@ extern "C" {
  * The GPIO interrupts are multiplexed. Total GPIO interrupts are 41.
  * 41 = (14 from GPIO0 + 24 from GPIO1 + 3 non direct interrupts)
  * GPIO2 interrupts are not available by default. Setting the corresponding bit
- * in GPIO_INTERRUPT_FAB_CR(32:0) will enable GPIO2(32:0) corresponding
+ * in GPIO_INTERRUPT_FAB_CR(31:0) will enable GPIO2(31:0) corresponding
  * interrupt on PLIC.
  *
  * PLIC       GPIO_INTERRUPT_FAB_CR

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * code running on e51
+ * Application code running on E51
  *
  * PolarFire SoC MSS GPIO interrupt example project
  */
@@ -11,12 +11,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "drivers/mss_gpio/mss_gpio.h"
 
 /******************************************************************************
- * Instruction message. This message will be transmitted over the UART to
- * HyperTerminal when the program starts.
+ * Instruction message. This message will be displayed on the UART terminal 
+   when the program starts.
  *****************************************************************************/
 const uint8_t g_message1[] =
 "\r\n\r\n\r\n **** PolarFire SoC MSS GPIO example ****\r\n\r\n\r\n";
@@ -39,7 +39,7 @@ uint64_t uart_lock;
 
 static volatile uint32_t irq_cnt = 0;
 
-/*Created for convenience. Uses Polled method of UART TX*/
+/* Created for convenience. Uses Polled method of UART TX */
 static void uart_tx_with_mutex (mss_uart_instance_t * this_uart,
                                 uint64_t mutex_addr,
                                 const uint8_t * pbuff,
@@ -59,9 +59,9 @@ void uart0_rx_handler (mss_uart_instance_t * this_uart)
     int8_t info_string[50];
 
     irq_cnt++;
-    sprintf(info_string,"UART0 irq_cnt = %x \r\n\r\n", irq_cnt);
+    sprintf(info_string,"UART0 Interrupt count = 0x%x \r\n\r\n", irq_cnt);
 
-    /*This will execute when interrupt from HART 0 is raised */
+    /* This will execute when interrupt from hart 0 is raised */
     mss_take_mutex((uint64_t)&uart_lock);
     g_rx_size = MSS_UART_get_rx(this_uart, g_rx_buff, sizeof(g_rx_buff));
     mss_release_mutex((uint64_t)&uart_lock);
@@ -70,9 +70,9 @@ void uart0_rx_handler (mss_uart_instance_t * this_uart)
                         info_string, strlen(info_string));
 }
 
-/* Main function for the HART0(E51 processor).
- * Application code running on HART0 is placed here.
- * UART0 PLIC interrupt is enabled on hart0.*/
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
+ * MMUART0 PLIC interrupt is enabled on hart0.*/
 void e51(void)
 {
     int8_t info_string[100];
@@ -82,7 +82,7 @@ void e51(void)
     uint64_t hartid = read_csr(mhartid);
     uint8_t cnt, int_num;
 
-    /*Bring the UART0, GPIO0, GPIO1 and GPIO2 out of Reset*/
+    /* Bring the UART0, GPIO0, GPIO1 and GPIO2 out of Reset */
     SYSREG->SOFT_RESET_CR &= ~( (1u << 0u) | (1u << 5u) | (1u << 20u) |
                                 (1u << 21u) | (1u << 22u)) ;
 
@@ -91,15 +91,15 @@ void e51(void)
 
     __enable_irq();
 
-    /* All HARTs use MMUART0 to display messages on Terminal. This mutex helps
-     * serializing MMUART0 accesses from multiple HARTs.*/
+    /* All harts use MMUART0 to display messages on Terminal. This mutex helps
+     * serializing MMUART0 accesses from multiple harts.*/
     mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( &g_mss_uart0_lo,
             MSS_UART_115200_BAUD,
             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
 
-    /*Receive interrupt is enabled now. The interrupt will be received on the
+    /* Receive interrupt is enabled now. The interrupt will be received on the
      * PLIC. Please see uart0_rx_handler() for more details */
     MSS_UART_set_rx_handler(&g_mss_uart0_lo,
                             uart0_rx_handler,
@@ -114,13 +114,13 @@ void e51(void)
 
     mcycle_start = readmcycle();
 
-    /*Configure Systick. The tick rate is configured in mss_sw_config.h*/
+    /* Configure Systick. The tick rate is configured in mss_sw_config.h */
     SysTick_Config();
 
-    /*Making sure that the default GPIO0 and GPIO1 are used on interrupts.
+    /* Making sure that the default GPIO0 and GPIO1 are used on interrupts.
      * No Non-direct interrupts enabled of GPIO0 and GPIO1.
      * Please see the mss_gpio.h for more description on how GPIO interrupts
-     * are routed to the PLIC*/
+     * are routed to the PLIC */
     SYSREG->GPIO_INTERRUPT_FAB_CR = 0x00000000UL;
 
     PLIC_SetPriority_Threshold(0);
@@ -147,8 +147,8 @@ void e51(void)
 
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_0, 0x0);
 
-    /*since GPIO0_0 is previously enabled, GPIO2_0 will be routed to
-     * GPIO2 non-direct interrupt.*/
+    /* Since GPIO0_0 is previously enabled, GPIO2_0 interrupts will be routed 
+       to the GPIO2 non-direct interrupt */
     MSS_GPIO_enable_irq(GPIO2_LO, MSS_GPIO_0);
     MSS_GPIO_enable_nondirect_irq(GPIO2_LO);
 
@@ -162,15 +162,16 @@ void e51(void)
             case '0':
                 mcycle_end      = readmcycle();
                 delta_mcycle    = mcycle_end - mcycle_start;
-                sprintf(info_string,"Hart %ld, %ld delta_mcycle \r\n", hartid,
+                sprintf(info_string,"hart %ld, %ld delta_mcycle \r\n", hartid,
                         delta_mcycle);
                 uart_tx_with_mutex(&g_mss_uart0_lo, (uint64_t)&uart_lock,
-                                    info_string, strlen(info_string));
+                                   info_string, strlen(info_string));
                 break;
+
             default:
-                /*Echo the characters received from the terminal*/
+                /* Echo the characters received from the terminal */
                 uart_tx_with_mutex(&g_mss_uart0_lo, (uint64_t)&uart_lock,
-                                    g_rx_buff, g_rx_size);
+                                   g_rx_buff, g_rx_size);
                 break;
             }
 
@@ -179,10 +180,10 @@ void e51(void)
     }
 }
 
-/* HART0 Software interrupt handler */
+/* hart0 Software interrupt handler */
 void Software_h0_IRQHandler (void)
 {
-    uint32_t hart_id = read_csr(mhartid);
+    uint64_t hart_id = read_csr(mhartid);
     count_sw_ints_h0++;
 }
 
@@ -218,12 +219,13 @@ uint8_t gpio1_bit0_or_gpio2_bit14_plic_14_IRQHandler(void)
 
     return EXT_IRQ_KEEP_ENABLED;
 }
+
 uint8_t gpio0_non_direct_plic_IRQHandler(void)
 {
     uint32_t intr_num = 0;
     intr_num = MSS_GPIO_get_irq(GPIO0_LO);
 
-    for(int cnt=0; cnt<14; cnt++)
+    for (int cnt=0; cnt<14; cnt++)
     {
         if (1u == (intr_num & 0x00000001U))
         {
@@ -244,7 +246,7 @@ uint8_t gpio1_non_direct_plic_IRQHandler(void)
     uint32_t intr_num = 0;
     intr_num = MSS_GPIO_get_irq(GPIO1_LO);
 
-    for(int cnt=0; cnt<24; cnt++)
+    for (int cnt=0; cnt<24; cnt++)
     {
         if (1u == (intr_num & 0x00000001U))
         {
@@ -265,7 +267,7 @@ uint8_t gpio2_non_direct_plic_IRQHandler(void)
     uint32_t intr_num = 0;
     intr_num = MSS_GPIO_get_irq(GPIO2_LO);
 
-    for(int cnt=0; cnt<32; cnt++)
+    for (int cnt=0; cnt<32; cnt++)
     {
         if (1u == (intr_num & 0x00000001U))
         {
@@ -286,14 +288,15 @@ void SysTick_Handler(uint32_t hard_id)
     static volatile uint8_t value = 0u;
     if (0u == hard_id)
     {
-        if(0 == value)
+        if(0u == value)
         {
-            value = 0x0f;
+            value = 0x0fu;
         }
         else
         {
-            value = 0x00;
+            value = 0x00u;
         }
+
         MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_0, value);
         MSS_GPIO_set_outputs(GPIO0_LO, value);
     }

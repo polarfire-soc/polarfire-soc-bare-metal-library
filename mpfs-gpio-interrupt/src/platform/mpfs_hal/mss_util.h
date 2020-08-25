@@ -9,7 +9,7 @@
 
 /***************************************************************************
  * @file mss_util.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief MACROs defines and prototypes associated with utility functions
  *
  */
@@ -29,13 +29,13 @@ extern "C" {
 /*
  * Useful macros 
  */
-#define WRITE_REG8(x, y) (*((volatile uint8_t *)(x)) = y)
+#define WRITE_REG8(x, y) (*((volatile uint8_t *)(x)) = (y))
 #define READ_REG8(x)     (*((volatile uint8_t *)(x)))
 
-#define WRITE_REG32(x, y) (*((volatile uint32_t *)(x)) = y)
+#define WRITE_REG32(x, y) (*((volatile uint32_t *)(x)) = (y))
 #define READ_REG32(x)     (*((volatile uint32_t *)(x)))
 
-#define WRITE_REG64(x, y) (*((volatile uint64_t *)(x)) = y)
+#define WRITE_REG64(x, y) (*((volatile uint64_t *)(x)) = (y))
 #define READ_REG64(x)     (*((volatile uint64_t *)(x)))
 
 uint64_t readmcycle(void);
@@ -54,11 +54,14 @@ void display_address_of_interest(uint64_t * address_of_interest, int nb_location
 
 void exit_simulation(void);
 
+void enable_interrupts(void);
+uint64_t disable_interrupts(void);
+void restore_interrupts(uint64_t saved_psr);
 void __disable_irq(void);
 void __disable_all_irqs(void);
 void __enable_irq(void);
-void __enable_local_irq(int8_t local_interrupt);
-void __disable_local_irq(int8_t local_interrupt);
+void __enable_local_irq(uint8_t local_interrupt);
+void __disable_local_irq(uint8_t local_interrupt);
 
 void mss_init_mutex(uint64_t address);
 void mss_take_mutex(uint64_t address);
@@ -68,4 +71,4 @@ void mss_release_mutex(uint64_t address);
 }
 #endif
 
-#endif	/* G5SOC_UTIL_H */
+#endif  /* G5SOC_UTIL_H */

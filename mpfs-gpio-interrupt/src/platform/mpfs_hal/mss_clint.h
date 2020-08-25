@@ -10,9 +10,8 @@
 /*******************************************************************************
  *
  * @file mss_clint.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief CLINT access data structures and functions.
- *
  *
  */
 #ifndef MSS_CLINT_H
@@ -26,9 +25,9 @@
 extern "C" {
 #endif
 
-#define RTC_PRESCALER 100
-#define SUCCESS 0
-#define ERROR   1
+#define RTC_PRESCALER 100U
+#define SUCCESS 0U
+#define ERROR   1U
 
 
 /*==============================================================================
@@ -37,10 +36,10 @@ extern "C" {
 typedef struct CLINT_Type_t
 {
     volatile uint32_t MSIP[5];
-    volatile uint32_t reserved1[(0x4000 - 0x14)/4];
-    volatile uint64_t MTIMECMP[5];	/* mtime compare value for each hart. When mtime equals this value, interrupt is generated for particular hart */
-    volatile uint32_t reserved2[((0xbff8 - 0x4028)/4)];
-    volatile uint64_t MTIME;		/* contains the current mtime value */
+    volatile uint32_t reserved1[(0x4000U - 0x14U)/4U];
+    volatile uint64_t MTIMECMP[5];  /* mtime compare value for each hart. When mtime equals this value, interrupt is generated for particular hart */
+    volatile uint32_t reserved2[((0xbff8U - 0x4028U)/4U)];
+    volatile uint64_t MTIME;    /* contains the current mtime value */
 } CLINT_Type;
 
 #define CLINT    ((CLINT_Type *)CLINT_BASE)
@@ -52,8 +51,8 @@ typedef struct CLINT_Type_t
 static inline void raise_soft_interrupt(unsigned long hart_id)
 {
     /*You need to make sure that the global interrupt is enabled*/
-	/*Note:  set_csr(mie, MIP_MSIP) needs to be set on hart you are setting sw interrupt */
-    CLINT->MSIP[hart_id] = 0x01;   /*raise soft interrupt for hart(x) where x== hart ID*/
+    /*Note:  set_csr(mie, MIP_MSIP) needs to be set on hart you are setting sw interrupt */
+    CLINT->MSIP[hart_id] = 0x01U;   /*raise soft interrupt for hart(x) where x== hart ID*/
     mb();
 }
 
@@ -68,10 +67,11 @@ static inline void clear_soft_interrupt(void)
     CLINT->MSIP[hart_id] = 0x00U;   /*clear soft interrupt for hart0*/
     reg = CLINT->MSIP[hart_id];     /* we read back to make sure it has been written before moving on */
                                     /* todo: verify line above guaranteed and best way to achieve result */
+    (void)reg;                      /* use reg to avoid compiler warning */
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/*	MSS_CLINT_H */
+#endif  /*  MSS_CLINT_H */
