@@ -3,25 +3,23 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * code running on e51
+ * Application code running on E51
  *
  * PolarFire SoC MSS RTC time example project
  */
 
 #include <stdio.h>
-#include "drivers/mss_uart/mss_uart.h"
+#include "mpfs_hal/mss_hal.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "drivers/mss_rtc/mss_rtc.h"
-#include "config/hardware/clocks/hw_cfg_clocks.h"
 
-/* Constant used for setting RTC control register.
- */
+/* Constant used for setting RTC control register. */
 #define BIT_SET 0x00010000U
 
 /* 1MHz clock is RTC clock source. */
 #define RTC_PERIPH_PRESCALER              (1000000u - 1u)
 
-/* Constant used for setting RTC control register.
- */
+/* Constant used for setting RTC control register. */
 #define BIT_SET 0x00010000U
 
 /* 1MHz clock is RTC clock source. */
@@ -39,8 +37,8 @@ The example project demonstrate the RTC time mode. The UART\r\n\
 message will be displayed at each second. \r\n\n\n\
 ";
 
-/* Main function for the HART0(E51 processor).
- * Application code running on HART0 is placed here.
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
  */
 void e51(void)
 {
@@ -62,7 +60,7 @@ void e51(void)
     MSS_UART_polled_tx_string(&g_mss_uart0_lo, g_greeting_msg);
 
     SYSREG->RTC_CLOCK_CR &= ~BIT_SET;
-    SYSREG->RTC_CLOCK_CR = MSS_RTC_TOGGLE_CLK / 100000UL;
+    SYSREG->RTC_CLOCK_CR = LIBERO_SETTING_MSS_RTC_TOGGLE_CLK / 100000UL;
     SYSREG->RTC_CLOCK_CR |= BIT_SET;
 
     /* Initialize RTC. */
@@ -74,6 +72,7 @@ void e51(void)
     for (;;)
     {
         volatile uint32_t rtc_count_updated;
+
         /* Update displayed time if value read from RTC changed since last read.*/
         rtc_count_updated = MSS_RTC_get_update_flag();
         if(rtc_count_updated)

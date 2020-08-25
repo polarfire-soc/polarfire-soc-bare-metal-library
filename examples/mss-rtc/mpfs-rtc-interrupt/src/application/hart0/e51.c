@@ -3,17 +3,16 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * code running on e51
+ * Application code running on E51
  *
  * PolarFire SoC MSS RTC interrupt example project
  */
 
-#include "drivers/mss_uart/mss_uart.h"
+#include "mpfs_hal/mss_hal.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "drivers/mss_rtc/mss_rtc.h"
-#include "config/hardware/clocks/hw_cfg_clocks.h"
 
-/* Constant used for setting RTC control register.
- */
+/* Constant used for setting RTC control register. */
 #define BIT_SET 0x00010000U
 
 /* 1MHz clock is RTC clock source. */
@@ -22,7 +21,7 @@
 uint64_t uart_lock;
 
 /******************************************************************************
- *  Greeting messages displayed over the UART.
+ *  Greeting messages displayed over the UART terminal.
  */
 const uint8_t g_greeting_msg[] =
 "\r\n\r\n\t  ******* PolarFire SoC RTC Interrupt Example *******\n\n\n\r\
@@ -43,14 +42,13 @@ uint8_t rtc_wakeup_plic_IRQHandler(void)
     return EXT_IRQ_KEEP_ENABLED;
 }
 
-/* Main function for the HART0(E51 processor).
- * Application code running on HART0 is placed here.
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
  */
 void e51(void)
 {
     uint32_t alarm_period = 1u;
     uint32_t temp;
-    uint64_t hash[4];
 
     PLIC_init();
     __enable_irq();
@@ -62,14 +60,13 @@ void e51(void)
 
     MSS_UART_init(&g_mss_uart0_lo,
             MSS_UART_115200_BAUD,
-            MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT
-    );
+            MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
 
     MSS_UART_polled_tx_string(&g_mss_uart0_lo, g_greeting_msg);
 
     temp = BIT_SET;
     SYSREG->RTC_CLOCK_CR &= ~BIT_SET;
-    SYSREG->RTC_CLOCK_CR = MSS_RTC_TOGGLE_CLK / 100000UL;
+    SYSREG->RTC_CLOCK_CR = LIBERO_SETTING_MSS_RTC_TOGGLE_CLK / 100000UL;
     SYSREG->RTC_CLOCK_CR |= BIT_SET;
 
     /* Initialize RTC. */

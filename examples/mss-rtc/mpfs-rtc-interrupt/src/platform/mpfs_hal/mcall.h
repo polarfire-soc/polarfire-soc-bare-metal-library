@@ -9,9 +9,9 @@
 
 /***********************************************************************************
  * @file mcall.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief mcall definitions
- *
+
  */
 #ifndef RISCV_SBI_H
 #define RISCV_SBI_H
