@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT 
+ * SPDX-License-Identifier: MIT
  *
  * MPFS HAL Embedded Software
  *
@@ -10,12 +10,9 @@
 /*******************************************************************************
  *
  * @file mss_peripheral_base_add.h
- * @author Microchip FPGA Embedded Systems Solutions
- * @brief source excel file g5_mss_top-MAS svn rev:92231 comment: Updated
+ * @author Microchip-FPGA Embedded Systems Solutions
  * MSSIO bank numbers
  *
- * SVN $Revision$
- * SVN $Date$
  */
 
 #ifndef MSS_ADDRESS_MAP_H

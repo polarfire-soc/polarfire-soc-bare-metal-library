@@ -9,7 +9,7 @@
 
 /***************************************************************************
  * @file mss_coreplex.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief Coreplex definitions
  *
  */
