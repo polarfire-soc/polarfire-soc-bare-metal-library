@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT 
+ * SPDX-License-Identifier: MIT
  *
  * MPFS HAL Embedded Software
  *
@@ -10,7 +10,7 @@
 /***************************************************************************
  *
  * @file mss_seg.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief segmentation block defines
  *
  * These blocks allow the DDR memory to be allocated to cached, non-cached
@@ -25,6 +25,13 @@
  * ranges as the MPU blocks. Each one has seven 32-segmentation registers, but
  * only two in SEG0 and five in SEG1 are actually implemented.
  *
+ * DDRC blocker - blocks writes to DDR before it is set-up
+ * SEG0.CFG[7]
+ * Is cleared at reset. When written to ‘1’ disables the blocker function
+ * Is allowing the L2 cache controller to access the DDRC.
+ * Is Once written to ‘1’ the register cannot be written to 0, only an MSS reset
+ * Is will clear the register
+ *
  */
 
 #ifndef MPFS_SEG_H
@@ -37,14 +44,16 @@ extern "C" {
 #endif
 
 typedef struct {
+    union {
+        struct {
+            volatile int32_t    offset : 15;
+            volatile int32_t    rsrvd  : 16;
+            volatile int32_t    locked : 1;
+        } CFG;
+        uint32_t raw;
+    } u[8U];
 
-    struct {
-        volatile int32_t    offset : 15;
-        volatile int32_t    rsrvd  : 16;
-        volatile int32_t    locked : 1;
-    } CFG[6];
-
-    uint32_t fill[64-6];
+    uint32_t fill[64U-8U];
 
 } seg_t;
 

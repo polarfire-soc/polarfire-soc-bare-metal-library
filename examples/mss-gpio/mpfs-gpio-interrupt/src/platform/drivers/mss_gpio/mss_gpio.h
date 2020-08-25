@@ -37,7 +37,7 @@
   ==============================================================================
   The PolarFire SoC Microprocessor Subsystem (MSS) includes three blocks of
   general  purpose input/outputs (GPIO). The GPIO0, GPIO1 and GPIO2 blocks have
-  14, 24 and 34 GPIO ports respectively. This software driver provides a set of
+  14, 24 and 32 GPIO ports respectively. This software driver provides a set of
   functions for controlling the MSS GPIO blocks as part of a bare metal system
   where no operating system is available. This driver can be adapted for use as
   part of an operating system but the implementation of the adaptation layer
@@ -135,10 +135,12 @@
     - MSS_GPIO_enable_nondirect_irq()
     - MSS_GPIO_disable_nondirect_irq()
 
-  The GPIO interrupts are multiplexed. Total GPIO interrupt inputs on PLIC are 41.
+  The GPIO interrupts are multiplexed. Total GPIO interrupt inputs on PLIC are
+  41.
+
   41 = (14 from GPIO0 + 24 from GPIO1 + 3 non direct interrupts)
   GPIO2 interrupts are not available by default. Setting the corresponding bit
-  in GPIO_INTERRUPT_FAB_CR(32:0) system register will enable GPIO2(32:0)
+  in GPIO_INTERRUPT_FAB_CR(31:0) system register will enable GPIO2(31:0)
   corresponding interrupt on PLIC. e.g. If GPIO_INTERRUPT_FAB_CR bit0 is set
   then GPIO2 bit0 interrupt is available on the direct input pin on the PLIC.
   In this case GPIO0 bit 0 interrupt will not be available on the direct input
@@ -161,17 +163,17 @@
   |  31  |      GPIO1  bit 17        |        GPIO2 bit 31       |
   
   
-  | PLIC |                           Interrupt source                            |
-  |------|-----------------------------------------------------------------------|
-  |  32  |                             GPIO1 bit 18                              |
-  |  33  |                             GPIO1 bit 19                              |
-  |  34  |                             GPIO1 bit 20                              |
-  |  35  |                             GPIO1 bit 21                              |
-  |  36  |                             GPIO1 bit 22                              |
-  |  37  |                             GPIO1 bit 23                              |
-  |  38  | OR of all GPIO0 interrupts who don't have a direct connection enabled |
-  |  39  | OR of all GPIO1 interrupts who don't have a direct connection enabled |
-  |  40  | OR of all GPIO2 interrupts who don't have a direct connection enabled |
+  | PLIC |                           Interrupt source                           |
+  |------|----------------------------------------------------------------------|
+  |  32  |                             GPIO1 bit 18                             |
+  |  33  |                             GPIO1 bit 19                             |
+  |  34  |                             GPIO1 bit 20                             |
+  |  35  |                             GPIO1 bit 21                             |
+  |  36  |                             GPIO1 bit 22                             |
+  |  37  |                             GPIO1 bit 23                             |
+  |  38  | OR of all GPIO0 interrupts who don't have a direct connection enabled|
+  |  39  | OR of all GPIO1 interrupts who don't have a direct connection enabled|
+  |  40  | OR of all GPIO2 interrupts who don't have a direct connection enabled|
 
 
     NOTE: GPIO_INTERRUPT_FAB_CR controls the multiplexing in above table. It is
@@ -196,7 +198,7 @@ extern "C" {
     - MSS_GPIO_set_output() and MSS_GPIO_drive_inout()
     - MSS_GPIO_enable_irq(), MSS_GPIO_disable_irq() and MSS_GPIO_clear_irq()
     
-  Note that the GPIO0, GPIO1 and GPIO2 blocks have 14, 24 and 34 GPIO ports
+  Note that the GPIO0, GPIO1 and GPIO2 blocks have 14, 24 and 32 GPIO ports
   respectively.
  */
 typedef enum mss_gpio_id
