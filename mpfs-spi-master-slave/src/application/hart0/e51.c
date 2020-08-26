@@ -3,10 +3,9 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * Code running on e51.
+ * Application code running on E51.
  * Example project demonstrate the Master Slave communication using internal
  * loopback mechanism.
- *
  */
 
 #include <stdint.h>
@@ -17,11 +16,11 @@
 /**************************************************************************//**
  * Macro definitions
  */
-#define COMMAND_BYTE_SIZE       1
-#define NB_OF_TURNAROUND_BYTES  4
-#define SLAVE_NB_OF_COMMANDS    4
-#define SLAVE_PACKET_LENGTH     8
-#define MSS_SPI_LOOPBACK_MASK   2
+#define COMMAND_BYTE_SIZE                            1U
+#define NB_OF_TURNAROUND_BYTES                       4U
+#define SLAVE_NB_OF_COMMANDS                         4U
+#define SLAVE_PACKET_LENGTH                          8U
+#define MSS_SPI_LOOPBACK_MASK                        2U
 
 /**************************************************************************//**
  * Private function declaration.
@@ -47,20 +46,20 @@ static uint8_t g_slave_rx_buffer[13] = { 0u };
 
 
 /**************************************************************************//**
- * Main function for the HART0(E51 processor).
- * Application code running on HART0 is placed here.
- * U54 HARTs are not used and they are kept in WFI
+ * Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
+ * U54 harts are not used and they are kept in WFI
  */
 void e51 (void)
 {
-    uint8_t cmd_idx = 0;
+    uint8_t cmd_idx = 0U;
 
     /*Reset SPI0 and SPI1*/
-    SYSREG->SOFT_RESET_CR &= ~(0x01UL << 10);
-    SYSREG->SOFT_RESET_CR &= ~(0x01UL << 11);
+    SYSREG->SOFT_RESET_CR &= ~(0x01UL << 10U);
+    SYSREG->SOFT_RESET_CR &= ~(0x01UL << 11U);
 
     /* all clocks on */
-    SYSREG->SUBBLK_CLOCK_CR = 0xffffffff;
+    SYSREG->SUBBLK_CLOCK_CR = 0xffffffffU;
 
     PLIC_init();
     __enable_irq();
@@ -179,15 +178,17 @@ static void mss_spi_overflow_handler
     if (mss_spi_core)
     {
         /* reset SPI1 */
-        SYSREG->SOFT_RESET_CR |= (0x01UL << 11);
-       /* Take SPI1 out of reset. */
-        SYSREG->SOFT_RESET_CR &= ~(0x01UL << 11);
+        SYSREG->SOFT_RESET_CR |= (0x01UL << 11U);
+
+        /* Take SPI1 out of reset. */
+        SYSREG->SOFT_RESET_CR &= ~(0x01UL << 11U);
     }
     else
     {
         /* reset SPI0 */
-         SYSREG->SOFT_RESET_CR |= (0x01UL << 10);
-        /* Take SPI0 out of reset. */
-         SYSREG->SOFT_RESET_CR &= ~(0x01UL << 10);
+         SYSREG->SOFT_RESET_CR |= (0x01UL << 10U);
+
+         /* Take SPI0 out of reset. */
+         SYSREG->SOFT_RESET_CR &= ~(0x01UL << 10U);
     }
 }
