@@ -6,9 +6,11 @@
  * PolarFire SoC Microprocessor Subsystem(MSS) System Services bare metal driver
  * implementation.
  */
-#include "drivers/mss_sys_services/mss_sys_services.h"
-#include "drivers/mss_sys_services/mss_sys_services_regs.h"
+ 
 #include "mpfs_hal/mss_hal.h"
+#include "mss_sys_services_regs.h"
+#include "mss_sys_services.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -316,8 +318,9 @@ MSS_SYS_query_security
     uint8_t idx=0;
     uint8_t buf[36] = {0};
 
-    /*Actual QUERY_SECURITY_RESP_LEN is 9 but CoreSysService_PF IP needs number
-    of words instead of number of bytes to be written to or read from MailBox*/
+    /* Actual QUERY_SECURITY_RESP_LEN is 9 but CoreSysService_PF IP needs number
+     * of words instead of number of bytes to be written to or read from 
+     * MailBox */
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
         status = execute_ss_interrupt_mode(
@@ -574,7 +577,7 @@ MSS_SYS_secure_nvm_write
     ASSERT(!(NULL_BUFFER == p_user_key));
     ASSERT(!(snvm_module >= 221u));
 
-    *p_frame = snvm_module; /*SNVMADDR - SNVM module*/
+    *p_frame = snvm_module; /* SNVMADDR - SNVM module */
     p_frame += 4; /* Next 3 bytes RESERVED - For alignment */
 
     /* Copy user key and send the command/data to mailbox. */
@@ -583,7 +586,7 @@ MSS_SYS_secure_nvm_write
     {
         /* Copy user data */
         for (index = 0u; index < (MSS_SYS_AUTHENTICATED_TEXT_DATA_LEN
-                - MSS_SYS_USER_SECRET_KEY_LEN); index++)
+                - MSS_SYS_USER_SECRET_KEY_LEN - 4u); index++)
         {
             *p_frame = p_data[index];
             p_frame++;
@@ -683,7 +686,7 @@ MSS_SYS_secure_nvm_read
 
     ASSERT((data_len == 236u) || (data_len == 252u));
 
-    *p_frame = snvm_module; /*SNVMADDR - SNVM module*/
+    *p_frame = snvm_module; /* SNVMADDR - SNVM module */
     p_frame += 4u; /* RESERVED - For alignment */
 
     /* Copy user key */
@@ -802,16 +805,16 @@ MSS_SYS_execute_uic_script
 
     if (src_periph_type == MSS_SYS_UIC_SOURCE_PERIPH_SNVM)
     {
-        l_periph_addr &= 0x000000FFu;   /*only first 8 bits are valid*/
+        l_periph_addr &= 0x000000FFu;   /* only first 8 bits are valid */
     }
     else if ((src_periph_type == MSS_SYS_UIC_SOURCE_PERIPH_NONAUTHEN_SPIFLASH )||
             (src_periph_type == MSS_SYS_UIC_SOURCE_PERIPH_AUTHEN_SPIFLASH ))
     {
-        l_periph_addr &= 0xFFFFFFFFu;   /*only first 24 or 32 bits are valid*/
+        l_periph_addr &= 0xFFFFFFFFu;   /* only first 24 or 32 bits are valid */
     }
     else if (src_periph_type == MSS_SYS_UIC_SOURCE_PERIPH_UPROM)
     {
-        l_periph_addr &= 0x000000FFu;   /*only first 8 bits are valid*/
+        l_periph_addr &= 0x000000FFu;   /* only first 8 bits are valid */
         l_periph_addr = (l_periph_addr << 14u);
     }
     else
@@ -945,7 +948,7 @@ MSS_SYS_authenticate_iap_image
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
         status = execute_ss_interrupt_mode(
-                (uint8_t)MSS_SYS_BITSTREAM_AUTHENTICATE_CMD,
+                (uint8_t)MSS_SYS_IAP_BITSTREAM_AUTHENTICATE_CMD,
                 NULL_BUFFER,
                 MSS_SYS_WITHOUT_CMD_DATA,
                 NULL_BUFFER,
@@ -956,7 +959,7 @@ MSS_SYS_authenticate_iap_image
     else
     {
         status = execute_ss_polling_mode(
-                (uint8_t)MSS_SYS_BITSTREAM_AUTHENTICATE_CMD,
+                (uint8_t)MSS_SYS_IAP_BITSTREAM_AUTHENTICATE_CMD,
                 NULL_BUFFER,
                 MSS_SYS_WITHOUT_CMD_DATA,
                 NULL_BUFFER,
@@ -1176,12 +1179,12 @@ MSS_SYS_debug_write_probe
      uint8_t mb_format[12] = {0};
 
      /* Local variable to store the combination of iprow_addr, ipseg_addr and
-      * prb_addr*/
+      * prb_addr */
      uint32_t service_data = 0u;
 
      uint16_t ip_addr = iprow_addr;
      ip_addr = ip_addr << 6u;
-     ip_addr += ipseg_addr;/* ip_addr is ipseg_addr + iprow_addr*/
+     ip_addr += ipseg_addr;/* ip_addr is ipseg_addr + iprow_addr */
 
      service_data = ip_addr;
      service_data = service_data << 16; /* 2 bytes space for prb_addr */
@@ -1336,7 +1339,6 @@ MSS_SYS_debug_select_mem
 
     return status;
 }
-
 
 /***************************************************************************//**
  * MSS_SYS_debug_read_mem()
@@ -1924,13 +1926,14 @@ static uint16_t request_system_service
 
     if (MSS_SCBCTRL->SERVICES_SR & SCBCTRL_SERVICESSR_BUSY_MASK)
     {
-        /*System controller is busy with executing service*/
+        /* System controller is busy with executing service */
         return MSS_SYS_BUSY;
     }
 
-    /*Code for MSS_SYS_PARAM_ERR is not implemented with this version of driver.*/
+    /* Code for MSS_SYS_PARAM_ERR is not implemented with this version of 
+       driver. */
 
-    *MSS_SCBMESSAGE_INT = 0x0u; /*clear message_int reg*/
+    *MSS_SCBMESSAGE_INT = 0x0u; /* clear message_int reg */
 
     if (g_service_mode == MSS_SYS_SERVICE_INTERRUPT_MODE)
     {
@@ -1967,12 +1970,12 @@ static uint16_t request_system_service
         }
     }
 
-    /*Form the SS command: bit 0to6 is the opcode, bit 7to15 is the Mailbox
-         offset For some services this field has another meaning.
-        (e.g. for IAP bit-stream auth. it means spi_idx)*/
+    /* Form the SS command: bit 0to6 is the opcode, bit 7to15 is the Mailbox
+     * offset For some services this field has another meaning.
+     * (e.g. for IAP bit-stream auth. it means spi_idx) */
     ss_command = ((mb_offset << 7u) |  (cmd_opcode & 0x7Fu));
 
-    /*Interrupt based implementation of services */
+    /* Interrupt based implementation of services */
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
         MSS_SCBCTRL->SERVICES_CR = (((ss_command << SCBCTRL_SERVICESCR_COMMAND)
@@ -1988,18 +1991,16 @@ static uint16_t request_system_service
 
     }
 
-    /*Service requested successfully*/
+    /* Service requested successfully */
     return MSS_SYS_SUCCESS;
 }
 
-/*
- * This function executes the SS command in interrupt mode. If Mailbox input data
+/* This function executes the SS command in interrupt mode. If Mailbox input data
  * is required by the service, the call to request_system_service() function will
  * first load it from cmd_data into the Mailbox. The response of the service is
  * not read by this function as it depends on message interrupt. Application
  * will have to read the response of service by calling MSS_SYS_read_response(),
- * only after interrupt occurs.
- */
+ * only after interrupt occurs. */
 static uint16_t execute_ss_interrupt_mode
 (
     uint8_t cmd_opcode,
@@ -2020,8 +2021,7 @@ static uint16_t execute_ss_interrupt_mode
     return status;
  }
 
-/*
- * This function executes the SS command in polling mode. If Mailbox input data
+/* This function executes the SS command in polling mode. If Mailbox input data
  * is required by the it will first load it from cmd_data into the Mailbox.
  * After requesting the service it will poll the request and busy bit. If the
  * service requires the response data to be read from mailbox, it will read the
@@ -2049,7 +2049,7 @@ static uint16_t execute_ss_polling_mode
 
     if (status == MSS_SYS_SUCCESS)
     {
-        /**REQ bit will remain set till the system controller starts
+        /* REQ bit will remain set till the system controller starts
          * processing command. Since DRI is slow interface, we are waiting
          * here to make sure System controller has started processing
          * command*/
@@ -2059,8 +2059,8 @@ static uint16_t execute_ss_polling_mode
             ;
         }
 
-        /*Once system controller starts processing command The busy bit will
-         *  go 1. Make sure that service is complete i.e. BUSY bit is gone 0*/
+        /* Once system controller starts processing command The busy bit will
+         * go 1. Make sure that service is complete i.e. BUSY bit is gone 0 */
         while (SCBCTRL_SERVICESSR_BUSY_MASK == (MSS_SCBCTRL->SERVICES_SR &
                 SCBCTRL_SERVICESSR_BUSY_MASK))
         {
@@ -2079,7 +2079,7 @@ static uint16_t execute_ss_polling_mode
             }
         }
 
-        /*Read the status returned by System Controller*/
+        /* Read the status returned by System Controller */
         status = ((MSS_SCBCTRL->SERVICES_SR & SCBCTRL_SERVICESSR_STATUS_MASK) >>
                 SCBCTRL_SERVICESSR_STATUS);
     }
@@ -2104,9 +2104,9 @@ g5c_message_plic_IRQHandler
 {
     g_message_interrupt_counter++;
 
-    volatile uint32_t reg = *MSS_SCBMESSAGE; /*read message reg.*/
+    volatile uint32_t reg = *MSS_SCBMESSAGE; /* read message reg. */
     reg = *MSS_SCBMESSAGE_INT;
-    *MSS_SCBMESSAGE_INT = 0x0u; /*clear message_int reg*/
+    *MSS_SCBMESSAGE_INT = 0x0u; /* clear message_int reg */
     reg = *MSS_SCBMESSAGE_INT;
 
     mss_sys_interrupt_handler();
