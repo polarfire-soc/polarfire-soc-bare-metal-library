@@ -25,6 +25,9 @@
     MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
+/***********************************************************************************
+ * Record of Microchip changes
+ */
 #ifndef RISCV_BITS_H
 #define RISCV_BITS_H
 

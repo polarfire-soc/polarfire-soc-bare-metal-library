@@ -10,7 +10,7 @@
 /*******************************************************************************
  *
  * @file mss_h2f.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief H2F access data structures and functions.
  *
  * Definitions and functions associated with host to fabric interrupt controller.
@@ -20,7 +20,7 @@
 #ifndef MSS_H2F_H
 #define MSS_H2F_H
 
-#include "config/software/mpfs_hal/mss_sw_config.h"
+#include "mpfs_hal_config/mss_sw_config.h"
 
 #ifdef __cplusplus
 extern "C" {

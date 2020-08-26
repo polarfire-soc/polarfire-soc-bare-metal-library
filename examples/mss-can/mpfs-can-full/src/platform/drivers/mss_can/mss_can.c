@@ -9,14 +9,10 @@
  */
 
 /*******************************************************************************
- * include files
+ * Include files
  */
-#include <stddef.h>
-#include <stdint.h>
+#include "mpfs_hal/mss_hal.h"
 #include "mss_can.h"
-#include "mpfs_hal/mss_sysreg.h"
-#include "mpfs_hal/mss_plic.h"
-#include "mpfs_hal/mss_util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -977,7 +973,7 @@ MSS_CAN_get_tx_gte96
                                                                 CAN_FLAG_MASK);
 }
 
-/*******************************************************************************
+/***************************************************************************//**
  * Global initialization for all modes
  */
 static void global_init

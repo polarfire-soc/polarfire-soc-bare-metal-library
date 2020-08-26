@@ -25,6 +25,10 @@
     MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
+/***********************************************************************************
+ * Record of Microchip changes
+ */
+
 #ifndef RISCV_ATOMIC_H
 #define RISCV_ATOMIC_H
 

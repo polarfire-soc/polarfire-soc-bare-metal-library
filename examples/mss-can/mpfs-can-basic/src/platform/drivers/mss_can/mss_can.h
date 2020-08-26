@@ -65,8 +65,8 @@
   subsystem or the FPGA fabric. The MSS CAN serial signals are routed through
   IOMUXs to the PolarFire SoC device external pins. The MSS CAN serial
   signals can also be routed through IOMUXs to the PolarFire SoC FPGA fabric.
-  For more information on IOMUX, see the IOMUX section of the PolarFire SoC
-  Microprocessor Subsystem (MSS) User's Guide.
+  For more information on IOMUX, refer to the I/O Configuration section of the
+  PolarFire SoC Microprocessor Subsystem (MSS) User's Guide.
 
   The IOMUXs are configured using the PolarFire SoC MSS configurator tool. You
   must ensure that the MSS CAN peripherals are enabled and configured in the
@@ -224,7 +224,6 @@
 extern "C" {
 #endif
 
-#define __I  const volatile
 #define __IO volatile
 #define __O volatile
 

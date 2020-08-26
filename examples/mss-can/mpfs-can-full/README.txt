@@ -11,7 +11,7 @@ The operation of the MSS CAN is controlled via a serial console.
 --------------------------------------------------------------------------------
                             How to use this example
 --------------------------------------------------------------------------------
-To use this project you will nee a UART terminal configured as below:
+To use this project you will need a UART terminal configured as below:
     - 115200 baud
     - 8 data bits
     - 1 stop bit
@@ -49,13 +49,13 @@ The following macros modify the behaviour of the program:
                         Test CAN Message Transmission
 --------------------------------------------------------------------------------
 
-    1. Enter the data on hyperterminal, which will be received through MSSUART0.
+    1. Enter the data on UART terminal, which will be received through MSSUART0.
     2. Based on received data bytes, segregate as CAN messages of maximum 8 
        bytes length.
     3. Send the received data in terms of CAN messages.
     4. Observe the CAN messages on CAN Analyzer with message identifier as 0x78.
     5. Compare the data received on CAN Analyzer with the data sent from the 
-       hyperterminal data should be same.
+       UART terminal data should be same.
 
 --------------------------------------------------------------------------------
                         Test CAN Message Reception
@@ -64,10 +64,10 @@ The following macros modify the behaviour of the program:
     1. Send the 8 bytes of CAN message from CAN Analyzer with message identifier
         as 0x80.
     2. Read the data using CAN APIs and store it in to RAM buffer.
-    3. Transmit the data using MSS UART-0 on to hyper terminal.
-    4. Observe the data received on Hyperterminal.
+    3. Transmit the data using MSSUART0 on to UART terminal.
+    4. Observe the data received on UART terminal.
     5. Compare the data sent from CAN Analyzer with the data received on 
-       hypertermianl data should be same.
+       UART terminal data should be same.
   
 --------------------------------------------------------------------------------
                                 Target hardware
@@ -75,29 +75,41 @@ The following macros modify the behaviour of the program:
 This example project can be used on the PolarFire SoC FPGA family hardware 
 platforms. 
 
-There are configurations that needs to be set for this example project. The
-configurations are categorized into hardware and software configurations and 
-are respectively located in the following folders
-    platform/config/hardware/hw_config
-    platform/config/software/mpfs_hal/mss_sw_config
+There are configurations that need to be set for this example project. The
+configurations are categorized into hardware and software configurations.
+The hardware configurations are located in ./src/board/<target_board> folder.
+The default software configurations are stored under 
+.src/platform/platform_config_reference folder.
+If you need to change these configurations, you are advised to create a new 
+folder to replicate this folder under the ./boards directory and do the 
+modifications there. It would look like 
+./src/boards/<target_board>/platform_config
 
-The "hw_config" defines the hardware configurations such as clocks. You must 
-make sure that the configurations in this example project match the actual 
-configurations of your target design you are using to test this example project.
+The include files in the "soc_config" folder define the hardware configurations 
+such as clocks. You must make sure that the configurations in this example 
+project match the actual configurations of your target design that you are using 
+to test this example project.
 
-The "sw_config" folder defines the software configurations such as HART 
-configurations. These configurations have no dependency on the hardware
-configurations that you use. If you change these configurations, you may have 
-to change the software code to work according to the new configurations that 
-you use.
+The include files in the "mpfs_hal_config" folder define the software 
+configurations such as how many HARTs are being used in the software, what is 
+the tick rate of the internal timer of each HART. These configurations have no 
+dependency on the hardware configurations "soc_config". Note that changing these 
+software configurations may require a change in your application code.
 
-## Executing project on PolarFire SoC hardware
+## Executing project in the Renode emulation
 
-This example project can be used on PolarFire SoC hardware platform. The MMUART0
-must be connected to host PC. The host PC must connect to the serial port using 
-a terminal emulator such as Tera Term or PuTTY.
+Further information on working with Renode is available from the "Renode 
+emulation platform" section of the SoftConsole release notes. The SoftConsole
+release notes document can be found at: <SoftConsole-install-dir>/documentation
+
+## Executing project on the PolarFire SoC
+
+This application can be used on PolarFire hardware platform as well e.g. Icicle 
+Kit. In this case, the MMUART0 must be connected to the host PC. The host PC 
+must connect to the serial port using a terminal emulator such as Tera Term or 
+PuTTY or the SoftConsole built-in terminal view.
 
 Build the project and launch the debug configuration named 
-mpfs-can-full hw-emulation all-harts debug.launch which is configured for 
+mpfs-full-can hw all-harts debug.launch which is configured for 
 PolarFire SoC hardware platform.
 

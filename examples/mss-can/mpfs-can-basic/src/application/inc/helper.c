@@ -7,12 +7,8 @@
  *
  */
 #include <stdio.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 #include "helper.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 
 static const uint8_t g_separator[] =
 "\r\n\
