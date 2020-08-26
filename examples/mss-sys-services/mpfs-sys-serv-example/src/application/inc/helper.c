@@ -3,7 +3,7 @@
  *
  * Helper function for PolarFire User Crypto- Cryptography service example.
  */
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "inc/helper.h"
 
 static const uint8_t g_separator[] =

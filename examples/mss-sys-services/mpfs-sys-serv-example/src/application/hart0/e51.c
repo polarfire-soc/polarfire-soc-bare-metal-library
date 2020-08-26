@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * Code running on e51.
+ * Application code running on E51.
  *
  * Example project demonstrating the use of PolarFire SoC System Services
  * supported by system controller.
@@ -14,14 +14,14 @@
 #include <stdio.h>
 #include "mpfs_hal/mss_hal.h"
 #include "inc/helper.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "drivers/mss_sys_services/mss_sys_services.h"
 
 /******************************************************************************
  * Enable this define to use system service driver in interrupt mode. Refer to
  * Readme.txt located in the root folder for more information.
  */
-//#define MSS_SYS_INTERRUPT_MODE
+/* #define MSS_SYS_INTERRUPT_MODE */
 
 /*****************************************************************************
  * MSS_SYS_MAILBOX_DATA_OFFSET
@@ -122,7 +122,7 @@ void execute_iap(void)
     uint8_t uart_input[8]={0};
     uint32_t* ptr = 0u;
 
-     /* Read FF timeout value*/
+     /* Read FF timeout value */
     get_input_data(uart_input, (sizeof(cmd)),
                   (const uint8_t*)iap_msg,
                   sizeof(iap_msg));
@@ -228,7 +228,7 @@ void execute_spi_copy_service(void)
 #endif
 
     /* An external flash device must be connected and design must include the
-     * connections to that external flash to execute this service successfully*/
+     * connections to that external flash to execute this service successfully */
      if (MSS_SYS_SUCCESS == status)
      {
          MSS_UART_polled_tx_string (&g_mss_uart0_lo, (const uint8_t*)"SPI Copy test\r\n");
@@ -320,13 +320,12 @@ void execute_match_otp_service(void)
     uint8_t one_time_passcode[32] = {0};
     uint8_t user_id[16] = {0};
 
-    /*NOTE: The parameter 'validator' is parameter is initialized to {0} here
+    /* NOTE: The parameter 'validator' is parameter is initialized to {0} here
      * for demonstration.
      * You must initialize it to a Proper validator value per application need
      * for the service to execute successfully.
-     * */
+     */
     uint8_t validator[32] = {0};
-
 
     MSS_UART_polled_tx_string(&g_mss_uart0_lo,
             (const uint8_t*)"\r\nMatch OTP service\r\n" );
@@ -336,10 +335,9 @@ void execute_match_otp_service(void)
      * service was KEYMODE_FACTORY_KEY and the passcode was not the Factory
      * Passcode.
      */
-
     status = MSS_SYS_otp_match(user_id, validator, one_time_passcode,
-                                       MSS_SYS_MAILBOX_DATA_OFFSET,
-                                       0u);
+            MSS_SYS_MAILBOX_DATA_OFFSET,
+            0u);
 
 #ifdef MSS_SYS_INTERRUPT_MODE
 
@@ -358,7 +356,7 @@ void execute_match_otp_service(void)
     {
         MSS_UART_polled_tx_string (&g_mss_uart0_lo,
                 (const uint8_t*)"\r\n Generate OTP service not executed or "
-                                      "KEYMODE specified is invalid\r\n");
+                "KEYMODE specified is invalid\r\n");
     }
 
     else if(MSS_SYS_MATCH_OTP_MISMATCHERR == status)
@@ -379,8 +377,8 @@ void execute_terminate_debug_service(void)
 
     MSS_UART_polled_tx_string(&g_mss_uart0_lo,
             (const uint8_t*)"\r\nDebug terminate service. \r\n\
-Executing this service terminates the debug operation which was previously  \r\n\
-requested using one of the debug services.\r\n" );
+    Executing this service terminates the debug operation which was previously\r\n\
+    requested using one of the debug services.\r\n" );
 
     status = MSS_SYS_debug_terminate(MSS_SYS_MAILBOX_DATA_OFFSET,
                                              0u);
@@ -421,14 +419,14 @@ void e51(void)
     uint32_t mpu_status;
 
     SYSREG->SOFT_RESET_CR &= ~( (1u << 0u) | (1u << 4u) | (1u << 5u) |
-            (1u << 19u) | (1u << 23u) | (1u << 28u)) ;       // MMUART0
+            (1u << 19u) | (1u << 23u) | (1u << 28u)) ;
 
     MSS_UART_init(&g_mss_uart0_lo,
                   MSS_UART_115200_BAUD,
                   MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT
                   );
 
-    /*Configuring MPU for spi copy service*/
+    /* Configuring MPU for spi copy service */
     mpu_status = MSS_MPU_configure(MSS_MPU_SCB,
                                    MSS_MPU_PMP_REGION0,
                                    0x1400000000,
@@ -450,7 +448,7 @@ void e51(void)
     MSS_SYS_select_service_mode(MSS_SYS_SERVICE_INTERRUPT_MODE,
                                 mss_sys_service_interrupt_handler);
 #else
-    /*Select service mode for service execution*/
+    /* Select service mode for service execution */
     MSS_SYS_select_service_mode(MSS_SYS_SERVICE_POLLING_MODE,
                                 mss_sys_service_interrupt_handler);
 #endif
@@ -491,9 +489,7 @@ void e51(void)
     }
 }
 
-/*
- * Interrupt service routine
- */
+/* Interrupt service routine */
 uint8_t maintenance_u51_local_IRQHandler_0(void)
 {
     /* Read MPU violation SR to know which MASTER violated.
@@ -501,7 +497,7 @@ uint8_t maintenance_u51_local_IRQHandler_0(void)
      */
     if (SYSREG->MPU_VIOLATION_SR)
     {
-        /*by writing 1, clear the status failed bit*/
+        /* by writing 1, clear the status failed bit */
         SYSREG->MPU_VIOLATION_SR |= 0x01;
     }
 

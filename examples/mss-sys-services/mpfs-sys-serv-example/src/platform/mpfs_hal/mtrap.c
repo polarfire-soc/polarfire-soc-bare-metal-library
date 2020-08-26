@@ -10,13 +10,11 @@
 /***************************************************************************
  *
  * @file mtrap.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief trap functions
  *
  */
 #include "mss_hal.h"
-#include "config/hardware/hw_platform.h"
-#include "config/software/mpfs_hal/mss_sw_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,56 +36,51 @@ void reset_mtime(void);
 
 void bad_trap(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc)
 {
+    (void)regs;
+    (void)dummy;
+    (void)mepc;
     while(1)
     {
-       volatile static uint64_t counter = 0U;
-
-       /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
     }
 }
 
 void misaligned_store_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
 {
+    (void)regs;
+    (void)mcause;
+    (void)mepc;
     while(1)
     {
-       volatile static uint64_t counter = 0U;
-
-       /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
     }
 }
 
 void misaligned_load_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
 {
+    (void)regs;
+    (void)mcause;
+    (void)mepc;
     while(1)
     {
-       volatile static uint64_t counter = 0U;
-
-       /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
     }
 }
 
 void illegal_insn_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
 {
+    (void)regs;
+    (void)mcause;
+    (void)mepc;
     while(1)
     {
-       volatile static uint64_t counter = 0U;
-
-       /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
     }
 }
 
 void pmp_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc)
 {
+    (void)regs;
+    (void)mcause;
+    (void)mepc;
     while(1)
     {
-       volatile static uint64_t counter = 0U;
-
-       /* Added some code as debugger hangs if in loop doing nothing */
-       counter += counter + 1U;
     }
 }
 
@@ -722,8 +715,8 @@ void handle_m_ext_interrupt(void)
 void handle_local_interrupt(uint8_t interrupt_no)
 {
 #ifndef SIFIVE_HIFIVE_UNLEASHED    /* no local interrupts on unleashed */
-    uint32_t mhart_id = read_csr(mhartid);
-    uint8_t local_interrupt_no = interrupt_no - 16U;
+    uint64_t mhart_id = read_csr(mhartid);
+    uint8_t local_interrupt_no = (uint8_t)(interrupt_no - 16U);
     local_int_p_t *local_int_table = local_int_mux[mhart_id];
 
     (*local_int_table[local_interrupt_no])();
@@ -747,16 +740,23 @@ void reset_mtime(void)
 
 /**
  * Configure system tick
- * @return
+ * @return SUCCESS or FAIL
  */
 uint32_t SysTick_Config(void)
 {
     const uint32_t tick_rate[5] = {HART0_TICK_RATE_MS,    HART1_TICK_RATE_MS    ,HART2_TICK_RATE_MS    ,HART3_TICK_RATE_MS    ,HART4_TICK_RATE_MS};
     volatile uint32_t ret_val = ERROR;
 
-    uint32_t mhart_id = read_csr(mhartid);
+    uint64_t mhart_id = read_csr(mhartid);
 
-    g_systick_increment[mhart_id] = ((MSS_RTC_TOGGLE_CLK/1000U)  * tick_rate[mhart_id]);
+    /*
+     * We are assuming the tick rate is in milli-seconds
+     *
+     * convert RTC frequency into milliseconds and multiple by the tick rate
+     *
+     */
+
+    g_systick_increment[mhart_id] = ((LIBERO_SETTING_MSS_RTC_TOGGLE_CLK/1000U)  * tick_rate[mhart_id]);
 
     if (g_systick_increment[mhart_id] > 0ULL)
     {
@@ -773,8 +773,14 @@ uint32_t SysTick_Config(void)
     return (ret_val);
 }
 
-
-
+/**
+ * Disable system tick interrupt
+ */
+void disable_systick(void)
+{
+    clear_csr(mie, MIP_MTIP);   /* mie Register - Machine Timer Interrupt Enable */
+    return;
+}
 
 
 /*------------------------------------------------------------------------------
@@ -783,10 +789,34 @@ uint32_t SysTick_Config(void)
 void handle_m_timer_interrupt(void)
 {
 
-    uint32_t hart_id = read_csr(mhartid);
+    volatile uint64_t hart_id = read_csr(mhartid);
+    volatile uint32_t error_loop;
     clear_csr(mie, MIP_MTIP);
 
-    SysTick_Handler(hart_id);
+    switch(hart_id)
+    {
+        case 0U:
+            SysTick_Handler_h0_IRQHandler();
+            break;
+        case 1U:
+            SysTick_Handler_h1_IRQHandler();
+            break;
+        case 2U:
+            SysTick_Handler_h2_IRQHandler();
+            break;
+        case 3U:
+            SysTick_Handler_h3_IRQHandler();
+            break;
+        case 4U:
+            SysTick_Handler_h4_IRQHandler();
+            break;
+        default:
+            while (hart_id != 0U)
+             {
+                 error_loop++;
+             }
+            break;
+    }
 
     CLINT->MTIMECMP[read_csr(mhartid)] = CLINT->MTIME + g_systick_increment[hart_id];
 
@@ -800,7 +830,7 @@ void handle_m_timer_interrupt(void)
  */
 void handle_m_soft_interrupt(void)
 {
-    volatile uint32_t hart_id = read_csr(mhartid);
+    volatile uint64_t hart_id = read_csr(mhartid);
     volatile uint32_t error_loop;
 
     switch(hart_id)
@@ -842,7 +872,7 @@ void trap_from_machine_mode(uintptr_t * regs, uintptr_t dummy, uintptr_t mepc)
     }
     else if (((mcause & MCAUSE_INT) == MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  > 15U)&& ((mcause & MCAUSE_CAUSE)  < 64U))
     {
-        handle_local_interrupt(mcause & MCAUSE_CAUSE);
+        handle_local_interrupt((uint8_t)(mcause & MCAUSE_CAUSE));
     }
     else if (((mcause & MCAUSE_INT) == MCAUSE_INT) && ((mcause & MCAUSE_CAUSE)  == IRQ_M_TIMER))
     {
