@@ -3,43 +3,52 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- *
  * MPFS HAL Embedded Software
  *
  */
 
 /*******************************************************************************
  * @file mss_hal.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief MPFS HAL include file. This is the file intended for application to
  * include so that all the other MPFS files are then accessible to it.
- *
  *
  */
 
 #ifndef MSS_HAL_H
 #define MSS_HAL_H
 
+#ifndef CONFIG_OPENSBI
+#  include <stddef.h>  // for size_t
+#  include <stdbool.h> // for bool, true, false
+#  include <stdint.h>
+#ifndef ssize_t
+typedef long            ssize_t;
+#endif
+#endif
+
+#include "mss_assert.h"
+#include "mpfs_hal/nwc/mss_ddr_defs.h"
+#include "mpfs_hal/nwc/mss_ddr_SGMII_regs.h"
+#include "mpfs_hal/nwc/mss_io_config.h"
+#include "mpfs_hal/nwc/mss_pll.h"
+#include "mpfs_hal/nwc/mss_scb_nwc_regs.h"
+#include "mpfs_hal/nwc/mss_scb_nwc_regs.h"
+/*
+ * mss_sw_config.h may be edited as required and should be located outside the
+ * mpfs_hal folder
+ */
+#include "mpfs_hal_config/mss_sw_config.h"
+/*
+ * The hw_platform.h is included here only. It must be included after
+ * mss_sw_config.h. This allows defines in hw_platform.h be overload from
+ * mss_sw_config.h if necessary.
+ * */
 #include "atomic.h"
 #include "bits.h"
 #include "encoding.h"
+#include "soc_config/hw_platform.h"
+#include "mpfs_hal/nwc/mss_ddr.h"
 #include "mss_clint.h"
 #include "mss_coreplex.h"
 #include "mss_h2f.h"
@@ -53,13 +62,23 @@
 #include "mss_sysreg.h"
 #include "mss_util.h"
 #include "mtrap.h"
+#include "mss_l2_cache.h"
+#include "mss_axiswitch.h"
+#include "nwc/mss_cfm.h"
+#include "nwc/mss_ddr.h"
+#include "nwc/mss_sgmii.h"
 #include "system_startup.h"
+#include "nwc/mss_ddr_debug.h"
+#ifdef SIMULATION_TEST_FEEDBACK
+#include "nwc/simulation.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 uint32_t SysTick_Config(void);
+void disable_systick(void);
 
 #ifdef __cplusplus
 }

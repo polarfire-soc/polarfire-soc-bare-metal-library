@@ -3,24 +3,25 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * Code running on e51
+ * Application code running on E51
  *
- * PolarFire SoC MSS CAN example demonstrating the Data transmission and
+ * PolarFire SoC MSS CAN example demonstrating the Data Transmission and
  * Reception using MSSCAN (FullCAN).
- * For Transmission: Get data from Hyperterminal using MSSUART1 --> Form as CAN
+ * For Transmission: Get data from UART terminal using MSSUART1 --> Form as CAN
  * packets --> Send to CAN Analyzer.
- * For Reception: Send the CAN Message from CAN Analyzer --> read the Message-->
- * Send to hyperterminal using MSSUART1.
- * Board settings and test procedure clearly mentioned in ReadMe.txt file.
+ * For Reception: Send the CAN Message from CAN Analyzer --> Read the Message-->
+ * Send to UART terminal using MSSUART1.
+ * Board settings and test procedure clearly mentioned in README.txt file.
  *
  */
 
 /*----------------------------------------------------------------------------
  * Include files
  */
+#include <stdio.h>
 #include "mpfs_hal/mss_hal.h"
 #include "drivers/mss_can/mss_can.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 
 /*------------------------------------------------------------------------------
  * Macros.
@@ -57,7 +58,7 @@ mss_can_rxmsgobject rx_msg;
  */
 uint64_t uart_lock;
 
-volatile mss_can_instance_t* g_mss_can_0 = &g_mss_can_0_lo;
+mss_can_instance_t* g_mss_can_0 = &g_mss_can_0_lo;
 static mss_uart_instance_t *gp_my_uart = &g_mss_uart0_lo;
 
 /*------------------------------------------------------------------------------
@@ -79,13 +80,6 @@ void e51(void)
     uint32_t tx_status = 0u;
 
     SYSREG->SUBBLK_CLOCK_CR = 0xffffffff;   /* All clocks on */
-    SYSREG->SOFT_RESET_CR &= ~( (1u << 0u) | \
-                                (1u << 4u) | \
-                                (1u << 5u) | \
-                                (1u << 19u) | \
-                                (1u << 23u) | \
-                                (1u << 28u) );
-
 
     PLIC_init();
     __disable_local_irq((int8_t)MMUART0_E51_INT);
@@ -107,8 +101,8 @@ void e51(void)
                   MSS_UART_ONE_STOP_BIT));
 
     /*--------------------------------------------------------------------------
-     Performs CAN Initialization and Message Buffer Configuration
-    */
+     * Performs CAN Initialization and Message Buffer Configuration
+     */
 #ifdef CAN_TARGET_COCO_PC_ACTIVE
     /*
      * Tweaked 20kbs configuration for a 16MHz PCLK1 which works with the
@@ -204,11 +198,12 @@ void e51(void)
         MSS_UART_polled_tx_string(gp_my_uart,
                        (const uint8_t *)"\n\rData transmitted as CAN Message ");
         display_hex_values(g_uart_to_can, loop_count);
+
         /*------------------------------------------------------------------
-          Identify the number of messages to transmit based on rx_bytes
+         * Identify the number of messages to transmit based on rx_bytes
          */
         no_of_msgs = rx_bytes / 16u;
-        if ((rx_bytes % 16u) != 0)
+        if ((rx_bytes % 16u) != 0u)
         {
             no_of_msgs = no_of_msgs + 1u;
         }
@@ -244,7 +239,7 @@ void e51(void)
                 else
                 {
                     pmsg.DATA[11u - loop_count] = \
-                                       g_uart_to_can[loop_count + (count * 8u)];
+                                       g_uart_to_can[loop_count +(count * 8u)];
                 }
             }
 
@@ -252,7 +247,7 @@ void e51(void)
             ret_status = MSS_CAN_send_message_n(g_mss_can_0, 0u, &pmsg);
             if (CAN_VALID_MSG != ret_status)
             {
-                error_flag = 1; /* Didn't succeed in sending packet... */
+                error_flag = 1u; /* Didn't succeed in sending packet... */
             }
             else
             {
@@ -264,9 +259,9 @@ void e51(void)
                     tx_status = MSS_CAN_get_tx_buffer_status(g_mss_can_0);
                 }
 
-            no_of_msgs--;
-            msg_len -= chunk_size;
-            count++;
+                no_of_msgs--;
+                msg_len -= chunk_size;
+                count++;
             }
         }
 
@@ -279,7 +274,7 @@ void e51(void)
             if (0u == error_flag) /* Everything sent */
             {
                 MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t *)"\n\rObserve the data received on CAN Analyzer");
-                MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t *)"\n\rIt should be same as the data transmitted from Hyperterminal");
+                MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t *)"\n\rIt should be same as the data transmitted from UART terminal");
             }
             else /* Some error occurred */
             {
@@ -298,7 +293,7 @@ void e51(void)
          MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t*)"\n\r");
 
        /*----------------------------------------------------------------------
-          Display options
+        *  Display options
         */
         display_option();
     }
@@ -306,7 +301,6 @@ void e51(void)
 }
 
 static void check_rx_buffer(void)
-
 {
     uint8_t loop_count;
 
@@ -334,13 +328,13 @@ static void check_rx_buffer(void)
         /* Send to UART */
         display_hex_values(g_can_to_uart, rx_buf.DLC);
         MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t *)"\n\rObserve the message sent from the CAN Analyzer ");
-        MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t *)"\n\rIt should be same as message Received on Hyperterminal");
+        MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t *)"\n\rIt should be same as message Received on UART terminal");
         MSS_UART_polled_tx_string(gp_my_uart, (const uint8_t*)"\n\r******************************************************************************\n\r");
     }
 }
 
 /*------------------------------------------------------------------------------
-  Receive the data from UART
+ * Receive data from UART terminal.
  */
 static uint8_t get_data_frm_uart(void)
 {
@@ -378,7 +372,6 @@ static uint8_t get_data_frm_uart(void)
                 {
                     g_temp[count] = rx_buff[0];
                 }
-
                 count++;
             }
 
@@ -408,7 +401,7 @@ static void display_greeting(void)
 }
 
 /*------------------------------------------------------------------------------
-  Display content of buffer passed as parameter as hex values
+ * Display content of buffer passed as parameter as hex values.
  */
 static void display_hex_values
 (
@@ -443,7 +436,7 @@ static void display_hex_values
 }
 
 /*------------------------------------------------------------------------------
-  Converts ASCII values to HEX values
+ * Converts ASCII values to HEX values
  */
 static void ascii_to_hex
 (
@@ -469,12 +462,13 @@ static void ascii_to_hex
         }
         else
         {
+            ;/* Do Nothing. */
         }
     }
 }
 
 /*------------------------------------------------------------------------------
-  Display the Option to continue or exit.
+ * Display the Option to continue or exit.
  */
 static void display_option(void)
 {
@@ -531,8 +525,8 @@ static void display_option(void)
         }
 
         /*----------------------------------------------------------------------
-          Read the Data from CAN channel and Transmit Through UART1
-        */
+         *  Read the Data from CAN channel and Transmit Through UART1
+         */
         check_rx_buffer();
 
     }while ((rx_buff[0]!= '7') & (rx_buff[0]!= '5'));
