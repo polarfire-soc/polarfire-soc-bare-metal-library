@@ -138,8 +138,8 @@ extern "C" {
 /*----------------------------------PDMA--------------------------------------*/
 
 /*----------------------------------------------------------------------------/*
-  The mss_pdma_channel_id_t enumeration is used to identify peripheral DMA channels.
-  It is used as function parameter to specify the PDMA channel used.
+  The mss_pdma_channel_id_t enumeration is used to identify peripheral DMA 
+  channels. It is used as function parameter to specify the PDMA channel used.
  */
 typedef enum __pdma_channel_id
 {
@@ -165,9 +165,9 @@ typedef struct _pdmachannelconfig
 {
     volatile uint64_t src_addr;            /* source address */
     volatile uint64_t dest_addr;           /* destination address */
-    volatile uint64_t num_bytes;           /* Number of bytes to be transfered.
+    volatile uint64_t num_bytes;           /* Number of bytes to be transferred.
                                             * Base 2 Logarithm */
-    volatile uint8_t enable_done_int;      /* enable transfer complete interrupt */
+    volatile uint8_t enable_done_int;      /* enable transfer complete interrupt*/
     volatile uint8_t enable_err_int;       /* enable transfer error interrupt*/
     volatile uint8_t repeat;               /* repeat the transaction */
     volatile uint8_t force_order;          /* Enforces strict ordering by only
@@ -202,9 +202,8 @@ typedef struct _pdmaregs
 {
     volatile uint32_t control_reg;           /* Channel Control Register */
     volatile uint32_t next_config;           /* Next transfer type */
-    volatile uint64_t next_bytes;            /* Number of bytes to be transfered.
-                                              * Base 2 Logarithm
-                                              */
+    volatile uint64_t next_bytes;            /* Number of bytes to be transferred.
+                                              * Base 2 Logarithm */
     volatile uint64_t next_destination;       /* Destination Start Address */
     volatile uint64_t next_source;            /* Source start Address*/
     const volatile  uint32_t exec_config;     /* Active transfer type */
@@ -396,7 +395,7 @@ MSS_PDMA_get_active_transfer_type
 
 /*-------------------------------------------------------------------------*//**
   The MSS_PDMA_get_number_bytes_remaining() function is used to request number
-  of bytes remaining to be transfered.
+  of bytes remaining to be transferred.
 
   @param channel_id
            The channel_id parameter specifies the Platform DMA channel selected

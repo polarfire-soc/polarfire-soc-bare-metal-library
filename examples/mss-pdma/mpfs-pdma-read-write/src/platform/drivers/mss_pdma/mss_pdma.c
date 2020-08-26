@@ -6,8 +6,8 @@
  * PoalrFire SoC Microprocessor Subsystem PDMA bare metal driver implementation.
  */
 
-#include "mss_pdma.h"
 #include "mpfs_hal/mss_hal.h"
+#include "mss_pdma.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,9 +20,10 @@ extern "C" {
                     (uint64_t)(PDMA_REG_BASE + (PDMA_CHL_REG_OFFSET * (x)))
 
 /* Default is maximum transaction size for both write_size and read_size. */
-uint8_t g_channel_nextcfg_wsize[MSS_PDMA_lAST_CHANNEL] = { 0x0Fu, 0x0Fu, 0x0Fu, 0x0Fu };
-uint8_t g_channel_nextcfg_rsize[MSS_PDMA_lAST_CHANNEL] = { 0x0Fu, 0x0Fu, 0x0Fu, 0x0Fu };
-
+uint8_t g_channel_nextcfg_wsize[MSS_PDMA_lAST_CHANNEL] = 
+                                                { 0x0Fu, 0x0Fu, 0x0Fu, 0x0Fu };
+uint8_t g_channel_nextcfg_rsize[MSS_PDMA_lAST_CHANNEL] = 
+                                                { 0x0Fu, 0x0Fu, 0x0Fu, 0x0Fu };
 /*-------------------------------------------------------------------------*//**
  * MSS_PDMA_init()
  * See pse_pdma.h for description of this function.
@@ -308,6 +309,7 @@ MSS_PDMA_get_transfer_error_status
     {
         return 0u;
     }
+    
     /* Set the register structure pointer for the PDMA channel. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET(channel_id);
 
@@ -390,6 +392,7 @@ dma_ch0_DONE_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_0);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_DONE_INT);
 
     return 0u;
@@ -404,6 +407,7 @@ dma_ch0_ERR_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_0);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_ERR_INT);
 
     return 0u;
@@ -418,6 +422,7 @@ dma_ch1_DONE_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_1);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_DONE_INT);
 
     return 0u;
@@ -432,6 +437,7 @@ dma_ch1_ERR_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_1);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_ERR_INT);
 
     return 0u;
@@ -447,6 +453,7 @@ dma_ch2_DONE_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_2);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_DONE_INT);
 
     return 0u;
@@ -461,6 +468,7 @@ dma_ch2_ERR_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_2);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_ERR_INT);
 
     return 0u;
@@ -475,6 +483,7 @@ dma_ch3_DONE_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_3);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_DONE_INT);
 
     return 0u;
@@ -489,6 +498,7 @@ dma_ch3_ERR_IRQHandler
     /* Clear the interrupt enable bit. */
     volatile mss_pdma_t *pdmareg = (mss_pdma_t *)MSS_PDMA_REG_OFFSET
                                                 (MSS_PDMA_CHANNEL_3);
+
     pdmareg->control_reg &= ~((uint32_t)MASK_PDMA_ENABLE_ERR_INT);
 
     return 0u;
@@ -497,4 +507,3 @@ dma_ch3_ERR_IRQHandler
 #ifdef __cplusplus
 }
 #endif
-

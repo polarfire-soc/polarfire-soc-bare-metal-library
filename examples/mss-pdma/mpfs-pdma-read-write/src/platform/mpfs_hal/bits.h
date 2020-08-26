@@ -26,7 +26,7 @@
 */
 
 /***********************************************************************************
- * Record of Microsemi changes
+ * Record of Microchip changes
  */
 #ifndef RISCV_BITS_H
 #define RISCV_BITS_H
