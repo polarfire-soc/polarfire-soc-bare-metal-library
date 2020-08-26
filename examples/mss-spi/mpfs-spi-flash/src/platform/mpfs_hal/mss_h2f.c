@@ -10,7 +10,7 @@
 /*******************************************************************************
  *
  * @file mss_h2f.c
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief H2F access data structures and functions.
  *
  */

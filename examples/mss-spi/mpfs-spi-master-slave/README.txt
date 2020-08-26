@@ -30,24 +30,31 @@ can put the breakpoint and check the buffer.
 This example project can be used on the PolarFire SoC FPGA family hardware 
 platforms. 
 
-There are configurations that needs to be set for this example project. The
-configurations are categorized into hardware and software configurations and 
-are respectively located in the following folders
-    platform/config/hardware/hw_config
-    platform/config/software/mpfs_hal/mss_sw_config
+There are configurations that need to be set for this example project. The
+configurations are categorized into hardware and software configurations.
+The hardware configurations are located in ./src/boards/<target_board> folder.
+The default software configurations are stored under 
+.src/platform/platform_config_reference folder.
 
-The "hw_config" defines the hardware configurations such as clocks. You must 
-make sure that the configurations in this example project match the actual 
-configurations of your target design you are using to test this example project.
+The include files in the "./src/boards/<target_board>/soc_config" folder define 
+the hardware configurations such as clocks. You must make sure that the 
+configurations in this example project match the actual configurations of your 
+target Libero design that you are using to test this example project.
 
-The "sw_config" folder defines the software configurations such as HART 
-configurations. These configurations have no dependency on the hardware
-configurations that you use. If you change these configurations, you may have 
-to change the software code to work according to the new configurations that 
-you use.
+If you need to change the software configurations, you are advised to create a 
+new folder to replicate this folder under the ./src/boards directory and do the 
+modifications there. It would look like 
+./src/boards/<target_board>/platform_config
 
-## Executing project on PolarFire SoC hardware
+The include files in the "platform_config" folder define the software 
+configurations such as how many harts are being used in the software, what is 
+the tick rate of the internal timer of each hart. These configurations have no 
+dependency on the hardware configurations in "soc_config" folder. Note that 
+changing these software configurations may require a change in your application 
+code.
+
+## Executing project on the PolarFire SoC hardware
 
 Build the project and launch the debug configuration named 
-mpfs-spi-master-slave hw-emulation all-harts debug.launch which is configured for 
+mpfs-spi-master-slave hw all-harts debug.launch which is configured for the
 PolarFire SoC hardware platform.
