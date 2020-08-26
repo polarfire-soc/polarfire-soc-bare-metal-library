@@ -5,20 +5,20 @@
  *
  * PolarFire SoC MSS Timer periodic IRQ example
  *
- * code running on e51
+ * Application code running on E51
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
 #include "drivers/mss_timer/mss_timer.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 
 uint64_t uart_lock;
 
 /******************************************************************************
- * Instruction message. This message will be transmitted over the UART to
- * HyperTerminal when the program starts.
+ * Instruction message. This message will be transmitted to the UART terminal
+ * when the program starts.
  *****************************************************************************/
 uint8_t g_message[] =
 "\r\n\r\n\r\n\t**** PolarFire SoC MSS TIMER example ****\r\n\r\n\n\
@@ -29,8 +29,8 @@ uint8_t g_message2[] =
     "\rObserve the messages on UART terminal at periodic programmed delays.\
     \r\nThe messages are displayed when the timer interrupt occurs \r\n\n";
 
-/* Main function for the HART0(E51 processor).
- * Application code running on HART0 is placed here.
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
  */
 void e51(void)
 {
@@ -41,8 +41,8 @@ void e51(void)
     SYSREG->SOFT_RESET_CR &= ~((1u << 0u) | (1u << 4u) | (1u << 5u) |
                                (1u << 19u) | (1u << 23u) | (1u << 28u));
 
-    /*This mutex is used to serialize accesses to UART0 when all harts want to
-     * TX/RX on UART0. This mutex is shared across all harts.*/
+    /* This mutex is used to serialize accesses to UART0 when all harts want to
+     * TX/RX on UART0. This mutex is shared across all harts. */
     mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( &g_mss_uart0_lo,
@@ -59,7 +59,7 @@ void e51(void)
     MSS_UART_polled_tx(&g_mss_uart0_lo, g_message2,strlen(g_message2));
     mss_release_mutex((uint64_t)&uart_lock);
 
-    /*Configure Timer1 for 1sec periodic interrupt*/
+    /* Configure Timer1 for 1sec periodic interrupt */
     timer1_load_value = 25000000;
     MSS_TIM1_init(TIMER_LO, MSS_TIMER_PERIODIC_MODE);
     MSS_TIM1_load_immediate(TIMER_LO, timer1_load_value);
@@ -75,7 +75,8 @@ void e51(void)
 uint8_t timer1_plic_IRQHandler()
 {
 
-    /*Print informative message on UART terminal for each interrupt occurrence*/
+    /* Print informative message on UART terminal for each interrupt
+     * occurrence */
     MSS_UART_polled_tx_string(&g_mss_uart0_lo,
                               "Timer Periodic interrupt example\r\n");
 

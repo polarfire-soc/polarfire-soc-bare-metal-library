@@ -1,7 +1,7 @@
  /*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT 
+ * SPDX-License-Identifier: MIT
  *
  * MPFS HAL Embedded Software
  *
@@ -9,7 +9,7 @@
 
 /*******************************************************************************
  * @file mss_prci.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief PRCI: Power, Reset, Clock, Interrupt
  *
  */
