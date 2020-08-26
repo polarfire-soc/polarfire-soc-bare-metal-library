@@ -5,27 +5,23 @@
  *
  * MPFS HAL Embedded Software example
  *
- * Code running on U54 hart 3
+ * Application code running on U54_3
  */
+
 #include <stdio.h>
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
-
-#ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_uart/mss_uart.h"
-#else
-#include "drivers/FU540_uart/FU540_uart.h"
-#endif
+#include "drivers/mss_mmuart/mss_uart.h"
 
 volatile uint32_t count_sw_ints_h3 = 0U;
 
 extern uint64_t uart_lock;
 
-/* Main function for the HART3(U54_3 processor).
- * Application code running on HART3 is placed here
+/* Main function for the hart3(U54_3 processor).
+ * Application code running on hart3 is placed here
  *
- * The HART3 goes into WFI. HART0 brings it out of WFI when it raises the first
- * Software interrupt to this HART
+ * The hart3 goes into WFI. hart0 brings it out of WFI when it raises the first
+ * Software interrupt to this hart
  */
 void u54_3(void)
 {
@@ -45,7 +41,7 @@ void u54_3(void)
         __asm("wfi");
     }while(0 == (read_csr(mip) & MIP_MSIP));
 
-    /*The hart is out of WFI, clear the SW interrupt. Hear onwards Application
+    /*The hart is out of WFI, clear the SW interrupt. Here onwards Application
      *can enable and use any interrupts as required*/
     clear_soft_interrupt();
 
@@ -71,7 +67,7 @@ void u54_3(void)
     /* never return */
 }
 
-/* HART3 Software interrupt handler */
+/* hart3 Software interrupt handler */
 void Software_h3_IRQHandler(void)
 {
     uint64_t hart_id = read_csr(mhartid);
