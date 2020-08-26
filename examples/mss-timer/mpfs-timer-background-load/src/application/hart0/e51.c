@@ -2,7 +2,7 @@
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
- * code running on e51
+ * Application code running on E51
  *
  * PolarFire SoC MSS TIMER background load example
  */
@@ -11,7 +11,7 @@
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
 #include "drivers/mss_timer/mss_timer.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 
 uint64_t uart_lock;
 
@@ -19,8 +19,8 @@ uint64_t uart_lock;
 #define SEQUENCE_LENGTH                         5
 
 /******************************************************************************
- * Instruction message. This message will be transmitted over the UART to
- * HyperTerminal when the program starts.
+ * Instruction message. This message will be transmitted to the UART terminal
+ * when the program starts.
  *****************************************************************************/
 uint8_t g_message[] =
 "\r\n\r\n\r\n **** PolarFire SoC MSS TIMER example ****\r\n\n\n\
@@ -40,8 +40,8 @@ static const uint32_t g_sequence_delays[SEQUENCE_LENGTH] =
     166000000
 };
 
-/* Main function for the HART0(E51 processor).
- * Application code running on HART0 is placed here.
+/* Main function for the hart0(E51 processor).
+ * Application code running on hart0 is placed here.
  */
 void e51(void)
 {
@@ -51,8 +51,8 @@ void e51(void)
     SYSREG->SOFT_RESET_CR &= ~( (1u << 0u) | (1u << 4u) | (1u << 5u) |
                                     (1u << 19u) | (1u << 23u) | (1u << 28u));
 
-    /*This mutex is used to serialize accesses to UART0 when all harts want to
-     * TX/RX on UART0. This mutex is shared across all harts.*/
+    /* This mutex is used to serialize accesses to UART0 when all harts want to
+     * TX/RX on UART0. This mutex is shared across all harts. */
     mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( &g_mss_uart0_lo,
@@ -69,7 +69,7 @@ void e51(void)
     MSS_UART_polled_tx(&g_mss_uart0_lo, g_message2,strlen(g_message2));
     mss_release_mutex((uint64_t)&uart_lock);
 
-	/*Configure Timer1*/
+	/* Configure Timer1 */
 	MSS_TIM1_init(TIMER_LO, MSS_TIMER_PERIODIC_MODE);
 	MSS_TIM1_load_immediate(TIMER_LO, g_sequence_delays[0]);
 	MSS_TIM1_start(TIMER_LO);

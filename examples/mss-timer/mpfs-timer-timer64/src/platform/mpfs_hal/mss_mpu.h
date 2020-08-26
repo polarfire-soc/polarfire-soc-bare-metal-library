@@ -1,16 +1,17 @@
 /*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- * SPDX-License-Identifier: MIT 
+ * SPDX-License-Identifier: MIT
  *
  * MPFS HAL Embedded Software
  *
  */
 /*******************************************************************************
  * @file mss_mpu.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief PolarFire SoC MSS MPU driver APIS for configuring access regions for
  * the external masters.
+ *
  */
 /*=========================================================================*//**
   
@@ -20,11 +21,12 @@
 
 #include <stdint.h>
 
-#ifndef SIFIVE_HIFIVE_UNLEASHED
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef SIFIVE_HIFIVE_UNLEASHED
 
 /***************************************************************************//**
 
@@ -37,7 +39,7 @@ typedef enum {
     MSS_MPU_FIC0    = 0x00,
     MSS_MPU_FIC1,
     MSS_MPU_FIC2,
-    MSS_MPU_ATHENA,
+    MSS_MPU_CRYPTO,
     MSS_MPU_GEM0,
     MSS_MPU_GEM1,
     MSS_MPU_USB,
@@ -49,8 +51,8 @@ typedef enum {
 } mss_mpu_mport_t;
 
 typedef enum {
-    MSS_MPU_AM_OFF    = 0x00,
-    MSS_MPU_AM_NAPOT  = 0x03,
+    MSS_MPU_AM_OFF    = 0x00U,
+    MSS_MPU_AM_NAPOT  = 0x03U,
 } mss_mpu_addrm_t;
 
 typedef enum {
@@ -74,16 +76,28 @@ typedef enum {
 
 extern uint8_t num_pmp_lut[10];
 
+#ifndef __I
 #define __I  const volatile
+#endif
+#ifndef __IO
 #define __IO volatile
+#endif
+#ifndef __O
 #define __O volatile
+#endif
 
 
-typedef struct
-{    __IO uint64_t  pmp   : 38;
-    __IO uint64_t  rsrvd : 18;
-    __IO uint64_t  mode  : 8;
-} MPUCFG_TypeDef;
+typedef struct {
+    union {
+        struct
+        {
+            __IO uint64_t  pmp   : 38;
+            __IO uint64_t  rsrvd : 18;
+            __IO uint64_t  mode  : 8;
+        } MPUCFG_TypeDef;
+        uint64_t raw;
+    };
+}MCU_CFG;
     
 typedef struct
 {
@@ -91,16 +105,21 @@ typedef struct
     __IO uint64_t  rw     : 1;
     __IO uint64_t  id     : 4;
     __IO uint64_t  failed : 1;
+    __IO uint64_t  padding : (64-44);
 } MPU_FailStatus_TypeDef;
 
 typedef struct
 {
-    MPUCFG_TypeDef               PMPCFG[16U];
+    MCU_CFG               PMPCFG[16U];
     __IO MPU_FailStatus_TypeDef  STATUS;
 } MPU_TypeDef;
 
 
+
 #define MSS_MPU(master)                ( (MPU_TypeDef*) (0x20005000UL + ((master) << 8U)))
+
+
+uint8_t mpu_configure(void);
 
 
 uint8_t MSS_MPU_configure(mss_mpu_mport_t master_port,
@@ -124,7 +143,7 @@ static inline uint8_t MSS_MPU_lock_region(mss_mpu_mport_t master_port,
 {
     if(pmp_region < num_pmp_lut[master_port])
     {
-        MSS_MPU(master_port)->PMPCFG[pmp_region].mode |= (0x1U << 7U);
+        MSS_MPU(master_port)->PMPCFG[pmp_region].MPUCFG_TypeDef.mode |= (0x1U << 7U);
         return (0U);
     }
     else
@@ -145,7 +164,7 @@ static inline uint8_t MSS_MPU_set_permission(mss_mpu_mport_t master_port,
 {
     if(pmp_region < num_pmp_lut[master_port])
     {
-        MSS_MPU(master_port)->PMPCFG[pmp_region].mode |= permission;
+        MSS_MPU(master_port)->PMPCFG[pmp_region].MPUCFG_TypeDef.mode |= permission;
         return (0U);
     }
     else
@@ -160,7 +179,7 @@ static inline uint8_t MSS_MPU_get_permission(mss_mpu_mport_t master_port,
 {
     if(pmp_region < num_pmp_lut[master_port])
     {
-        *permission = MSS_MPU(master_port)->PMPCFG[pmp_region].mode & 0x7U;
+        *permission = MSS_MPU(master_port)->PMPCFG[pmp_region].MPUCFG_TypeDef.mode & 0x7U;
         return (0U);
     }
     else
@@ -179,10 +198,15 @@ static inline MPU_FailStatus_TypeDef MSS_MPU_get_failstatus(mss_mpu_mport_t mast
     return (MSS_MPU(master_port)->STATUS);
 }
 
+#endif /* ! SIFIVE_HIFIVE_UNLEASHED */
+
+uint8_t pmp_configure(uint8_t hart_id);
+
+
 
 #ifdef __cplusplus
 }
 #endif
 
+
 #endif /* MSS_MPU_H */
-#endif

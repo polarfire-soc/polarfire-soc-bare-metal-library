@@ -10,7 +10,7 @@
 /*******************************************************************************
  *
  * @file mss_stubs.c
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief MPFS MSS Interrupt Function stubs.
  *
  * The functions below will only be linked with the application code if the user
@@ -58,7 +58,27 @@ __attribute__((weak)) void Software_h4_IRQHandler(void)
 
 }
 
-__attribute__((weak)) void SysTick_Handler(uint32_t hard_id)
+__attribute__((weak)) void SysTick_Handler_h0_IRQHandler(void)
+{
+
+}
+
+__attribute__((weak)) void SysTick_Handler_h1_IRQHandler(void)
+{
+
+}
+
+__attribute__((weak)) void SysTick_Handler_h2_IRQHandler(void)
+{
+
+}
+
+__attribute__((weak)) void SysTick_Handler_h3_IRQHandler(void)
+{
+
+}
+
+__attribute__((weak)) void SysTick_Handler_h4_IRQHandler(void)
 {
 
 }
@@ -67,7 +87,7 @@ __attribute__((weak))  uint8_t Invalid_IRQHandler(void)
 {
     return(0U);
 }
-
+#ifdef SIFIVE_HIFIVE_UNLEASHED
 __attribute__((weak))  uint8_t External_1_IRQHandler(void)
 {
     return(0U);
@@ -177,6 +197,7 @@ __attribute__((weak))  uint8_t External_22_IRQHandler(void)
 {
     return(0U);
 }
+#endif
 
 __attribute__((weak))  uint8_t dma_ch0_DONE_IRQHandler(void)
 {
@@ -217,7 +238,7 @@ __attribute__((weak))  uint8_t dma_ch3_ERR_IRQHandler(void)
 {
     return(0U);
 }
-
+#ifdef SIFIVE_HIFIVE_UNLEASHED
 __attribute__((weak))  uint8_t External_31_IRQHandler(void)
 {
     return(0U);
@@ -334,6 +355,7 @@ __attribute__((weak))  uint8_t MAC0_plic_53_IRQHandler(void)
 {
     return(0U);
 }
+#endif
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
 __attribute__((weak))  uint8_t  l2_metadata_corr_IRQHandler(void)

@@ -10,7 +10,7 @@
 /*******************************************************************************
  *
  * @file mss_ints.h
- * @author Microchip FPGA Embedded Systems Solutions
+ * @author Microchip-FPGA Embedded Systems Solutions
  * @brief MPFS interrupt prototypes
  *
  * Interrupt function prototypes
@@ -32,7 +32,11 @@ void Software_h1_IRQHandler(void);
 void Software_h2_IRQHandler(void);
 void Software_h3_IRQHandler(void);
 void Software_h4_IRQHandler(void);
-void SysTick_Handler(uint32_t hard_id);
+void SysTick_Handler_h0_IRQHandler(void);
+void SysTick_Handler_h1_IRQHandler(void);
+void SysTick_Handler_h2_IRQHandler(void);
+void SysTick_Handler_h3_IRQHandler(void);
+void SysTick_Handler_h4_IRQHandler(void);
 
 /*
  *
