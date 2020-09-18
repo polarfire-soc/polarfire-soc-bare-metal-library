@@ -24,8 +24,9 @@
  * Local Defines
  */
 /* This string is updated if any change to ddr driver */
-#define DDR_DRIVER_VERSION_STRING   "0.1.001"
+#define DDR_DRIVER_VERSION_STRING   "0.1.002"
 /* Version     |  Change                                                      */
+/* 0.1.002     |  refclk_phase correctly masked during bclk sclk sw training  */
 /* 0.1.001     |  Reset modified- corrects softreset on retry issue           */
 /* 0.0.013     |  Added code to turn off DM if DDR4 and using ECC             */
 /* 0.0.012     |  Added support for turning off unused I/O from Libero        */
@@ -990,7 +991,7 @@ static uint32_t ddr_setup(void)
                          * refclk phase offset manually
                          * We may need to sweep this
                          */
-                        refclk_phase = (uint32_t)((answer+SW_TRAING_BCLK_SCLK_OFFSET + 5U + LIBERO_SETTING_MANUAL_REF_CLK_PHASE_OFFSET ) << 2U);
+                        refclk_phase = (uint32_t)(((answer+SW_TRAING_BCLK_SCLK_OFFSET + 5U + LIBERO_SETTING_MANUAL_REF_CLK_PHASE_OFFSET ) & 0x07UL) << 2U);
                         bclk_phase  = ((answer+SW_TRAING_BCLK_SCLK_OFFSET)    & 0x07UL ) << 8U;
                         bclk90_phase= ((answer+SW_TRAING_BCLK_SCLK_OFFSET+2U)  & 0x07UL ) << 11U;
                         MSS_SCB_DDR_PLL->PLL_PHADJ      = (0x00004003UL | bclk_phase | bclk90_phase | refclk_phase);
