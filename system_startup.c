@@ -54,6 +54,9 @@ __attribute__((weak)) int main_first_hart(void)
 {
     uint64_t hartid = read_csr(mhartid);
     HLS_DATA* hls = NULL;
+    ptrdiff_t stack_bottom;
+    ptrdiff_t stack_top;
+    ptrdiff_t stack_size;
 
     if(hartid == MPFS_HAL_FIRST_HART)
     {
@@ -108,10 +111,12 @@ __attribute__((weak)) int main_first_hart(void)
             {
                 default:
                 case INIT_THREAD_PR:
-                    hls = (HLS_DATA*)((uint8_t *)&__stack_bottom_h1$
-                            + (((uint8_t *)&__stack_top_h1$ -
-                                    (uint8_t *)&__stack_bottom_h1$) * hard_idx)
-                                - (uint8_t *)(HLS_DEBUG_AREA_SIZE));
+                    stack_bottom = (ptrdiff_t)((uint8_t*)&__stack_bottom_h1$);
+                    stack_top = (ptrdiff_t)((uint8_t*)&__stack_top_h1$);
+                    stack_size = stack_top - stack_bottom;
+
+                    hls = (HLS_DATA*)(stack_bottom + (stack_size * hard_idx) - HLS_DEBUG_AREA_SIZE);
+
                     sm_check_thread = CHECK_WFI;
                     wait_count = 0U;
                     break;
