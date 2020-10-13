@@ -6,14 +6,10 @@
  * PolarFire SoC Microprocessor Subsystem MMUART bare metal software driver
  * implementation.
  *
- *
  */
-
-#include "mss_uart.h"
+#include "mpfs_hal/mss_hal.h"
 #include "mss_uart_regs.h"
-#include "mpfs_hal/mss_plic.h"
-#include "mpfs_hal/mss_util.h"
-#include "config/hardware/hw_platform.h"
+#include "mss_uart.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +51,7 @@ mss_uart_instance_t g_mss_uart4_hi;
  * 4 ==> MMUART4
 
  */
-static uint8_t g_uart_axi_pos = 0x0u;
+static uint32_t g_uart_axi_pos = 0x0u;
 
 /*******************************************************************************
  * Defines
@@ -74,6 +70,12 @@ static uint8_t g_uart_axi_pos = 0x0u;
 #define MSS_UART_DATA_READY             ((uint8_t) 0x01)
 
 #define SYNC_ASYNC_MODE_MASK            (0x7u)
+
+#define UART0_POSITION_MASK              0x01u
+#define UART1_POSITION_MASK              0x02u
+#define UART2_POSITION_MASK              0x04u
+#define UART3_POSITION_MASK              0x08u
+#define UART4_POSITION_MASK              0x10u
 
 /*******************************************************************************
  * Possible values for Interrupt Identification Register Field.
@@ -447,7 +449,7 @@ MSS_UART_enable_irq
          * bit 3 - Modem Status Interrupt
          */
         this_uart->hw_reg->IER |= ((uint8_t)(((uint32_t)irq_mask &
-                                                            (uint32_t)IIRF_MASK)));
+                                                         (uint32_t)IIRF_MASK)));
 
 
         /* 
@@ -458,7 +460,7 @@ MSS_UART_enable_irq
          * bit 8 - LIN Sync detection interrupt
          */
         this_uart->hw_reg->IEM |= (uint8_t)(((uint32_t)irq_mask >> 4u) &
-                                                        ((uint32_t)IIRF_MASK));
+                                                         ((uint32_t)IIRF_MASK));
     }
 }
 
@@ -491,7 +493,14 @@ MSS_UART_disable_irq
     this_uart->hw_reg->IEM &= (uint8_t)(~(((uint32_t)irq_mask >> 4u) &
                                                         ((uint32_t)IIRF_MASK)));
 
-    disable_irq(this_uart);
+    if(1 == this_uart->local_irq_enabled)
+    {
+        __disable_local_irq((int8_t)MMUART0_E51_INT);
+    }
+    else
+    {
+        disable_irq(this_uart);
+    }
 }
 
 /***************************************************************************//**
@@ -581,7 +590,7 @@ MSS_UART_set_loopback
  */
 uint8_t mmuart0_plic_77_IRQHandler(void)
 {
-    if (g_uart_axi_pos & 0x01u)
+    if (g_uart_axi_pos & UART0_POSITION_MASK)
     {
         uart_isr(&g_mss_uart0_hi);
     }
@@ -595,7 +604,7 @@ uint8_t mmuart0_plic_77_IRQHandler(void)
 
 uint8_t mmuart1_plic_IRQHandler(void)
 {
-    if (g_uart_axi_pos & 0x02u)
+    if (g_uart_axi_pos & UART1_POSITION_MASK)
     {
         uart_isr(&g_mss_uart1_hi);
     }
@@ -609,7 +618,7 @@ uint8_t mmuart1_plic_IRQHandler(void)
 
 uint8_t mmuart2_plic_IRQHandler(void)
 {
-    if (g_uart_axi_pos & 0x04u)
+    if (g_uart_axi_pos & UART2_POSITION_MASK)
     {
         uart_isr(&g_mss_uart2_hi);
     }
@@ -623,7 +632,7 @@ uint8_t mmuart2_plic_IRQHandler(void)
 
 uint8_t mmuart3_plic_IRQHandler(void)
 {
-    if (g_uart_axi_pos & 0x08u)
+    if (g_uart_axi_pos & UART3_POSITION_MASK)
     {
         uart_isr(&g_mss_uart3_hi);
     }
@@ -637,7 +646,7 @@ uint8_t mmuart3_plic_IRQHandler(void)
 
 uint8_t mmuart4_plic_IRQHandler(void)
 {
-    if (g_uart_axi_pos & 0x10u)
+    if (g_uart_axi_pos & UART4_POSITION_MASK)
     {
         uart_isr(&g_mss_uart4_hi);
     }
@@ -649,9 +658,9 @@ uint8_t mmuart4_plic_IRQHandler(void)
     return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart0_e51_local_IRQHandler_11(void)
+void mmuart0_e51_local_IRQHandler_11(void)
 {
-    if (g_uart_axi_pos & 0x01u)
+    if (g_uart_axi_pos & UART0_POSITION_MASK)
     {
         uart_isr(&g_mss_uart0_hi);
     }
@@ -659,13 +668,11 @@ uint8_t mmuart0_e51_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart0_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h1_local_IRQHandler_11(void)
+void mmuart_u54_h1_local_IRQHandler_11(void)
 {
-    if (g_uart_axi_pos & 0x01u)
+    if (g_uart_axi_pos & UART1_POSITION_MASK)
     {
         uart_isr(&g_mss_uart1_hi);
     }
@@ -673,13 +680,11 @@ uint8_t mmuart_u54_h1_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart1_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h2_local_IRQHandler_11(void)
+void mmuart_u54_h2_local_IRQHandler_11(void)
 {
-    if (g_uart_axi_pos & 0x01u)
+    if (g_uart_axi_pos & UART2_POSITION_MASK)
     {
         uart_isr(&g_mss_uart2_hi);
     }
@@ -687,13 +692,11 @@ uint8_t mmuart_u54_h2_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart2_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h3_local_IRQHandler_11(void)
+void mmuart_u54_h3_local_IRQHandler_11(void)
 {
-    if (g_uart_axi_pos & 0x01u)
+    if (g_uart_axi_pos & UART3_POSITION_MASK)
     {
         uart_isr(&g_mss_uart3_hi);
     }
@@ -701,13 +704,11 @@ uint8_t mmuart_u54_h3_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart3_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
-uint8_t mmuart_u54_h4_local_IRQHandler_11(void)
+void mmuart_u54_h4_local_IRQHandler_11(void)
 {
-    if (g_uart_axi_pos & 0x01u)
+    if (g_uart_axi_pos & UART4_POSITION_MASK)
     {
         uart_isr(&g_mss_uart4_hi);
     }
@@ -715,8 +716,6 @@ uint8_t mmuart_u54_h4_local_IRQHandler_11(void)
     {
         uart_isr(&g_mss_uart4_lo);
     }
-
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
 /***************************************************************************//**
@@ -1095,7 +1094,7 @@ MSS_UART_set_rx_endian
     {
         /* Configure MSB first / LSB first for receiver */
         ((MSS_UART_LITTLEEND == endian) ? (this_uart->hw_reg->MM1 &= ~E_MSB_RX_MASK) :
-                                          (this_uart->hw_reg->MM1 |= E_MSB_RX_MASK));
+                                     (this_uart->hw_reg->MM1 |= E_MSB_RX_MASK));
     }
 }
 
@@ -1115,7 +1114,7 @@ MSS_UART_set_tx_endian
     {
         /* Configure MSB first / LSB first for transmitter */
         ((MSS_UART_LITTLEEND == endian) ? (this_uart->hw_reg->MM1 &= ~E_MSB_TX_MASK) :
-                                          (this_uart->hw_reg->MM1 |= E_MSB_TX_MASK)) ;
+                                    (this_uart->hw_reg->MM1 |= E_MSB_TX_MASK));
     }
 }
 
@@ -1282,7 +1281,7 @@ MSS_UART_set_ready_mode
     {
         /* Configure mode 0 or mode 1 for TXRDY and RXRDY */
         ((MSS_UART_READY_MODE0 == mode) ? (this_uart->hw_reg->FCR &= ~RDYMODE_MASK) :
-                                 (this_uart->hw_reg->FCR |= RDYMODE_MASK) );
+                                     (this_uart->hw_reg->FCR |= RDYMODE_MASK) );
     }
 }
 
@@ -1314,13 +1313,15 @@ MSS_UART_set_usart_mode
 void
 MSS_UART_enable_local_irq
 (
-    const mss_uart_instance_t * this_uart
+    mss_uart_instance_t * this_uart
 )
 {
-  /*Make sure to disable interrupt on PLIC as it might have been enabled
-   * when application registered an interrupt handler function or
-   * used MSS_UART_enable_irq() to enable PLIC interrupt*/
-  disable_irq(this_uart);
+	/*Make sure to disable interrupt on PLIC as it might have been enabled
+	 * when application registered an interrupt handler function or
+	 * used MSS_UART_enable_irq() to enable PLIC interrupt*/
+	disable_irq(this_uart);
+
+	this_uart->local_irq_enabled = 1u;
 
     /* Enable local interrupt UART instance.
      * Local interrupt will be enabled on the HART on which the application
@@ -1330,7 +1331,7 @@ MSS_UART_enable_local_irq
 
 /*******************************************************************************
  * Local Functions
- *******************************************************************************/
+ ******************************************************************************/
 /*******************************************************************************
  * Global initialization for all modes
  */
@@ -1485,6 +1486,7 @@ static void global_init
     this_uart->break_handler    = NULL_HANDLER;    
     this_uart->sync_handler     = NULL_HANDLER;   
 
+    this_uart->local_irq_enabled = 0u;
     /* Initialize the sticky status */
     this_uart->status = 0u;
 }
@@ -1507,7 +1509,6 @@ config_baud_divisors
 
     this_uart->baudrate = baudrate;
 
-    /* Use the system clock value from hw_platform.h */
     pclk_freq = LIBERO_SETTING_MSS_APB_AHB_CLK;
 
     /*
@@ -1767,33 +1768,36 @@ enable_irq
 {
     PLIC_IRQn_Type plic_num = 0;
 
-    if (((&g_mss_uart0_lo == this_uart)) || ((&g_mss_uart0_hi == this_uart)))
+    if(0u == this_uart->local_irq_enabled)
     {
-        plic_num = MMUART0_PLIC_77;
-    }
-    else if (((&g_mss_uart1_lo == this_uart)) || ((&g_mss_uart1_hi == this_uart)))
-    {
-        plic_num = MMUART1_PLIC;
-    }
-    else if (((&g_mss_uart2_lo == this_uart)) || ((&g_mss_uart2_hi == this_uart)))
-    {
-        plic_num = MMUART2_PLIC;
-    }
-    else if (((&g_mss_uart3_lo == this_uart)) || ((&g_mss_uart3_hi == this_uart)))
-    {
-        plic_num = MMUART3_PLIC;
-    }
-    else if (((&g_mss_uart4_lo == this_uart)) || ((&g_mss_uart4_hi == this_uart)))
-    {
-        plic_num = MMUART4_PLIC;
-    }
-    else
-    {
-        ASSERT(0); /*Alternative case has been considered*/
-    }
+        if (((&g_mss_uart0_lo == this_uart)) || ((&g_mss_uart0_hi == this_uart)))
+        {
+            plic_num = MMUART0_PLIC_77;
+        }
+        else if (((&g_mss_uart1_lo == this_uart)) || ((&g_mss_uart1_hi == this_uart)))
+        {
+            plic_num = MMUART1_PLIC;
+        }
+        else if (((&g_mss_uart2_lo == this_uart)) || ((&g_mss_uart2_hi == this_uart)))
+        {
+            plic_num = MMUART2_PLIC;
+        }
+        else if (((&g_mss_uart3_lo == this_uart)) || ((&g_mss_uart3_hi == this_uart)))
+        {
+            plic_num = MMUART3_PLIC;
+        }
+        else if (((&g_mss_uart4_lo == this_uart)) || ((&g_mss_uart4_hi == this_uart)))
+        {
+            plic_num = MMUART4_PLIC;
+        }
+        else
+        {
+            ASSERT(0); /*Alternative case has been considered*/
+        }
 
-    /* Enable UART instance interrupt in PLIC. */
-    PLIC_EnableIRQ(plic_num);
+        /* Enable UART instance interrupt in PLIC. */
+        PLIC_EnableIRQ(plic_num);
+    }
 }
 
 static void

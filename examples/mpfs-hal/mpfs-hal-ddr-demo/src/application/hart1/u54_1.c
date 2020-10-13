@@ -28,6 +28,7 @@ volatile uint32_t count_sw_ints_h1 = 0U;
 extern uint64_t uart_lock;
 extern MEM_TYPE mem_area;
 extern uint64_t hart1_jump_ddr;
+extern mss_uart_instance_t *g_uart;
 
 /* Main function for the HART1(U54_1 processor).
  * Application code running on HART1 is placed here
@@ -37,7 +38,7 @@ extern uint64_t hart1_jump_ddr;
  */
 void u54_1(void)
 {
-    uint8_t info_string[100];
+    char info_string[100];
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
 
@@ -66,19 +67,19 @@ void u54_1(void)
         {
             icount = 0U;
             sprintf(info_string,\
-                    "Hart %d, use option 6 and 7 to jump to DDR program\r\n",\
+                    "Hart %lu, use option 6 and 7 to jump to DDR program\r\n",\
                         hartid);
             mss_take_mutex((uint64_t)&uart_lock);
-            MSS_UART_polled_tx(&g_mss_uart0_lo, info_string,strlen(info_string));
+            MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string,(uint32_t)strlen(info_string));
             mss_release_mutex((uint64_t)&uart_lock);
         }
         if(hart1_jump_ddr == 1U)
         {
             mss_take_mutex((uint64_t)&uart_lock);
-            MSS_UART_polled_tx_string(&g_mss_uart0_lo,
-                    "We are leaving the boot loader\r\n");
-            MSS_UART_polled_tx_string(&g_mss_uart0_lo,
-                        "to run in loaded DDR program\r\n");
+            MSS_UART_polled_tx_string(g_uart,
+                    (const uint8_t*)"We are leaving the boot loader\r\n");
+            MSS_UART_polled_tx_string(g_uart,
+                    (const uint8_t*)"to run in loaded DDR program\r\n");
             mss_release_mutex((uint64_t)&uart_lock);
             jump_to_application(mem_area);
         }
@@ -89,6 +90,5 @@ void u54_1(void)
 /* HART1 Software interrupt handler */
 void Software_h1_IRQHandler(void)
 {
-    uint64_t hart_id = read_csr(mhartid);
     count_sw_ints_h1++;
 }
