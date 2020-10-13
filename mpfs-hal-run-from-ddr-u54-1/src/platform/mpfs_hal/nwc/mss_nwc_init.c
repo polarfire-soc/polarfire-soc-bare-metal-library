@@ -53,7 +53,7 @@ extern void delay(uint32_t n);
 extern void mss_pll_config(void);
 extern uint32_t sgmii_setup(void);
 #ifdef MSSIO_SUPPORT
-extern int32_t mssio_setup(void);
+extern uint8_t mssio_setup(void);
 #endif
 #endif
 #ifdef DEBUG_DDR_INIT
@@ -77,7 +77,6 @@ uint8_t mss_nwc_init(void)
     uint8_t error = 0U;
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-    uint8_t sgmii_instruction;
 
 #ifdef SIMULATION_TEST_FEEDBACK
     /*

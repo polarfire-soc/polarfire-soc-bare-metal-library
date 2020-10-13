@@ -99,7 +99,7 @@ typedef struct BEU_Types_
 #define    FABRIC_F2H_62_E51_INT            46
 #define    FABRIC_F2H_63_E51_INT            47
 
-#define    LOCAL_INT_MAX                    47U  /* Highest numbered */
+#define    LOCAL_INT_MAX                    47  /* Highest numbered */
 #define    LOCAL_INT_UNUSED                 127U /* Signifies unused interrupt */
 /*
  * Interrupts associated with
@@ -135,19 +135,21 @@ typedef struct BEU_Types_
  * These defines added here for clarity need to replay with status register defines
  * for determining interrupt cause
  */
+#ifndef FOR_CLARITY
+#  define FOR_CLARITY 0
+#endif
+
 #if FOR_CLARITY
-
-#define     mpu_fail_plic             0
-#define     lp_state_enter_plic       1
-#define     lp_state_exit_plic        2
-#define     ff_start_plic             3
-#define     ff_end_plic               4
-#define     fpga_on_plic              5
-#define     fpga_off_plic             6
-#define     scb_error_plic            7
-#define     scb_fault_plic            8
-#define     mesh_fail_plic            9
-
+#  define     mpu_fail_plic             0
+#  define     lp_state_enter_plic       1
+#  define     lp_state_exit_plic        2
+#  define     ff_start_plic             3
+#  define     ff_end_plic               4
+#  define     fpga_on_plic              5
+#  define     fpga_off_plic             6
+#  define     scb_error_plic            7
+#  define     scb_fault_plic            8
+#  define     mesh_fail_plic            9
 #endif
 
 /*
