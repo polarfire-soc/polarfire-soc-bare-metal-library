@@ -114,7 +114,7 @@ Bare Metal Library: mpfs-bare-metal-library/examples
 
 **This will launch the debug session, the debug perspective reflects the debug operations:**
 
-   ![Debug_Perspective](images/debug_perspective.png)
+   ![Debug_Perspective](images/debug_perspective_hw.png)
 
 
 **The debug execution is controlled using the debug buttons:**
@@ -151,7 +151,7 @@ Bare Metal Library: mpfs-bare-metal-library/examples
 
 **The debug perspective reflects the debug operations:**
 
-   ![Debug_Perspective](images/debug_perspective.png)
+   ![Debug_Perspective](images/debug_perspective_renode.png)
 
 
 **The debug execution is controlled using the debug buttons:**
