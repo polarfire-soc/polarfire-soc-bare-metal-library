@@ -3,7 +3,7 @@ This document describes how to use the SoftConsole example projects included in
 the PolarFire SoC Bare Metal Library.
 
 - [Supported Targets](#supported-targets)
-- [Important Not About SoftConsole Workspace](#softconsole-workspace)
+- [Important Note About SoftConsole Workspace](#softconsole-workspace)
 - [Importing Example Projects Into Your SoftConsole Workspace](#importing-projetcs)
 - [Running an example project on the PolarFire SoC Icicle Kit](#run-icicle)
 - [Running an example project using the Renode Emulation Platform](#run-renode)
