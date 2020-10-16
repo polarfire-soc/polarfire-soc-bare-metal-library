@@ -124,7 +124,7 @@ Bare Metal Library: mpfs-bare-metal-library/examples
    
 **A serial emulator, such as Putty, can be used to monitor COM output from the Icicle kit using a micro USB cable connected to J11:**
    
-   ![Putty_COM](images/putty_COM.png)
+   ![Putty_COM](images/putty_com.png)
 
 
 <a name="run-renode"></a> 
