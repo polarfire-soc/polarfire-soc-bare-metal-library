@@ -9,10 +9,9 @@ This document describes how to use the SoftConsole example projects included in 
 
 A playlist is available on YouTube showing the steps outlined in this document targeting the Icicle Development Kit for PolarFire SoC:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PL9B4edd-p2ahc3AQdBAmGfAyo_pcDW0Tg" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![Watch the video](https://img.youtube.com/vi/F4_wR3e62og/0.jpg)](https://www.youtube.com/playlist?list=PL9B4edd-p2ahc3AQdBAmGfAyo_pcDW0Tg)
 
 <a name="supported-targets"></a> 
-
 ## Supported Targets
 The bare metal example projects can all be built in SoftConsole with no modification. Depending on the project used, examples can be run on either:
 - The PolarFire SoC Icicle Kit
