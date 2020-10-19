@@ -18,7 +18,8 @@ Information on the Icicle Kit is available [here](https://microsemi.com/icicle).
 
 Each project readme will state which target(s) are supported. Projects will also contain debug configurations for their supported target(s).
 
-<a name="softconsole-workspaces"></a> 
+<a name="softconsole-workspace"></a> 
+
 ## Important Note About SoftConsole Workspace
 SoftConsole includes an empty workspace. We recommend that you make a copy of
 this empty workspace to a location of your choice. This will allow you to take
@@ -38,7 +39,7 @@ installation:
 <a name="importing-projetcs"></a> 
 ## Importing Example Projects Into Your SoftConsole Workspace
 SoftConsole example projects are included in the following folder of the of the
-Bare Metal Library: mpfs-bare-metal-library/examples
+Bare Metal Library: polarfire-soc-bare-metal-library/examples
 
 **Select the File->Import menu to import an example project into your SoftConsole workspace:**
 
@@ -48,19 +49,17 @@ Bare Metal Library: mpfs-bare-metal-library/examples
 **Expand "Git" -> "Projects from Git (with smart import)" and click "Next":**
 
    ![Import_Select_Dialog_1](images/import_select_dialog_1.png)
-   
-   
-**Select "Clone URL" and click "Next":**
+
+**Select "Clone URI" and click "Next":**
 
    ![import_projects_from_git_dialog_1](images/import_projects_from_git_dialog_1.png)
-   
+
 
 **Copy the link to the PolarFire SoC Bare Metal Library GitHub repository:**
 
    ![copy_bare_metal_library_link_1](images/copy_bare_metal_library_link_1.png)   
-   
 
-**Paste the link to the PolarFire SoC Bare Metal Library GitHub repository into the "URL" field, others will auto populate, and click "Next":**
+**Paste the link to the PolarFire SoC Bare Metal Library GitHub repository into the "URI" field, others will auto populate, and click "Next":**
 
    ![import_projects_from_git_dialog_2](images/import_projects_from_git_dialog_2.png)
 
@@ -68,32 +67,30 @@ Bare Metal Library: mpfs-bare-metal-library/examples
 **Ensure the "Master" branch is selected and click "Next":**
 
    ![import_projects_from_git_dialog_3](images/import_projects_from_git_dialog_3.png)   
-   
-   
+
+
 **Select a destination folder to clone the bare metal library to and click "Next":**
 
    ![import_projects_from_git_dialog_4](images/import_projects_from_git_dialog_4.png)    
-   
-   
+
+
 **Allow SoftConsole to clone the bare metal library:**
 
    ![import_projects_from_git_dialog_5](images/import_projects_from_git_dialog_5.png)       
-   
-   
+
+
 **Use the "Deselect All" option to deselect all of the included projects and only import the required project and click "Finish":**
 
    ![import_projects_from_git_dialog_6](images/import_projects_from_git_dialog_6.png)       
-   
-   
-**The imported project will now appear in the project explorer and the "polarfire-soc-bare-metal-libray" will now appear as a git repository:**
+
+**The imported project will now appear in the project explorer and the "polarfire-soc-bare-metal-library" will now appear as a git repository:**
 
    ![imported_project_1](images/imported_project_1.png)          
-   
 
-**Further projects can be imported following these steps, as the bare metal library is already cloned, the projects can be imported from a local repository instead of a URL**
-   
+**Further projects can be imported after the preceding steps, as the bare metal library is already cloned. The projects can be imported from a local repository instead of a URI**
+
    ![local_repository_1](images/local_repository_1.png)     
-   
+
 
 <a name="run-icicle"></a> 
 ## Running an example project on the PolarFire SoC Icicle Kit
@@ -120,10 +117,10 @@ Bare Metal Library: mpfs-bare-metal-library/examples
 **The debug execution is controlled using the debug buttons:**
 
    ![Debug_Buttons_1](images/debug_buttons_1.png)
-   
-   
+
+
 **A serial emulator, such as Putty, can be used to monitor COM output from the Icicle kit using a micro USB cable connected to J11:**
-   
+
    ![Putty_COM](images/putty_com.png)
 
 
