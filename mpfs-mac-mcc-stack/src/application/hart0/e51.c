@@ -25,33 +25,24 @@
  *
  */
 
-#include <stdint.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include "mpfs_hal/mss_mpu.h"
-#include "mpfs_hal/system_startup.h"
 
 #include "mpfs_hal/mss_hal.h"
+#include "mpfs_hal/nwc/mss_nwc_init.h"
 
 #if PSE
 #include "drivers/mss_gpio/mss_gpio.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
 
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
-
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-#include "drivers/mss_mac/phy.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
+#include "drivers/mss_ethernet_mac/phy.h"
 #include "drivers/mss_gpio/mss_gpio.h"
 
 /* TCP/IP stack */
@@ -143,14 +134,11 @@ extern uint16_t VSC8662_reg_16[32];
 void dump_vsc8662_regs(mss_mac_instance_t * this_mac);
 #endif
 /*
-/*
  * Align these on an 8 byte boundary as we might be using IEEE 1588 time
  * stamping and that uses b2 of the buffer pointer to indicate that a timestamp
  * is present in this descriptor.
  */
 static uint8_t g_mac_rx_buffer[MSS_MAC_RX_RING_SIZE][MSS_MAC_MAX_RX_BUF_SIZE] __attribute__ ((aligned (8)));
-
-static uint8_t g_mac_tx_buffer[MSS_MAC_TX_RING_SIZE][MSS_MAC_MAX_TX_BUF_SIZE] __attribute__ ((aligned (8)));
 
 mss_mac_cfg_t g_mac_config;
 
@@ -182,7 +170,7 @@ uint8_t tx_pak_arp[128] =    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFC, 0
                                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-static volatile int tx_count = 0;
+static volatile uint64_t tx_count = 0;
 
 volatile uint32_t g_crc  = 0; /* CRC pass through control */
 volatile int g_loopback  = 0; /* Software loopback control */
@@ -196,13 +184,13 @@ volatile int g_tx_adjust = 1; /* Adjustment to make to the packet length when en
 #define PACKET_ARMED 1
 #define PACKET_DONE  2
 
-#define PACKET_MAX   16384
+#define PACKET_MAX   16384U
 volatile int g_capture = PACKET_IDLE;
 uint8_t      g_packet_data[PACKET_MAX];
 volatile uint32_t g_packet_length = 0;
 volatile int g_reload = PACKET_IDLE;
 
-volatile int g_tx_retry = 0;
+volatile uint64_t g_tx_retry = 0;
 volatile int g_link_status = 0;
 
 mss_mac_instance_t *g_test_mac = &g_mac0;
@@ -415,12 +403,12 @@ int main_first_hart(void)
 
 #endif /* defined(G5_SOC_EMU_USE_GEM1) */
 
-        SEG[0].CFG[0].offset = -(0x0080000000ll >> 24u);
-        SEG[0].CFG[1].offset = -(0x1000000000ll >> 24u);
-        SEG[1].CFG[2].offset = -(0x00C0000000ll >> 24u);
-        SEG[1].CFG[3].offset = -(0x1400000000ll >> 24u);
-        SEG[1].CFG[4].offset = -(0x00D0000000ll >> 24u);
-        SEG[1].CFG[5].offset = -(0x1800000000ll >> 24u);
+        SEG[0].u[0].CFG.offset = -(0x0080000000ll >> 24u);
+        SEG[0].u[1].CFG.offset = -(0x1000000000ll >> 24u);
+        SEG[1].u[2].CFG.offset = -(0x00C0000000ll >> 24u);
+        SEG[1].u[3].CFG.offset = -(0x1400000000ll >> 24u);
+        SEG[1].u[4].CFG.offset = -(0x00D0000000ll >> 24u);
+        SEG[1].u[5].CFG.offset = -(0x1800000000ll >> 24u);
 #endif
 #endif  /* MPFS_HAL_HW_CONFIG */
 
@@ -455,7 +443,7 @@ static void packet_tx_complete_handler(/* mss_mac_instance_t*/ void *this_mac, u
 }
 
 
-static volatile int rx_count = 0;
+static volatile uint64_t rx_count = 0;
 
 /**=============================================================================
     Bottom-half of receive packet handler
@@ -560,6 +548,8 @@ low_level_init(void)
     g_mac_config.mac_addr[4] = 0x34;
     g_mac_config.mac_addr[5] = 0x56;
 
+    g_mac_config.tsu_clock_select = 1U;
+
 #if MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_SVG_GMII_GEM0
 
     /*
@@ -612,11 +602,15 @@ low_level_init(void)
     g_test_mac = &g_mac1;
 #endif
 
-#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) || (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)   ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0)
     /*
      * Icicle board setups with SGMII to VSC8662
      */
-#if MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0)
     g_test_mac = &g_mac0;
 #else
     g_test_mac = &g_mac1;
@@ -838,7 +832,8 @@ g_mac_config.phy_addr            = PHY_VSC8541_MDIO_ADDR;
      * functional after this function returns but still requires transmit and
      * receive buffers to be allocated for communications to take place.
      */
-#if MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0)
     /* Init GEM1 for MDIO interface only */
     g_mac_config.mac_addr[5] = 0x57;
     MSS_MAC_init(&g_mac1, &g_mac_config);
@@ -850,7 +845,17 @@ g_mac_config.phy_addr            = PHY_VSC8541_MDIO_ADDR;
 #endif
     MSS_MAC_init(g_test_mac, &g_mac_config);
 
-    g_test_mac->mac_base->TX_Q_SEG_ALLOC_Q0TO3 = 2; /* Allocate all 4 segments to queue 0 as this is our only one... */
+    /*
+     * Not doing the tx disable/enable sequence here around the queue allocation
+     * adjustment results in tx_go being set which causes the new tx code to
+     * hang waiting for the last tx to complete...
+     */
+    g_test_mac->mac_base->NETWORK_CONTROL &= ~GEM_ENABLE_TRANSMIT;
+
+    /* Allocate all 4 segments to queue 0 as this is our only one... */
+    g_test_mac->mac_base->TX_Q_SEG_ALLOC_Q0TO3 = 2;
+
+    g_test_mac->mac_base->NETWORK_CONTROL |= GEM_ENABLE_TRANSMIT;
 
     /*
      * Register MAC interrupt handler listener functions. These functions will
@@ -936,7 +941,7 @@ void prvLinkStatusTask(void)
  */
 void SysTick_Handler_h0_IRQHandler(void)
 {
-    g_tick_counter++;
+    g_tick_counter += HART0_TICK_RATE_MS;
 }
 
 
@@ -1016,9 +1021,15 @@ static void print_help(void)
     PRINT_STRING(info_string);
     sprintf(info_string,"h - Display this help information\n\r");
     PRINT_STRING(info_string);
-    sprintf(info_string,"i - Show IPv4 info\n\r");
+    sprintf(info_string,"i - Increment statistics counters\n\r");
+    PRINT_STRING(info_string);
+    sprintf(info_string,"I - Show IPv4 info\n\r");
+    PRINT_STRING(info_string);
+    sprintf(info_string,"j - Toggle Jumbo Packet Mode---------------(%s)\n\r", 0 != (g_test_mac->mac_base->NETWORK_CONFIG & GEM_JUMBO_FRAMES) ? "enabled" : "disabled");
     PRINT_STRING(info_string);
     sprintf(info_string,"k - Toggle capture re-trigger mode --------(%s)\n\r", g_reload ? "enabled" : "disabled");
+    PRINT_STRING(info_string);
+    sprintf(info_string,"l - Toggle log priority mode --------(%s)\n\r", (LOG_EMERGENCY == logGetPriority(LOG_ICMP)) ? "Emergency" : "Default");
     PRINT_STRING(info_string);
     sprintf(info_string,"p - Toggle promiscuous receive mode -------(%s)\n\r", 0 != (g_test_mac->mac_base->NETWORK_CONFIG & GEM_COPY_ALL_FRAMES) ? "enabled" : "disabled");
     PRINT_STRING(info_string);
@@ -1090,14 +1101,14 @@ static void print_help(void)
 
 static uint32_t stats[MSS_MAC_LAST_STAT];
 static uint64_t copper_rx_good      = 0; /* P1 reg 18 */
-static uint32_t phy_rx_err          = 0; /* P0 reg 19 */
-static uint32_t phy_false_carrier   = 0; /* P0 reg 20 */
-static uint32_t phy_link_disconnect = 0; /* P0 reg 21 */
+static uint64_t phy_rx_err          = 0; /* P0 reg 19 */
+static uint64_t phy_false_carrier   = 0; /* P0 reg 20 */
+static uint64_t phy_link_disconnect = 0; /* P0 reg 21 */
 #if defined (TARGET_G5_SOC)
 static uint64_t mac_rx_good         = 0; /* P3 reg 28 */
-static uint32_t mac_rx_err          = 0; /* P3 reg 29 */
+static uint64_t mac_rx_err          = 0; /* P3 reg 29 */
 static uint64_t mac_tx_good         = 0; /* P3 reg 15 */
-static uint32_t mac_tx_err          = 0; /* P3 reg 16 */
+static uint64_t mac_tx_err          = 0; /* P3 reg 16 */
 #endif
 
 /*==============================================================================
@@ -1168,16 +1179,16 @@ void stats_dump(void)
     sprintf(info_string,"PHY Statistics\n\r");
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"PHY CU RX GOOD          % 10U  ", copper_rx_good);
+    sprintf(info_string,"PHY CU RX GOOD          % 10lu  ", copper_rx_good);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"PHY CU RX ERRORS        % 10U\n\r", phy_rx_err);
+    sprintf(info_string,"PHY CU RX ERRORS        % 10lu\n\r", phy_rx_err);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"PHY FALSE CARRIER ERR   % 10U  ", phy_false_carrier);
+    sprintf(info_string,"PHY FALSE CARRIER ERR   % 10lu  ", phy_false_carrier);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"PHY LINK DISCONNECTS    % 10U\n\r\n\r", phy_link_disconnect);
+    sprintf(info_string,"PHY LINK DISCONNECTS    % 10lu\n\r\n\r", phy_link_disconnect);
     PRINT_STRING(info_string);
 #endif
 
@@ -1187,27 +1198,27 @@ void stats_dump(void)
         sprintf(info_string,"PHY Statistics\n\r");
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY CU RX GOOD          % 10U  ", copper_rx_good);
+        sprintf(info_string,"PHY CU RX GOOD          % 10lu  ", copper_rx_good);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY CU RX ERRORS        % 10U\n\r", phy_rx_err);
+        sprintf(info_string,"PHY CU RX ERRORS        % 10lu\n\r", phy_rx_err);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY MAC RX GOOD         % 10U  ", mac_rx_good);
+        sprintf(info_string,"PHY MAC RX GOOD         % 10lu  ", mac_rx_good);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY MAC RX ERRORS       % 10U\n\r", mac_rx_err);
+        sprintf(info_string,"PHY MAC RX ERRORS       % 10lu\n\r", mac_rx_err);
         PRINT_STRING(info_string);
-        sprintf(info_string,"PHY MAC TX GOOD         % 10U  ", mac_tx_good);
-        PRINT_STRING(info_string);
-
-        sprintf(info_string,"PHY MAC TX ERRORS       % 10U\n\r", mac_tx_err);
+        sprintf(info_string,"PHY MAC TX GOOD         % 10lu  ", mac_tx_good);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY FALSE CARRIER ERR   % 10U  ", phy_false_carrier);
+        sprintf(info_string,"PHY MAC TX ERRORS       % 10lu\n\r", mac_tx_err);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY LINK DISCONNECTS    % 10U\n\r\n\r", phy_link_disconnect);
+        sprintf(info_string,"PHY FALSE CARRIER ERR   % 10lu  ", phy_false_carrier);
+        PRINT_STRING(info_string);
+
+        sprintf(info_string,"PHY LINK DISCONNECTS    % 10lu\n\r\n\r", phy_link_disconnect);
         PRINT_STRING(info_string);
 
         if(GMII_SGMII == g_test_mac->interface_type)
@@ -1232,16 +1243,16 @@ void stats_dump(void)
         sprintf(info_string,"PHY Statistics\n\r");
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY CU RX GOOD          % 10U  ", copper_rx_good);
+        sprintf(info_string,"PHY CU RX GOOD          % 10lu  ", copper_rx_good);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY CU RX ERRORS        % 10U\n\r", phy_rx_err);
+        sprintf(info_string,"PHY CU RX ERRORS        % 10lu\n\r", phy_rx_err);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY FALSE CARRIER ERR   % 10U  ", phy_false_carrier);
+        sprintf(info_string,"PHY FALSE CARRIER ERR   % 10lu  ", phy_false_carrier);
         PRINT_STRING(info_string);
 
-        sprintf(info_string,"PHY LINK DISCONNECTS    % 10U\n\r\n\r", phy_link_disconnect);
+        sprintf(info_string,"PHY LINK DISCONNECTS    % 10lu\n\r\n\r", phy_link_disconnect);
         PRINT_STRING(info_string);
     }
 
@@ -1333,142 +1344,142 @@ void stats_dump(void)
     sprintf(info_string,"GEM Statistics\n\r");
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_OCTETS_LOW           % 10U  ", (uint64_t)stats[MSS_MAC_TX_OCTETS_LOW]);
+    sprintf(info_string,"TX_OCTETS_LOW           % 10lu  ", (uint64_t)stats[MSS_MAC_TX_OCTETS_LOW]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_OCTETS_HIGH          % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_OCTETS_HIGH]);
+    sprintf(info_string,"TX_OCTETS_HIGH          % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_OCTETS_HIGH]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_FRAMES_OK            % 10U  ", (uint64_t)stats[MSS_MAC_TX_FRAMES_OK]);
+    sprintf(info_string,"TX_FRAMES_OK            % 10lu  ", (uint64_t)stats[MSS_MAC_TX_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_BCAST_FRAMES_OK      % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_BCAST_FRAMES_OK]);
+    sprintf(info_string,"TX_BCAST_FRAMES_OK      % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_BCAST_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_MCAST_FRAMES_OK      % 10U  ", (uint64_t)stats[MSS_MAC_TX_MCAST_FRAMES_OK]);
+    sprintf(info_string,"TX_MCAST_FRAMES_OK      % 10lu  ", (uint64_t)stats[MSS_MAC_TX_MCAST_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_PAUSE_FRAMES_OK      % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_PAUSE_FRAMES_OK]);
+    sprintf(info_string,"TX_PAUSE_FRAMES_OK      % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_PAUSE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_64_BYTE_FRAMES_OK    % 10U  ", (uint64_t)stats[MSS_MAC_TX_64_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_64_BYTE_FRAMES_OK    % 10lu  ", (uint64_t)stats[MSS_MAC_TX_64_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_65_BYTE_FRAMES_OK    % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_65_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_65_BYTE_FRAMES_OK    % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_65_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_128_BYTE_FRAMES_OK   % 10U  ", (uint64_t)stats[MSS_MAC_TX_128_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_128_BYTE_FRAMES_OK   % 10lu  ", (uint64_t)stats[MSS_MAC_TX_128_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_256_BYTE_FRAMES_OK   % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_256_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_256_BYTE_FRAMES_OK   % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_256_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_512_BYTE_FRAMES_OK   % 10U  ", (uint64_t)stats[MSS_MAC_TX_512_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_512_BYTE_FRAMES_OK   % 10lu  ", (uint64_t)stats[MSS_MAC_TX_512_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_1024_BYTE_FRAMES_OK  % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_1024_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_1024_BYTE_FRAMES_OK  % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_1024_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_1519_BYTE_FRAMES_OK  % 10U  ", (uint64_t)stats[MSS_MAC_TX_1519_BYTE_FRAMES_OK]);
+    sprintf(info_string,"TX_1519_BYTE_FRAMES_OK  % 10lu  ", (uint64_t)stats[MSS_MAC_TX_1519_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_UNDERRUNS            % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_UNDERRUNS]);
+    sprintf(info_string,"TX_UNDERRUNS            % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_UNDERRUNS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_SINGLE_COLLISIONS    % 10U  ", (uint64_t)stats[MSS_MAC_TX_SINGLE_COLLISIONS]);
+    sprintf(info_string,"TX_SINGLE_COLLISIONS    % 10lu  ", (uint64_t)stats[MSS_MAC_TX_SINGLE_COLLISIONS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_MULTIPLE_COLLISIONS  % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_MULTIPLE_COLLISIONS]);
+    sprintf(info_string,"TX_MULTIPLE_COLLISIONS  % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_MULTIPLE_COLLISIONS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_EXCESSIVE_COLLISIONS % 10U  ", (uint64_t)stats[MSS_MAC_TX_EXCESSIVE_COLLISIONS]);
+    sprintf(info_string,"TX_EXCESSIVE_COLLISIONS % 10lu  ", (uint64_t)stats[MSS_MAC_TX_EXCESSIVE_COLLISIONS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_LATE_COLLISIONS      % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_LATE_COLLISIONS]);
+    sprintf(info_string,"TX_LATE_COLLISIONS      % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_LATE_COLLISIONS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_DEFERRED_FRAMES      % 10U  ", (uint64_t)stats[MSS_MAC_TX_DEFERRED_FRAMES]);
+    sprintf(info_string,"TX_DEFERRED_FRAMES      % 10lu  ", (uint64_t)stats[MSS_MAC_TX_DEFERRED_FRAMES]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"TX_CRS_ERRORS           % 10U\n\r", (uint64_t)stats[MSS_MAC_TX_CRS_ERRORS]);
+    sprintf(info_string,"TX_CRS_ERRORS           % 10lu\n\r", (uint64_t)stats[MSS_MAC_TX_CRS_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_OCTETS_LOW           % 10U  ", (uint64_t)stats[MSS_MAC_RX_OCTETS_LOW]);
+    sprintf(info_string,"RX_OCTETS_LOW           % 10lu  ", (uint64_t)stats[MSS_MAC_RX_OCTETS_LOW]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_OCTETS_HIGH          % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_OCTETS_HIGH]);
+    sprintf(info_string,"RX_OCTETS_HIGH          % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_OCTETS_HIGH]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_FRAMES_OK            % 10U  ", (uint64_t)stats[MSS_MAC_RX_FRAMES_OK]);
+    sprintf(info_string,"RX_FRAMES_OK            % 10lu  ", (uint64_t)stats[MSS_MAC_RX_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_BCAST_FRAMES_OK      % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_BCAST_FRAMES_OK]);
+    sprintf(info_string,"RX_BCAST_FRAMES_OK      % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_BCAST_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_MCAST_FRAMES_OK      % 10U  ", (uint64_t)stats[MSS_MAC_RX_MCAST_FRAMES_OK]);
+    sprintf(info_string,"RX_MCAST_FRAMES_OK      % 10lu  ", (uint64_t)stats[MSS_MAC_RX_MCAST_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_PAUSE_FRAMES_OK      % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_PAUSE_FRAMES_OK]);
+    sprintf(info_string,"RX_PAUSE_FRAMES_OK      % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_PAUSE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_64_BYTE_FRAMES_OK    % 10U  ", (uint64_t)stats[MSS_MAC_RX_64_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_64_BYTE_FRAMES_OK    % 10lu  ", (uint64_t)stats[MSS_MAC_RX_64_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_65_BYTE_FRAMES_OK    % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_65_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_65_BYTE_FRAMES_OK    % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_65_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_128_BYTE_FRAMES_OK   % 10U  ", (uint64_t)stats[MSS_MAC_RX_128_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_128_BYTE_FRAMES_OK   % 10lu  ", (uint64_t)stats[MSS_MAC_RX_128_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_256_BYTE_FRAMES_OK   % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_256_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_256_BYTE_FRAMES_OK   % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_256_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_512_BYTE_FRAMES_OK   % 10U  ", (uint64_t)stats[MSS_MAC_RX_512_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_512_BYTE_FRAMES_OK   % 10lu  ", (uint64_t)stats[MSS_MAC_RX_512_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_1024_BYTE_FRAMES_OK  % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_1024_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_1024_BYTE_FRAMES_OK  % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_1024_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_1519_BYTE_FRAMES_OK  % 10U  ", (uint64_t)stats[MSS_MAC_RX_1519_BYTE_FRAMES_OK]);
+    sprintf(info_string,"RX_1519_BYTE_FRAMES_OK  % 10lu  ", (uint64_t)stats[MSS_MAC_RX_1519_BYTE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_UNDERSIZE_FRAMES_OK  % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_UNDERSIZE_FRAMES_OK]);
+    sprintf(info_string,"RX_UNDERSIZE_FRAMES_OK  % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_UNDERSIZE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_OVERSIZE_FRAMES_OK   % 10U  ", (uint64_t)stats[MSS_MAC_RX_OVERSIZE_FRAMES_OK]);
+    sprintf(info_string,"RX_OVERSIZE_FRAMES_OK   % 10lu  ", (uint64_t)stats[MSS_MAC_RX_OVERSIZE_FRAMES_OK]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_JABBERS              % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_JABBERS]);
+    sprintf(info_string,"RX_JABBERS              % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_JABBERS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_FCS_ERRORS           % 10U  ", (uint64_t)stats[MSS_MAC_RX_FCS_ERRORS]);
+    sprintf(info_string,"RX_FCS_ERRORS           % 10lu  ", (uint64_t)stats[MSS_MAC_RX_FCS_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_LENGTH_ERRORS        % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_LENGTH_ERRORS]);
+    sprintf(info_string,"RX_LENGTH_ERRORS        % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_LENGTH_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_SYMBOL_ERRORS        % 10U  ", (uint64_t)stats[MSS_MAC_RX_SYMBOL_ERRORS]);
+    sprintf(info_string,"RX_SYMBOL_ERRORS        % 10lu  ", (uint64_t)stats[MSS_MAC_RX_SYMBOL_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_ALIGNMENT_ERRORS     % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_ALIGNMENT_ERRORS]);
+    sprintf(info_string,"RX_ALIGNMENT_ERRORS     % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_ALIGNMENT_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_RESOURCE_ERRORS      % 10U  ", (uint64_t)stats[MSS_MAC_RX_RESOURCE_ERRORS]);
+    sprintf(info_string,"RX_RESOURCE_ERRORS      % 10lu  ", (uint64_t)stats[MSS_MAC_RX_RESOURCE_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_OVERRUNS             % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_OVERRUNS]);
+    sprintf(info_string,"RX_OVERRUNS             % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_OVERRUNS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_IP_CHECKSUM_ERRORS   % 10U  ", (uint64_t)stats[MSS_MAC_RX_IP_CHECKSUM_ERRORS]);
+    sprintf(info_string,"RX_IP_CHECKSUM_ERRORS   % 10lu  ", (uint64_t)stats[MSS_MAC_RX_IP_CHECKSUM_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_TCP_CHECKSUM_ERRORS  % 10U\n\r", (uint64_t)stats[MSS_MAC_RX_TCP_CHECKSUM_ERRORS]);
+    sprintf(info_string,"RX_TCP_CHECKSUM_ERRORS  % 10lu\n\r", (uint64_t)stats[MSS_MAC_RX_TCP_CHECKSUM_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_UDP_CHECKSUM_ERRORS  % 10U  ", (uint64_t)stats[MSS_MAC_RX_UDP_CHECKSUM_ERRORS]);
+    sprintf(info_string,"RX_UDP_CHECKSUM_ERRORS  % 10lu  ", (uint64_t)stats[MSS_MAC_RX_UDP_CHECKSUM_ERRORS]);
     PRINT_STRING(info_string);
 
-    sprintf(info_string,"RX_AUTO_FLUSHED_PACKETS % 10U\n\r\n\r", (uint64_t)stats[MSS_MAC_RX_AUTO_FLUSHED_PACKETS]);
+    sprintf(info_string,"RX_AUTO_FLUSHED_PACKETS % 10lu\n\r\n\r", (uint64_t)stats[MSS_MAC_RX_AUTO_FLUSHED_PACKETS]);
     PRINT_STRING(info_string);
 }
 
@@ -1912,9 +1923,14 @@ void e51_task( void *pvParameters )
         delay_count++;
     }
 #endif
-#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) || (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)   ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0)
     MSS_GPIO_init(GPIO2_LO);
 
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_0,  MSS_GPIO_OUTPUT_MODE);  /* USB ULPI Reset */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_2,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 Reset */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_3,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 Soft Reset */
@@ -1925,6 +1941,7 @@ void e51_task( void *pvParameters )
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_8,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 CMODE 5 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_9,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 CMODE 6 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_10,  MSS_GPIO_OUTPUT_MODE); /* VSC8662 CMODE 7 */
+#endif
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_16,  MSS_GPIO_OUTPUT_MODE); /* LED 0 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_17,  MSS_GPIO_OUTPUT_MODE); /* LED 1 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_18,  MSS_GPIO_OUTPUT_MODE); /* LED 2 */
@@ -1935,6 +1952,8 @@ void e51_task( void *pvParameters )
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_30,  MSS_GPIO_INPUT_MODE);  /* PB 1 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_31,  MSS_GPIO_INPUT_MODE);  /* PB 2 */
 
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_11,  MSS_GPIO_OUTPUT_MODE);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_0, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_2, 0); /* Assert reset */
@@ -1946,6 +1965,7 @@ void e51_task( void *pvParameters )
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_8, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_9, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_10, 0);
+#endif
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_16, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_17, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_18, 0);
@@ -1954,6 +1974,8 @@ void e51_task( void *pvParameters )
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_27, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_28, 0);
 
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
     for(delay_count = 0; delay_count != 1000;)
     {
         delay_count++;
@@ -1966,6 +1988,11 @@ void e51_task( void *pvParameters )
         delay_count++;
     }
 #endif
+#endif /*#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)   ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0) */
+
 #endif /* defined(TARGET_G5_SOC) */
 //    PLIC_init();
     __disable_local_irq((int8_t)MMUART0_E51_INT);
@@ -2245,18 +2272,18 @@ PLIC_EnableIRQ(USART0_PLIC_4);
                     PRINT_STRING("Speed = Unknown\n\r");
                 }
 
-                sprintf(info_string,"RX %U (%U pkts), TX %U (%U pkts)\n\rRX Over Flow %U, TX Retries %U\n\r", g_test_mac->queue[0].ingress, rx_count, g_test_mac->queue[0].egress, tx_count, g_test_mac->queue[0].rx_overflow, g_tx_retry);
+                sprintf(info_string,"RX %lu (%lu pkts), TX %lu (%lu pkts)\n\rRX Over Flow %lu, TX Retries %lu\n\r", g_test_mac->queue[0].ingress, rx_count, g_test_mac->queue[0].egress, tx_count, g_test_mac->queue[0].rx_overflow, g_tx_retry);
                 PRINT_STRING(info_string);
-                sprintf(info_string,"TX Pause %U, RX Pause %U, Pause Elapsed %U\n\r", g_test_mac->tx_pause, g_test_mac->rx_pause, g_test_mac->pause_elapsed);
+                sprintf(info_string,"TX Pause %lu, RX Pause %lu, Pause Elapsed %lu\n\r", g_test_mac->tx_pause, g_test_mac->rx_pause, g_test_mac->pause_elapsed);
                 PRINT_STRING(info_string);
 
-                sprintf(info_string,"HRESP not ok %U RX Restarts %U\n\r\n\r", g_test_mac->queue[0].hresp_error, g_test_mac->queue[0].rx_restart);
+                sprintf(info_string,"HRESP not ok %lu RX Restarts %lu\n\r\n\r", g_test_mac->queue[0].hresp_error, g_test_mac->queue[0].rx_restart);
                 PRINT_STRING(info_string);
                 stats_dump();
             }
             else if(rx_buff[0] == 't')
             {
-                uint8_t tx_status;
+                int32_t tx_status;
 
                 add_on = 0; /* Reset the count for 'T' command */
                 memcpy(&tx_pak_arp[6], g_test_mac->mac_addr, 6);
@@ -2267,7 +2294,7 @@ PLIC_EnableIRQ(USART0_PLIC_4);
             }
             else if(rx_buff[0] == 'T')
             {
-                uint8_t tx_status;
+                int32_t tx_status;
                 volatile uint32_t *ctrl_reg;
 
                 memcpy(&tx_pak_arp[6], g_test_mac->mac_addr, 6);

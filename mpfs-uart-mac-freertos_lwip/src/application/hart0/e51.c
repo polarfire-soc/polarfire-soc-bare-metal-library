@@ -27,33 +27,26 @@
  * SVN $Date: 2018-01-15 10:43:33 +0000 (Mon, 15 Jan 2018) $
  */
 
-#include <stdint.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "mpfs_hal/mss_mpu.h"
 
 #include "mpfs_hal/mss_hal.h"
+#include "mpfs_hal/nwc/mss_nwc_init.h"
 
 #if PSE
 #include "drivers/mss_gpio/mss_gpio.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
 
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
 
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-
-#include "drivers/mss_mac/phy.h"
+#include "drivers/mss_ethernet_mac/phy.h"
 
 /* Kernel includes. */
 #include "FreeRTOS.h"
@@ -303,12 +296,12 @@ int main_first_hart(void)
 #endif /* defined(MSS_MAC_USE_DDR) */
 #endif /* defined(G5_SOC_EMU_USE_GEM1) */
 
-        SEG[0].CFG[0].offset = -(0x0080000000ll >> 24u);
-        SEG[0].CFG[1].offset = -(0x1000000000ll >> 24u);
-        SEG[1].CFG[2].offset = -(0x00C0000000ll >> 24u);
-        SEG[1].CFG[3].offset = -(0x1400000000ll >> 24u);
-        SEG[1].CFG[4].offset = -(0x00D0000000ll >> 24u);
-        SEG[1].CFG[5].offset = -(0x1800000000ll >> 24u);
+        SEG[0].u[0].CFG.offset = -(0x0080000000ll >> 24u);
+        SEG[0].u[1].CFG.offset = -(0x1000000000ll >> 24u);
+        SEG[1].u[2].CFG.offset = -(0x00C0000000ll >> 24u);
+        SEG[1].u[3].CFG.offset = -(0x1400000000ll >> 24u);
+        SEG[1].u[4].CFG.offset = -(0x00D0000000ll >> 24u);
+        SEG[1].u[5].CFG.offset = -(0x1800000000ll >> 24u);
 #endif
 #endif  /* MPFS_HAL_HW_CONFIG */
 
@@ -494,7 +487,8 @@ void prvEthernetConfigureInterface(void * param)
     str_to_ipv4_address(&g_ip_gateway, "192.168.128.252");
     str_to_ipv4_address(&g_ip_mask, "255.255.255.0");
 #else
-#if MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)
     str_to_ipv4_address(&g_ip_address, "10.2.2.21");
 #else
     str_to_ipv4_address(&g_ip_address, "10.2.2.20");
@@ -540,7 +534,7 @@ void prvLinkStatusTask(void * pvParameters)
         mss_mac_speed_t speed;
         uint32_t stats;
 
-#if defined(G5_SOC_EMU_USE_GEM0) && (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
+#if defined(G5_SOC_EMU_USE_GEM0) && ((MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) || (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0))
         stats = MSS_MAC_read_stat(&g_mac0, 1);
         /* Run through loop every 500 milliseconds. */
         vTaskDelay(500/ portTICK_RATE_MS);
@@ -583,8 +577,85 @@ TaskHandle_t thandle_uart;
 TaskHandle_t thandle_link;
 TaskHandle_t thandle_web;
 
+#if MSS_MAC_HW_PLATFORM  == MSS_MAC_DESIGN_ICICLE_STD_GEM0_LOCAL
+void u54_2(void)
+{
+    BaseType_t rtos_result;
+
+    write_csr(mscratch, 0);
+    write_csr(mcause, 0);
+    write_csr(mepc, 0);
+    init_memory();
+
+    PLIC_init();
+
+    rtos_result = xTaskCreate( e51_task, "u54", 4000, NULL, uartPRIMARY_PRIORITY, NULL );
+    if(1 != rtos_result)
+    {
+        int ix;
+        for(;;)
+            ix++;
+    }
+
+    rtos_result = xTaskCreate( e51_second_task, "u54-2nd", 4000, NULL, uartPRIMARY_PRIORITY + 2, NULL );
+    if(1 != rtos_result)
+    {
+        int ix;
+        for(;;)
+            ix++;
+    }
+#if 1
+    rtos_result = xTaskCreate(http_server_netconn_thread, (char *) "http_server", 4000, NULL, uartPRIMARY_PRIORITY + 3, &thandle_web );
+
+    if(1 != rtos_result)
+    {
+        int ix;
+        for(;;)
+            ix++;
+    }
+
+    /* Create the task the Ethernet link status. */
+    rtos_result = xTaskCreate(prvLinkStatusTask, (char *) "EthLinkStatus", 4000, NULL, uartPRIMARY_PRIORITY + 1, &thandle_link);
+    if(1 != rtos_result)
+    {
+        int ix;
+        for(;;)
+            ix++;
+    }
+
+    vTaskSuspend(thandle_link);
+    vTaskSuspend(thandle_web);
+#endif
+
+    /* Start the kernel.  From here on, only tasks and interrupts will run. */
+      vTaskStartScheduler();
+}
+#endif
+
+
+
 void e51(void)
 {
+#if MSS_MAC_HW_PLATFORM  == MSS_MAC_DESIGN_ICICLE_STD_GEM0_LOCAL
+    volatile int ix;
+
+    write_csr(mscratch, 0);
+    write_csr(mcause, 0);
+    write_csr(mepc, 0);
+
+    PLIC_init();
+
+    SYSREG->FAB_INTEN_U54_2 = 0x000001F8;
+    SYSREG->FAB_INTEN_MISC  = 0x00000002;
+    SysTick_Config();  /* Let hart 0 run the timer */
+
+    CLINT->MSIP[2] = 1; /* Kick start hart 2 */
+    __enable_irq();
+    while (1)
+    {
+        ix++;
+    }
+#else
     BaseType_t rtos_result;
 
     write_csr(mscratch, 0);
@@ -634,12 +705,19 @@ void e51(void)
 
     /* Start the kernel.  From here on, only tasks and interrupts will run. */
       vTaskStartScheduler();
-
+#endif
 }
 
 /**
  *
  */
+
+/*
+ * Default to e51 values
+ */
+volatile uint64_t* mtime = (volatile uint64_t*)0x0200bff8;
+volatile uint64_t* timecmp = (volatile uint64_t*)0x02004000;
+
 void e51_task( void *pvParameters )
 {
     int count;
@@ -889,7 +967,59 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
     SYSREG->IOMUX5_CR = 0;
 #endif
 
-#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) || (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
+#if MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0_LOCAL
+    /*
+     * Icicle board setups with SGMII to VSC8662
+     */
+    /*
+     * Start with GEM1 address as the standard Icicle design has the MDIO
+     * connected to GEM1.
+     */
+    g_mac_config.phy_addr              = PHY_VSC8662_1_MDIO_ADDR;
+    g_mac_config.phy_type              = MSS_MAC_DEV_PHY_VSC8662;
+    g_mac_config.pcs_phy_addr          = SGMII_MDIO_ADDR;
+    g_mac_config.interface_type        = TBI;
+    g_mac_config.phy_autonegotiate     = MSS_MAC_VSC8662_phy_autonegotiate;
+    g_mac_config.phy_mac_autonegotiate = MSS_MAC_VSC8662_mac_autonegotiate;
+    g_mac_config.phy_get_link_status   = MSS_MAC_VSC8662_phy_get_link_status;
+    g_mac_config.phy_init              = MSS_MAC_VSC8662_phy_init;
+    g_mac_config.phy_set_link_speed    = MSS_MAC_VSC8662_phy_set_link_speed;
+
+#if MSS_MAC_USE_PHY_DP83867
+    g_mac_config.phy_extended_read     = NULL_ti_read_extended_regs;
+    g_mac_config.phy_extended_write    = NULL_ti_write_extended_regs;
+#endif
+
+    MSS_GPIO_init(GPIO2_LO);
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_16,  MSS_GPIO_OUTPUT_MODE); /* LED 0 */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_17,  MSS_GPIO_OUTPUT_MODE); /* LED 1 */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_18,  MSS_GPIO_OUTPUT_MODE); /* LED 2 */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_19,  MSS_GPIO_OUTPUT_MODE); /* LED 3 */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_26,  MSS_GPIO_OUTPUT_MODE); /* PB 0 Force */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_27,  MSS_GPIO_OUTPUT_MODE); /* PB 0 Force */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_28,  MSS_GPIO_OUTPUT_MODE); /* PB 0 Force */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_30,  MSS_GPIO_INPUT_MODE);  /* PB 1 */
+    MSS_GPIO_config(GPIO2_LO, MSS_GPIO_31,  MSS_GPIO_INPUT_MODE);  /* PB 2 */
+
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_16, 0);
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_17, 0);
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_18, 0);
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_19, 0);
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_26, 0);
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_27, 0);
+    MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_28, 0);
+
+    /* U54 2 values */
+    mtime = (volatile uint64_t*)0x0200bff8;
+    timecmp = ((volatile uint64_t*)0x02004000) + 2;
+
+#endif
+
+
+    #if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)   ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0)
     /*
      * Icicle board setups with SGMII to VSC8662
      */
@@ -1208,9 +1338,14 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
         delay_count++;
     }
 #endif
-#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) || (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)   ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0)
     MSS_GPIO_init(GPIO2_LO);
 
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_0,  MSS_GPIO_OUTPUT_MODE);  /* USB ULPI Reset */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_2,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 Reset */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_3,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 Soft Reset */
@@ -1221,6 +1356,7 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_8,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 CMODE 5 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_9,  MSS_GPIO_OUTPUT_MODE);  /* VSC8662 CMODE 6 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_10,  MSS_GPIO_OUTPUT_MODE); /* VSC8662 CMODE 7 */
+#endif
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_16,  MSS_GPIO_OUTPUT_MODE); /* LED 0 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_17,  MSS_GPIO_OUTPUT_MODE); /* LED 1 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_18,  MSS_GPIO_OUTPUT_MODE); /* LED 2 */
@@ -1231,6 +1367,8 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_30,  MSS_GPIO_INPUT_MODE);  /* PB 1 */
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_31,  MSS_GPIO_INPUT_MODE);  /* PB 2 */
 
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
     MSS_GPIO_config(GPIO2_LO, MSS_GPIO_11,  MSS_GPIO_OUTPUT_MODE);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_0, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_2, 0); /* Assert reset */
@@ -1242,6 +1380,7 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_8, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_9, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_10, 0);
+#endif
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_16, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_17, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_18, 0);
@@ -1250,6 +1389,8 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_27, 0);
     MSS_GPIO_set_output(GPIO2_LO, MSS_GPIO_28, 0);
 
+#if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
     for(delay_count = 0; delay_count != 1000;)
     {
         delay_count++;
@@ -1262,6 +1403,11 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
         delay_count++;
     }
 #endif
+#endif /* #if (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM1) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM1)   ||\
+    (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0) */
+
 //    PLIC_init();
     __disable_local_irq((int8_t)MMUART0_E51_INT);
 
@@ -1307,7 +1453,7 @@ Hart 0, 1048576 loops required 580897991 cycles, sw ints h0 = 0, sw ints h1 = 0,
     /* hack - must use a semaphore or other synchronisation?
      * Hold off starting these tasks until network is active
      * */
-#if defined(G5_SOC_EMU_USE_GEM0) && (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0)
+#if defined(G5_SOC_EMU_USE_GEM0) && ((MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_SGMII_GEM0) || (MSS_MAC_HW_PLATFORM == MSS_MAC_DESIGN_ICICLE_STD_GEM0))
     while(MSS_MAC_AVAILABLE != g_mac0.mac_available)
 #else
         while(MSS_MAC_AVAILABLE != g_mac1.mac_available)

@@ -1,5 +1,5 @@
-/***************************************************************************
- * Copyright 2019 Microchip Corporation.
+/***********************************************************************************
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,6 @@
  *
  * FU540-C000 contains two UART instances.
  *
- * SVN $Revision: 9661 $
- * SVN $Date: 2018-01-15 10:43:33 +0000 (Mon, 15 Jan 2018) $
  */
 
 #ifndef FU540_uart_H_
