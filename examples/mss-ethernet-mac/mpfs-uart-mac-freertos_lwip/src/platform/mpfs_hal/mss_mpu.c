@@ -348,8 +348,6 @@ uint8_t MSS_MPU_configure(mss_mpu_mport_t master_port,
 {
     uint64_t temp = size, cnt=0ULL;
     uint64_t range;
-    volatile uint64_t baddr=0ULL;
-
 
     /*size must be minimum 4k
       Size must be power of 2
@@ -364,14 +362,11 @@ uint8_t MSS_MPU_configure(mss_mpu_mport_t master_port,
 
         range = (1ULL << (cnt-1U))-1U;
 
-        MSS_MPU(master_port)->PMPCFG[pmp_region].pmp = (base | range) >> 2U;
+        MSS_MPU(master_port)->PMPCFG[pmp_region].raw = (base | range) >> 2U;
 
-        MSS_MPU(master_port)->PMPCFG[pmp_region].mode = permission |
-                                                        (matching_mode << 3U) |
-                                                        (lock_en << 0x7U);
-
-        baddr = (MSS_MPU(master_port)->PMPCFG[pmp_region].mode);
-        baddr = (MSS_MPU(master_port)->PMPCFG[pmp_region].pmp);
+        MSS_MPU(master_port)->PMPCFG[pmp_region].MPUCFG_TypeDef.mode = (uint8_t)(permission |
+                                              (uint8_t)(matching_mode << 3U) |
+                                                        (lock_en << 0x7U));
 
         return ((uint8_t)0);
     }
@@ -394,10 +389,10 @@ uint8_t MSS_MPU_get_config(mss_mpu_mport_t master_port,
     /*All AXI external masters dont have same number of PMP regions*/
     if(pmp_region < num_pmp_lut[master_port])
     {
-        reg = MSS_MPU(master_port)->PMPCFG[pmp_region].pmp;
+        reg = MSS_MPU(master_port)->PMPCFG[pmp_region].MPUCFG_TypeDef.pmp;
         *base = pmp_get_napot_base_and_range(reg, size);
 
-        reg = MSS_MPU(master_port)->PMPCFG[pmp_region].mode;
+        reg = MSS_MPU(master_port)->PMPCFG[pmp_region].MPUCFG_TypeDef.mode;
         *lock_en = ( reg >> 0x7U) & 0x1U;
         *matching_mode = (mss_mpu_addrm_t)( (reg >> 3ULL) & 0x3U);
         *permission = reg & 0x7U;
@@ -448,21 +443,21 @@ uint8_t pmp_configure(uint8_t hart_id) /* set-up with settings from Libero */
     write_csr(pmpcfg0, pmp_values[hart_id][0]);
     write_csr(pmpcfg2, pmp_values[hart_id][1]);
     write_csr(pmpaddr0, pmp_values[hart_id][2]);
-    write_csr(pmpaddr0, pmp_values[hart_id][3]);
-    write_csr(pmpaddr0, pmp_values[hart_id][4]);
-    write_csr(pmpaddr0, pmp_values[hart_id][5]);
-    write_csr(pmpaddr0, pmp_values[hart_id][6]);
-    write_csr(pmpaddr0, pmp_values[hart_id][7]);
-    write_csr(pmpaddr0, pmp_values[hart_id][8]);
-    write_csr(pmpaddr0, pmp_values[hart_id][9]);
-    write_csr(pmpaddr0, pmp_values[hart_id][10]);
-    write_csr(pmpaddr0, pmp_values[hart_id][11]);
-    write_csr(pmpaddr0, pmp_values[hart_id][12]);
-    write_csr(pmpaddr0, pmp_values[hart_id][13]);
-    write_csr(pmpaddr0, pmp_values[hart_id][14]);
-    write_csr(pmpaddr0, pmp_values[hart_id][15]);
-    write_csr(pmpaddr0, pmp_values[hart_id][16]);
-    write_csr(pmpaddr0, pmp_values[hart_id][17]);
+    write_csr(pmpaddr1, pmp_values[hart_id][3]);
+    write_csr(pmpaddr2, pmp_values[hart_id][4]);
+    write_csr(pmpaddr3, pmp_values[hart_id][5]);
+    write_csr(pmpaddr4, pmp_values[hart_id][6]);
+    write_csr(pmpaddr5, pmp_values[hart_id][7]);
+    write_csr(pmpaddr6, pmp_values[hart_id][8]);
+    write_csr(pmpaddr7, pmp_values[hart_id][9]);
+    write_csr(pmpaddr8, pmp_values[hart_id][10]);
+    write_csr(pmpaddr9, pmp_values[hart_id][11]);
+    write_csr(pmpaddr10, pmp_values[hart_id][12]);
+    write_csr(pmpaddr11, pmp_values[hart_id][13]);
+    write_csr(pmpaddr12, pmp_values[hart_id][14]);
+    write_csr(pmpaddr13, pmp_values[hart_id][15]);
+    write_csr(pmpaddr14, pmp_values[hart_id][16]);
+    write_csr(pmpaddr15, pmp_values[hart_id][17]);
 
     return(0);
 }

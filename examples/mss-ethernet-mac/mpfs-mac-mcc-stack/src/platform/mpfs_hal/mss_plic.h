@@ -21,8 +21,7 @@
 
 #include <stdint.h>
 #include "encoding.h"
-
-#include "hal/hal_assert.h"
+#include "mss_assert.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,8 +157,6 @@ uint8_t  wdog4_tout_plic_IRQHandler(void);
 uint8_t  g5c_mss_spi_plic_IRQHandler(void);
 uint8_t  volt_temp_alarm_plic_IRQHandler(void);
 
-uint8_t  g5c_mss_spi_plic_IRQHandler(void);
-uint8_t  volt_temp_alarm_plic_IRQHandler(void);
 uint8_t  athena_complete_plic_IRQHandler(void);
 uint8_t  athena_alarm_plic_IRQHandler(void);
 uint8_t  athena_bus_error_plic_IRQHandler(void);
@@ -697,6 +694,8 @@ typedef struct
 #define TARGET_OFFSET_HART4_M 7U
 #define TARGET_OFFSET_HART4_S 8U
 
+extern const unsigned long plic_hart_lookup[5U];
+
 /***************************************************************************//**
  * PLIC: Platform Level Interrupt Controller
  */
@@ -920,9 +919,7 @@ static inline uint32_t PLIC_ClaimIRQ(void)
 {
     uint64_t hart_id  = read_csr(mhartid);
 
-    const unsigned long lookup[5U] = {0U, 1U, 3U, 5U, 7U};
-
-    return (PLIC->TARGET[lookup[hart_id]].CLAIM_COMPLETE);
+    return (PLIC->TARGET[plic_hart_lookup[hart_id]].CLAIM_COMPLETE);
 }
 
 /***************************************************************************//**
@@ -933,11 +930,9 @@ static inline void PLIC_CompleteIRQ(uint32_t source)
 {
     uint64_t hart_id  = read_csr(mhartid);
 
-    const unsigned long lookup[5U] = {0U, 1U, 3U, 5U, 7U};
-
     ASSERT(source <= MAX_PLIC_INT);
 
-    PLIC->TARGET[lookup[hart_id]].CLAIM_COMPLETE  = source;
+    PLIC->TARGET[plic_hart_lookup[hart_id]].CLAIM_COMPLETE  = source;
 }
 
 /***************************************************************************//**
@@ -955,11 +950,10 @@ static inline void PLIC_CompleteIRQ(uint32_t source)
 static inline void PLIC_SetPriority_Threshold(uint32_t threshold)
 {
     uint64_t hart_id  = read_csr(mhartid);
-    const unsigned long lookup[5U] = {0U, 1U, 3U, 5U, 7U};
 
     ASSERT(threshold <= 7);
 
-    PLIC->TARGET[lookup[hart_id]].PRIORITY_THRESHOLD  = threshold;
+    PLIC->TARGET[plic_hart_lookup[hart_id]].PRIORITY_THRESHOLD  = threshold;
 }
 
 /***************************************************************************//**
@@ -974,8 +968,6 @@ static inline void PLIC_ClearPendingIRQ(void)
 
     while ( int_num != INVALID_IRQn)
     {
-        uint8_t disable = EXT_IRQ_KEEP_ENABLED;
-
         PLIC_CompleteIRQ(int_num);
         wait_possible_int = 0xFU;
         while (wait_possible_int)

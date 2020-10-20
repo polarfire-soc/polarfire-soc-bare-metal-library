@@ -1,7 +1,10 @@
+========================================================================
+ PolarFire SoC MSS Ethernet MAC MCC TCP/IP stack demo program 
+========================================================================
+
 This program implements a test shell for the PSE MSS MAC Ethernet driver which
 can be used to exercise the driver and the MCC TCP/IP stack on the G5 SoC 
-Emulation Platform with the Peripheral Daughter Board, the FU540 based Aloe
-board and the Icicle board.
+Emulation Platform with the Peripheral Daughter Board and the Icicle Kit.
 
 In addition the software implements a simple BACnet/IP server to test UDP
 operation and an FTP client and simple web server to test TCP/IP operation (The 
@@ -10,7 +13,7 @@ TCP/IP examples are not yet complete).
 The following project defines are used to configure the system:
 
 G5_SOC_EMU_USE_GEM0 - Define this to test GEM 0
-G5_SOC_EMU_USE_GEM0 - Define this to test GEM 1
+G5_SOC_EMU_USE_GEM1 - Define this to test GEM 1
 
 TI_PHY - Use G5 SoC Emulation Platform onboard PHY Otherwise VSC8575 PHY is used.
 
@@ -28,10 +31,6 @@ VTSS_OPT_TRACE=0
 VTSS_OS_BARE_METAL_RV
 
 CMSIS_PROT
-TARGET_ALOE      - Define when building for FU540 based Aloe board
-
-SIFIVE_HIFIVE_UNLEASHED=0  - Define when building for FU540 based Aloe board
-
 TARGET_G5_SOC   - Define when building for G5 SoC Emulation Platform board.
 PSE=1           - Define as 1 when building for G5 SoC Emulation Platform
                   board 0 otherwise.
@@ -47,20 +46,37 @@ with a value that identifies the hardware platform and interface modes to use.
 
 Valid values are:
 
-    MSS_MAC_DESIGN_ALOE             - ALOE board from Sifive
-    MSS_MAC_DESIGN_EMUL_GMII        - G5 Emulation Platform VSC8575 designs with GMII to SGMII bridge on GEM0
-    MSS_MAC_DESIGN_EMUL_TBI         - G5 Emulation Platform VSC8575 designs with TBI to SGMII bridge on GEM0
-    MSS_MAC_DESIGN_EMUL_TI_GMII     - G5 Emulation Platform DP83867 design with GMII to SGMII bridge
-    MSS_MAC_DESIGN_EMUL_DUAL_EX_TI  - G5 Emulation Platform Dual GEM design with external TI PHY on GEM1 (GMII)
-    MSS_MAC_DESIGN_EMUL_DUAL_EX_VTS - G5 Emulation Platform Dual GEM design with external Vitess PHY on GEM0 (GMII)
-    MSS_MAC_DESIGN_EMUL_GMII_GEM1   - G5 Emulation Platform VSC8575 designs with GMII to SGMII bridge on GEM 1
-    MSS_MAC_DESIGN_EMUL_TBI_GEM1    - G5 Emulation Platform VSC8575 designs with TBI to SGMII bridge GEM1
-    MSS_MAC_DESIGN_EMUL_TBI_GEM1_TI - G5 Emulation Platform DP83867 designs with TBI to SGMII bridge GEM0
+    MSS_MAC_DESIGN_EMUL_GMII         - G5 Emulation Platform VSC8575 designs
+                                       with GMII to SGMII bridge on GEM0
+    MSS_MAC_DESIGN_EMUL_TBI          - G5 Emulation Platform VSC8575 designs
+                                       with TBI to SGMII bridge on GEM0
+    MSS_MAC_DESIGN_EMUL_TI_GMII      - G5 Emulation Platform DP83867 design with
+                                       GMII to SGMII bridge
+    MSS_MAC_DESIGN_EMUL_DUAL_EX_TI   - G5 Emulation Platform Dual GEM design 
+                                     - with external TI PHY on GEM1 (GMII)
+    MSS_MAC_DESIGN_EMUL_DUAL_EX_VTS  - G5 Emulation Platform Dual GEM design
+                                       with external Vitess PHY on GEM0 (GMII)
+    MSS_MAC_DESIGN_EMUL_GMII_GEM1    - G5 Emulation Platform VSC8575 designs 
+                                       with GMII to SGMII bridge on GEM 1
+    MSS_MAC_DESIGN_EMUL_TBI_GEM1     - G5 Emulation Platform VSC8575 designs
+                                       with TBI to SGMII bridge GEM1
+    MSS_MAC_DESIGN_EMUL_TBI_GEM1_TI  - G5 Emulation Platform DP83867 designs 
+                                       with TBI to SGMII bridge GEM0
+    MSS_MAC_DESIGN_SVG_GMII_GEM0     - SVG Board with GEM0 GMII
+    MSS_MAC_DESIGN_SVG_GMII_GEM1     - SVG Board with GEM1 GMII
+    MSS_MAC_DESIGN_SVG_SGMII_GEM0    - SVG Board with GEM0 SGMII
+    MSS_MAC_DESIGN_SVG_SGMII_GEM1    - SVG Board with GEM1 SGMII
+    MSS_MAC_DESIGN_ICICLE_SGMII_GEM0 - Icicle board with GEM0 SGMII.
+    MSS_MAC_DESIGN_ICICLE_SGMII_GEM1 - Icicle board with GEM1 SGMII.
+    MSS_MAC_DESIGN_ICICLE_STD_GEM0   - Icicle board GEM0 Standard Reference
+                                       Design
+    MSS_MAC_DESIGN_ICICLE_STD_GEM1   - Icicle board GEM1 Standard Reference
+                                       Design
 
-When working with the G5 SOC Emulation system, the serial port baud rate is 115200.
-When working with the Aloe board, the serial port baud rate is 1728000.
+The serial port baud rate is 115200.
 
-The test program responds to the following commands:
+The test program responds to the following single key commands via the serial
+console:
 
 a - Show current ARP table contents\n\r");
 A - Clear ARP table contents
@@ -68,10 +84,13 @@ B - Toggle broadcast RX mode. The default is to receive broadcasts.
 c - Arms the single packet capture feature. A hex dump of the next received
     packet will be displayed via the serial port.
 h - Display this help information.
-i - Show IPv4 info
+i - Increment all statistics registers
+I - Show IPv4 info
+j - Toggle jumbo frame reception. Default is disabled.
 k - Toggle capture re-trigger mode. The default is disabled. When re-trigger
     mode is enabled, the software will automatically re-enable packet capture
     after displaying a captured packet.
+l - Toggle log priority between Default and Emergency. Default is the default.
 p - Toggles promiscuous mode. In promiscuous mode the MAC will receive all
     packets but in normal mode it will only receive broadcast packets and
     packets addressed directly to its MAC address which defaults to 
@@ -87,63 +106,154 @@ x - Toggles reading of PHY registers. When disabled, the PHY statistics are not
     updated when displaying the statistics. This may help when testing with high
     network loads.
 
-When creating a debug session for this project the following settings are
-required to create a debug session for the e51 hart only:
-
-For G5 SOC target:
-
-    In Debugger\OpenOCD Setup\Config options
-
-    -c "set DEVICE G5SOC"
-    -c "set JTAG_KHZ 6000"
-    -d2
-    --file board/microsemi-riscv.cfg
-
-    In Debugger\GDB Client Setup\Commands
     
-    set $target_riscv=1
-    set mem inaccessible-by-default off
-    set remotetimeout 15
-    
-    In Startup\Run/Restart Commands
-    
-    set *0x02000000=0
-    set $pc=0x8000000
-    set $mstatus = 0
+Icicle Standard design has the following setup for the VSC8662:
 
-For Aloe target:
+  NRESET is connected to an MCP121T active low open drain power on reset.
+  chip. The signal is also connected to pin C12 of the G5SoC - GPIO0NB1.
 
-    In Debugger\OpenOCD Setup\Config options
+  NSRESET is connected to pin D16 of the G5SoC - GPIO10NB1.
 
-    --file board/microsemi-sifive-hifive-unleashed.cfg
+  CMODE 0 to 2 are connected to 0R resistors to ground or VCC. They also
+  connect to the G5SoC but the use of 0R resistors means they cannot
+  be changed via the I/O. The current default strapping is:
 
-    In Debugger\GDB Client Setup\Commands
-    
-    set $target_riscv=1
-    set mem inaccessible-by-default off
-    set remotetimeout 15
-    
-    In Startup\Run/Restart Commands
-    
-    set *0x02000000=0
-    set *0x02000004=0
-    set *0x02000008=0
-    set *0x0200000C=0
-    set *0x02000010=0
-    set $pc=0x8000000
-    thread 2
-    set $pc=0x8000000
-    set $mstatus = 0
-    thread 3
-    set $pc=0x8000000
-    set $mstatus = 0
-    thread 4
-    set $pc=0x8000000
-    set $mstatus = 0
-    thread 5
-    set $pc=0x8000000
-    set $mstatus = 0
-    
+    CMODE 0 - 0 (C16)
+    CMODE 1 - 1 (C17)
+    CMODE 2 - 0 (B19)
+
+    This selects a PHY address range of 8 to 11 for the device i.e. port 0
+    is at address 8, port 1 is at address 9 and addresses 10 and 11 are
+    reserved.
+    These pins on the G5SoC should be configured as inputs to avoid issues.
+
+  CMODE 3 to 7 are currently floating and connect to G5SoC as follows and should
+  be driven to 0 for consistent operation:
+
+    CMODE 3 - D18
+    CMODE 4 - A18
+    CMODE 5 - B18
+    CMODE 6 - A12
+    CMODE 7 - B12
+
+  GPIO  0/Sigdet 0 is connected to A10 - GPIO177PB1
+  GPIO  1/Sigdet 1 is connected to A11 - GPIO177PB1
+  GPIO  2 is not connected
+  GPIO  3 is not connected
+  GPIO  4 is not connected
+  GPIO  5/I2C_SCL1 is not connected
+  GPIO  6 is not connected
+  GPIO  7 is not connected
+  GPIO  8 is not connected
+  GPIO  9/FASTLINKFAIL is connected to C11 - GPIO178PB1
+  GPIO 10 is not connected
+  GPIO 11 is not connected
+  GPIO 12 is not connected
+  GPIO 13 is not connected
+  GPIO 14 is not connected
+  GPIO 15 is not connected
+
+  RXD0P is connected to L5
+  RXD0N is connected to L6
+  TXD0P is connected to N6
+  TXD0N is connected to N7
+  RCVRD_CLK1 is connected to F17
+  RXD1P is connected to K6
+  RXD1N is connected to K7
+  TXD1P is connected to M7
+  TXD1N is connected to N8
+  RCVRD_CLK2 is connected to E15
+
+  MDINT0 is connected to E16
+  MDINT1 is connected to B10
+  MDC is connected to D3 - MSSIO28B2
+  MDIO is connected to C2 - MSSIO29B2
+
+  OSCEN is connected to E18 however there is a 0R resistor R344 marked as NL...
+  CLKOUT is connected to A13 - GPIO1PB1/CLKIN_S_5
+  PLLMODE is connected to D12
+
+  For this design, the jumper settings must be set as follows:
+    Jumper Setting
+    J15    Open
+    J17    Open
+    J24    Open
+    J28    Closed
+    J31    Open
+    J34    1 & 2
+    J35    1 & 2
+    J43    1 & 2
+    J45    1 & 2
+    J46    Closed
+
+Icicle board test design has the following setup for the VSC8662:
+
+  NRESET is connected to an MCP121T active low open drain power on reset
+  chip. The signal is also connected to pin C12 of the G5SoC - GPIO0NB1.
+  This connects to MSS GPIO 2 M2F 2
+
+  NSRESET is connected to pin D16 of the G5SoC - GPIO10NB1.
+  This connects to MSS GPIO 2 M2F 3
+
+  CMODE 0 to 2 are connected to 0R resistors to ground or VCC. They also
+  connect to the G5SoC but the use of 0R resistors means they cannot
+  be changed via the I/O. The current default strapping is:
+
+    CMODE 0 - 0 (C16 - GPIO12PB1)
+    CMODE 1 - 1 (C17 - GPIO15NB1)
+    CMODE 2 - 0 (B19 - GPIO19NB9)
+
+    This selects a PHY address range of 8 to 11 for the device i.e. port 0
+    is at address 8, port 1 is at address 9 and addresses 10 and 11 are
+    reserved.
+    These pins on the G5SoC should be configured as inputs to avoid issues.
+
+  CMODE 3 to 7 are currently floating and connect to G5SoC as follows and should
+  be driven to 0 for consistent operation:
+
+    CMODE 3 - D18 - GPIO16PB1
+    CMODE 4 - A18 - GPIO17PB1
+    CMODE 5 - B18 - GPIO17NB1
+    CMODE 6 - A12 - GPIO1NB1
+    CMODE 7 - B12 - GPIO0PB1
+
+  GPIO  0/Sigdet 0 is connected to A10 - GPIO177PB1
+  GPIO  1/Sigdet 1 is connected to A11 - GPIO177PB1
+  GPIO  2 is not connected
+  GPIO  3 is not connected
+  GPIO  4 is not connected
+  GPIO  5/I2C_SCL1 is not connected
+  GPIO  6 is not connected
+  GPIO  7 is not connected
+  GPIO  8 is not connected
+  GPIO  9/FASTLINKFAIL is connected to C11 - GPIO178PB1
+  GPIO 10 is not connected
+  GPIO 11 is not connected
+  GPIO 12 is not connected
+  GPIO 13 is not connected
+  GPIO 14 is not connected
+  GPIO 15 is not connected
+
+  RXD0P is connected to L5
+  RXD0N is connected to L6
+  TXD0P is connected to N6
+  TXD0N is connected to N7
+  RCVRD_CLK1 is connected to F17
+  RXD1P is connected to K6
+  RXD1N is connected to K7
+  TXD1P is connected to M7
+  TXD1N is connected to N8
+  RCVRD_CLK2 is connected to E15
+
+  MDINT0 is connected to E16
+  MDINT1 is connected to B10
+  MDC is connected to D3 - MSSIO28B2
+  MDIO is connected to C2 - MSSIO29B2
+
+  OSCEN is connected to E18 however there is a 0R resistor R344 marked as NL...
+  CLKOUT is connected to A13 - GPIO1PB1/CLKIN_S_5
+  PLLMODE is connected to D12
+
 SVB has the following setup for the VSC8662:
 
   NRESET is connected to an MCP121T active low open drain power on reset
@@ -220,74 +330,6 @@ SVB has the following setup for the VSC8662:
   CLKOUT is connected to pin C18 on FMC connector J1C               (FMC1 HPC1_LA14_P_B7      - J5,   FMC2 HPC2_LA14_P_B1    - E3)
   PLLMODE is connected to pin D20 on FMC connector J1D              (FMC1 HPC1_LA17_CC_L12_B7 - L12,  FMC2 HPC2_LA17_CC_P_B1 - J15)
 
-Icicle board test design has the following setup for the VSC8662:
-
-  NRESET is connected to an MCP121T active low open drain power on reset
-  chip. The signal is also connected to pin C12 of the G5SoC - GPIO0NB1.
-  This connects to MSS GPIO 2 M2F 2
-
-  NSRESET is connected to pin D16 of the G5SoC - GPIO10NB1.
-  This connects to MSS GPIO 2 M2F 3
-
-  CMODE 0 to 2 are connected to 0R resistors to ground or VCC. They also
-  connect to the G5SoC but the use of 0R resistors means they cannot
-  be changed via the I/O. The current default strapping is:
-
-    CMODE 0 - 0 (C16 - GPIO12PB1)
-    CMODE 1 - 1 (C17 - GPIO15NB1)
-    CMODE 2 - 0 (B19 - GPIO19NB9)
-
-    This selects a PHY address range of 8 to 11 for the device i.e. port 0
-    is at address 8, port 1 is at address 9 and addresses 10 and 11 are
-    reserved.
-    These pins on the G5SoC should be configured as inputs to avoid issues.
-
-  CMODE 3 to 7 are currently floating and connect to G5SoC as follows and should
-  be driven to 0 for consistent operation:
-
-    CMODE 3 - D18 - GPIO16PB1
-    CMODE 4 - A18 - GPIO17PB1
-    CMODE 5 - B18 - GPIO17NB1
-    CMODE 6 - A12 - GPIO1NB1
-    CMODE 7 - B12 - GPIO0PB1
-
-  GPIO  0/Sigdet 0 is connected to A10 - GPIO177PB1
-  GPIO  1/Sigdet 1 is connected to A11 - GPIO177PB1
-  GPIO  2 is not connected
-  GPIO  3 is not connected
-  GPIO  4 is not connected
-  GPIO  5/I2C_SCL1 is not connected
-  GPIO  6 is not connected
-  GPIO  7 is not connected
-  GPIO  8 is not connected
-  GPIO  9/FASTLINKFAIL is connected to C11 - GPIO178PB1
-  GPIO 10 is not connected
-  GPIO 11 is not connected
-  GPIO 12 is not connected
-  GPIO 13 is not connected
-  GPIO 14 is not connected
-  GPIO 15 is not connected
-
-  RXD0P is connected to L5
-  RXD0N is connected to L6
-  TXD0P is connected to N6
-  TXD0N is connected to N7
-  RCVRD_CLK1 is connected to F17
-  RXD1P is connected to K6
-  RXD1N is connected to K7
-  TXD1P is connected to M7
-  TXD1N is connected to N8
-  RCVRD_CLK2 is connected to E15
-
-  MDINT0 is connected to E16
-  MDINT1 is connected to B10
-  MDC is connected to D3 - MSSIO28B2
-  MDIO is connected to C2 - MSSIO29B2
-
-  OSCEN is connected to E18 however there is a 0R resistor R344 marked as NL...
-  CLKOUT is connected to A13 - GPIO1PB1/CLKIN_S_5
-  PLLMODE is connected to D12
-
 SVB has the following setup for the VSC8541:
 
   The hardware bootstrap signals are configured as follows:
@@ -350,5 +392,35 @@ SVB has the following setup for the VSC8541:
     CLKOUT is connected to pin H37 on FMC connector J1H         (FMC1 HPC1_LA32_P_B7    - N13,  FMC2 HPC2_LA32_P_B9    - E16)
     CLK_SQUELCH_IN is connected to pin F29 on FMC connector J1F (FMC1 HPC1_HB08_N_B0    - AJ27, FMC2 HPC2_HB08_N_B9    - B22)
     
-    
-    
+--------------------------------------------------------------------------------
+Target hardware
+--------------------------------------------------------------------------------
+This example project can be used on PolarFire SoC FPGA family hardware 
+platforms.
+There are configurations that need to be set for this example project. The
+configurations are categorized into hardware and software configurations.
+The hardware configurations are located in ./src/boards/<target_board> folder.
+The default software configurations are stored under 
+.src/platform/platform_config_reference folder.
+The include files in the "./src/boards/<target_board>/soc_config" folder define 
+the hardware configurations such as clocks. You must make sure that the 
+configurations in this example project match the actual configurations of your 
+target Libero design that you are using to test this example project.
+If you need to change the software configurations, you are advised to create a 
+new folder to replicate this folder under the ./src/boards directory and do the 
+modifications there. It would look like 
+./src/boards/<target_board>/platform_config
+The include files in the "platform_config" folder define the software 
+configurations such as how many harts are being used in the software, what is 
+the tick rate of the internal timer of each hart. These configurations have no 
+dependency on the hardware configurations in "soc_config" folder. Note that 
+changing these software configurations may require a change in your application 
+code.
+## Executing project on the PolarFire SoC hardware
+This application can be used on PolarFire hardware platform as well e.g. Icicle 
+Kit. In this case, the MMUART0 must be connected to a host PC. The host PC must 
+connect to the serial port using a terminal emulator such as Tera Term or PuTTY 
+or the SoftConsole built-in terminal view.
+Build the project and launch the debug configuration named 
+"mpfs-mac-mscc-stack hw all-harts debug" which is configured for 
+PolarFire SoC hardware platform.

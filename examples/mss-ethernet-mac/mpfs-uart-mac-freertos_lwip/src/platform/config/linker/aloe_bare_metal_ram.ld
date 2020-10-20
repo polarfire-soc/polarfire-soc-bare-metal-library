@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019 Microchip Corporation.
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,8 @@
 /*******************************************************************************
  * 
  * file name : mpfs_lim.ld
- * For use with G5SoC MSS
+ * For use with MPFS MSS
  *
- * SVN $Revision: 9187 $
- * SVN $Date: 2017-05-13 13:31:28 +0530 (Sat, 13 May 2017) $
- * 
  */
  
 OUTPUT_ARCH( "riscv" )

@@ -73,13 +73,13 @@ uint8_t init_mem_protection_unit(void);
 uint8_t init_pmp(uint8_t hart_id);
 uint8_t init_bus_error_unit( void);
 char * config_copy(void *dest, const void * src, size_t len);
+void copy_section
+(
+    uint64_t * p_load,
+    uint64_t * p_vma,
+    uint64_t * p_vma_end
+);
 void load_virtual_rom(void);
-void copy_section(uint64_t * p_load, uint64_t * p_vma, uint64_t * p_vma_end);
-
-/*
- * extern Functions Used
- */
-extern uint8_t mss_nwc_init(void);
 
 #ifdef __cplusplus
 }

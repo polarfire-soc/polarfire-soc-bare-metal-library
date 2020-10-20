@@ -1,11 +1,8 @@
-/*******************************************************************************
- * (c) Copyright 20019 Microsemi-PRO Embedded Systems Solutions.
- * All rights reserved.
- * 
+/***********************************************************************************
+ * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
- *  
- * SVN $Revision: 10597 $
- * SVN $Date: 2018-11-23 15:48:29 +0000 (Fri, 23 Nov 2018) $
+ * SPDX-License-Identifier: MIT
+ * 
  */
 
 #ifndef COMMON_H_

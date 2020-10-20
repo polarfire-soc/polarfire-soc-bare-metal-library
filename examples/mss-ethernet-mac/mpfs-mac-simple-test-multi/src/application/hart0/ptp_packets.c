@@ -19,20 +19,17 @@
 
 #if PSE
 #include "drivers/mss_gpio/mss_gpio.h"
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
 
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
 
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-
-#include "drivers/mss_mac/phy.h"
+#include "drivers/mss_ethernet_mac/phy.h"
 
 /* Kernel includes. */
 #include "support/bm_rv_port.h"
@@ -2188,7 +2185,7 @@ void send_ptp_stream(mss_mac_instance_t *this_mac,
 
     while(packet->data != 0)
     {
-        uint8_t tx_status;
+        int32_t tx_status;
 
         uint32_t vlan_offset = 0;
         memset(packet_buf, 0, sizeof(packet_buf));

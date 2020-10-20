@@ -30,14 +30,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "mss_hal.h"
+#ifdef  MPFS_HAL_HW_CONFIG
+#include "nwc/mss_nwc_init.h"
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef  MPFS_HAL_HW_CONFIG
-void load_virtual_rom(void);
-#endif  /* MPFS_HAL_HW_CONFIG */
 
 /*LDRA_INSPECTED 440 S MR:R.11.1,R.11.2,R.11.4,R.11.6,R.11.7  Have to allocate number (address) as point reference*/
 mss_sysreg_t*   SYSREG = ((mss_sysreg_t*) BASE32_ADDR_MSS_SYSREG);
@@ -159,8 +160,7 @@ __attribute__((weak)) int main_first_hart(void)
     /* should never get here */
     while(true)
     {
-       volatile static uint64_t counter = 0U;
-
+       static volatile uint64_t counter = 0U;
        /* Added some code as debugger hangs if in loop doing nothing */
        counter = counter + 1U;
     }
@@ -237,8 +237,7 @@ __attribute__((weak)) int main_other_hart(void)
     /* should never get here */
     while(true)
     {
-       volatile static uint64_t counter = 0U;
-
+       static volatile uint64_t counter = 0U;
        /* Added some code as debugger hangs if in loop doing nothing */
        counter = counter + 1U;
     }
@@ -252,23 +251,23 @@ __attribute__((weak)) int main_other_hart(void)
  * registers with an executable allowing to park a hart in an infinite loop.
  */
 #ifdef  MPFS_HAL_HW_CONFIG
-#define VIRTUAL_BOOTROM_BASE_ADDR   0x20003120U
-#define NB_BOOT_ROM_WORDS       8
+#define VIRTUAL_BOOTROM_BASE_ADDR   0x20003120UL
+#define NB_BOOT_ROM_WORDS           8U
 void load_virtual_rom(void)
 {
-    int inc;
+    uint8_t inc;
     volatile uint32_t * p_virtual_bootrom = (uint32_t *)VIRTUAL_BOOTROM_BASE_ADDR;
 
     const uint32_t rom[NB_BOOT_ROM_WORDS] =
     {
-            0x00000513U,    /* li a0, 0 */
-            0x34451073U,    /* csrw mip, a0 */
-            0x10500073U,    /* wfi */
-            0xFF5FF06FU,    /* j 0x20003120 */
-            0xFF1FF06FU,    /* j 0x20003120 */
-            0xFEDFF06FU,    /* j 0x20003120 */
-            0xFE9FF06FU,    /* j 0x20003120 */
-            0xFE5FF06FU     /* j 0x20003120 */
+        0x00000513U,    /* li a0, 0 */
+        0x34451073U,    /* csrw mip, a0 */
+        0x10500073U,    /* wfi */
+        0xFF5FF06FU,    /* j 0x20003120 */
+        0xFF1FF06FU,    /* j 0x20003120 */
+        0xFEDFF06FU,    /* j 0x20003120 */
+        0xFE9FF06FU,    /* j 0x20003120 */
+        0xFE5FF06FU     /* j 0x20003120 */
     };
 
     for(inc = 0; inc < NB_BOOT_ROM_WORDS; ++inc)
@@ -369,10 +368,10 @@ __attribute__((weak)) void u54_4(void)
   */
  char * config_copy(void *dest, const void * src, size_t len)
  {
-     char *csrc = (char *)src;
-     char *cdest = (char *)dest;
+     volatile char *csrc = (char *)src;
+     volatile char *cdest = (char *)dest;
 
-     for(int inc = 0; inc < len; inc++)
+     for(uint32_t inc = 0; inc < len; inc++)
      {
          cdest[inc] = csrc[inc];
      }
@@ -411,7 +410,7 @@ void copy_section
  */
 static void zero_section(uint64_t * start, uint64_t * end)
 {
-    uint64_t * p_zero = start;
+    volatile uint64_t * p_zero = start;
 
     while(p_zero < end)
     {
