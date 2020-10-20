@@ -26,7 +26,7 @@
 | Examples | Revision | time stamp (YYYY-MM-DD) |
 |----------|:-------------:|------:|
 | mss-can examples | 1.7.102 | 2020-08-26 | 
-| mss-ethernet-mac examples | develop-1.6.102 | 2020-07-24 | 
+| mss-ethernet-mac examples | 1.7.104 | 2020-10-20 | 
 | mss-gpio examples | 1.7.106 | 2020-08-25 | 
 | mss-i2c examples | 1.7.102 | 2020-08-26 | 
 | mss-mmc examples | 1.8.100 | 2020-10-02 | 
