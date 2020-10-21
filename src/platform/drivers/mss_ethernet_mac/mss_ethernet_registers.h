@@ -188,7 +188,9 @@ typedef struct
     __IO uint32_t  DESIGNCFG_DEBUG10;                   /* 0x02A4 */
     __IO uint32_t  DESIGNCFG_DEBUG11;                   /* 0x02A8 */
     __IO uint32_t  DESIGNCFG_DEBUG12;                   /* 0x02AC */
-         uint32_t  reserved11[84];                      /* 0x02B0 - 0x03FC */ 
+         uint32_t  reserved11[12];                      /* 0x02B0 - 0x02DC */
+    __IO uint32_t  AXI_QoS_CFG_0;                       /* 0X02E0 */
+         uint32_t  reserved11a[71];                     /* 0x02E4 - 0x03FC */
     __IO uint32_t  INT_Q1_STATUS;                       /* 0x0400 */
     __IO uint32_t  INT_Q2_STATUS;                       /* 0x0404 */
     __IO uint32_t  INT_Q3_STATUS;                       /* 0x0408 */
@@ -435,7 +437,9 @@ typedef struct
     __IO uint32_t  DESIGNCFG_DEBUG10;              /* 0x12A4 */
     __IO uint32_t  DESIGNCFG_DEBUG11;              /* 0x12A8 */
     __IO uint32_t  DESIGNCFG_DEBUG12;              /* 0x12AC */
-         uint32_t  reserved37[131];                /* 0x12B0 - 0x14B8 */ 
+         uint32_t  reserved37[12];                 /* 0x12B0 - 0x12DC */
+    __IO uint32_t  AXI_QoS_CFG_0;                  /* 0X12E0 */
+         uint32_t  reserved37a[118];               /* 0x12E4 - 0x14B8 */
     __IO uint32_t  CBS_CONTROL;                    /* 0x14BC */
     __IO uint32_t  CBS_IDLESLOPE_Q_A;              /* 0x14C0 */
     __IO uint32_t  CBS_IDLESLOPE_Q_B;              /* 0x14C4 */

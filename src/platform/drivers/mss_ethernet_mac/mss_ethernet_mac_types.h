@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
  * Copyright 2020 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
@@ -13,8 +13,7 @@
 #define MSS_ETHERNET_MAC_TYPES_H_
 #include <stdint.h>
 
-#if defined(TARGET_G5_SOC)
-#include "drivers/mss_gpio/mss_gpio_regs.h"
+#if defined(MSS_MAC_PHY_HW_RESET) || defined(MSS_MAC_PHY_HW_SRESET)
 #include "drivers/mss_gpio/mss_gpio.h"
 #endif
 
@@ -389,7 +388,36 @@ typedef enum
     The MSS_MAC_cfg_struct_def_init() function sets these configuration
     parameters to 7.
 
+  tsu_clock_select
+    Selects the TSU clock source. 0 is the default TSU clock source and 1 is the
+    alternative TSU clock source driven from the fabric.
+
+  amba_burst_length
+    Sets the burst length for the DMA AXI data access transfers. Valid values
+    are:
+
+    0x00 - Attempt to use bursts up to 256
+    0x01 - Always use single bursts
+    0x02 - Always use single bursts
+    0x04 - Attempt to use bursts up to 4
+    0x08 - Attempt to use bursts up to 8
+    0x10 - Attempt to use bursts up to 16
+
+    default is bursts up to 16.
  */
+
+
+/*******************************************************************************
+ * AMBA burst length defines.
+ */
+
+#define MSS_MAC_AMBA_BURST_256  (0U)
+#define MSS_MAC_AMBA_BURST_1    (1U)
+#define MSS_MAC_AMBA_BURST_4    (4U)
+#define MSS_MAC_AMBA_BURST_8    (8U)
+#define MSS_MAC_AMBA_BURST_16   (16U)
+#define MSS_MAC_AMBA_BURST_MASK (31U)
+
 
 /*******************************************************************************
  * Pointer to PHY init function
@@ -499,7 +527,7 @@ typedef struct
     uint8_t  mac_addr[6];               /* Station's MAC address */
     uint32_t phy_addr;                  /* Address of Ethernet PHY on MII management interface. */
     uint32_t pcs_phy_addr;              /* Address of SGMII interface controller on MII management interface. */
-#if defined(TARGET_G5_SOC)
+#if defined(MSS_MAC_PHY_HW_RESET) || defined(MSS_MAC_PHY_HW_SRESET)
     GPIO_TypeDef  *phy_soft_reset_gpio; /* GPIO device soft reset for PHY is connected to */
     mss_gpio_id_t  phy_soft_reset_pin;  /* GPIO pin soft reset for PHY is connected to */
     GPIO_TypeDef  *phy_hard_reset_gpio; /* GPIO device hard reset for PHY is connected to */
@@ -528,6 +556,8 @@ typedef struct
     uint32_t queue2_int_priority;       /* Queue 2 interrupt */
     uint32_t queue3_int_priority;       /* Queue 3 interrupt */
     uint32_t mmsl_int_priority;         /* MMSL interrupt */
+    uint32_t tsu_clock_select;          /* 0 for default TSU clock, 1 for fabric tsu clock */
+    uint32_t amba_burst_length;         /* AXI burst length for DMA data transfers */
 } mss_mac_cfg_t;
 
 /*******************************************************************************
@@ -870,13 +900,19 @@ struct mss_mac_mmsl_stats
 };
 
 
-#if defined(MSS_MAC_SIMPLE_TX_QUEUE)
-/* Only need two descriptors... */
-#undef MSS_MAC_TX_RING_SIZE
-#define MSS_MAC_TX_RING_SIZE (4) /* Ok, I lied we use a couple more for testing
-                                  * sometimes by stuffing the queue with extra
-                                  * copies of the packet... */
-#endif
+/*******************************************************************************
+ * Multi packet transmit structure
+ */
+typedef struct mss_mac_tx_pkt_info mss_mac_tx_pkt_info_t;
+
+struct mss_mac_tx_pkt_info
+{
+    uint32_t  queue_no;    /* Queue number for this packet */
+    uint32_t  length;      /* Length of this packet - 0 for end of list */
+    uint8_t  *tx_buffer;   /* Pointer to packet data - 0 for end of list */
+    void     *p_user_data; /* Pointer to user data for this packet */
+};
+
 
 /*******************************************************************************
  * Per queue specific info for device management structure.
@@ -899,11 +935,13 @@ struct mss_mac_queue
     mss_mac_transmit_callback_t  pckt_tx_callback;
     mss_mac_receive_callback_t   pckt_rx_callback;
     volatile uint32_t            nb_available_tx_desc;
+    volatile uint32_t            current_tx_desc; /* Oldest in the queue... */
     volatile uint32_t            nb_available_rx_desc;
     volatile uint32_t            next_free_rx_desc_index;
     volatile uint32_t            first_rx_desc_index;
     uint32_t                     rx_discard;
     uint32_t                     overflow_counter;
+    uint32_t                     tries;  /* Keep track of failure to sends... */
     volatile int32_t             in_isr; /* Set when processing ISR so functions
                                           * don't call PLIC enable/disable for protection */
 
@@ -924,6 +962,8 @@ struct mss_mac_queue
     volatile uint64_t hresp_error;
     volatile uint64_t rx_restart;
     volatile uint64_t tx_amba_errors;
+    volatile uint64_t tx_restart;
+    volatile uint64_t tx_reenable;
 };
 
 typedef struct mss_mac_queue mss_mac_queue_t;
@@ -961,7 +1001,8 @@ typedef struct mss_mac_instance
     uint32_t phy_type;                  /* PHY device type associated with this GEM */
     uint32_t phy_addr;                  /* Address of Ethernet PHY on MII management interface. */
     uint32_t pcs_phy_addr;              /* Address of SGMII interface controller on MII management interface. */
-#if defined(TARGET_G5_SOC)
+#if defined(MSS_MAC_PHY_HW_RESET) || defined(MSS_MAC_PHY_HW_SRESET)
+
     GPIO_TypeDef  *phy_soft_reset_gpio; /* GPIO device soft reset for PHY is connected to */
     mss_gpio_id_t  phy_soft_reset_pin;  /* GPIO pin soft reset for PHY is connected to */
     uint32_t       phy_soft_reset_done; /* Flag to indicate soft reset is done so multi-port devices

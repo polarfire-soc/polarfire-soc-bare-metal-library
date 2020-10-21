@@ -154,6 +154,7 @@
     packet that was sent.
     The following functions are used as part of transmit and receive operations:
         - MSS_MAC_send_pkt()
+        - MSS_MAC_send_pkts()
         - MSS_MAC_set_tx_callback()
         
     Receive Operations
@@ -234,7 +235,7 @@
 #define MSS_ETHERNET_MAC_H_
 
 #include <stdbool.h>
-#include "drivers/mss_mac/mss_ethernet_mac_types.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -258,10 +259,16 @@ extern "C" {
  */
 #define MSS_MAC_SUCCESS                     MSS_MAC_ENABLE
 #define MSS_MAC_FAILED                      MSS_MAC_DISABLE
-  
+
+#define MSS_MAC_ERR_OK          (1)     /* Success */
+#define MSS_MAC_ERR_NOT_DONE    (0)     /* Previous packet send not yet completed */
+#define MSS_MAC_ERR_TX_NOT_OK   (-1     /* Non specific fail */
+#define MSS_MAC_ERR_TX_TIMEOUT  (-2)    /* Packet send did not release queue after send */
+#define MSS_MAC_ERR_TX_FAIL     (-3)    /* Packet send failed with errors */
+
 /********************************************************************************
   The following definitions are used with function MSS_MAC_get_link_status() to
-  report the link�s status.
+  report the link status.
  */
 #define MSS_MAC_LINK_DOWN                   (0U)
 #define MSS_MAC_LINK_UP                     (1U)
@@ -793,6 +800,13 @@ void MSS_MAC_change_speed
   indicates that the packet is sent by calling the transmit completion handler
   registered by a call to MSS_MAC_set_tx_callback().
   
+  This function waits for all active transmission(s) on all queues to complete
+  before initiating a new transmission.
+
+  Some of the error responses for this function refer to issues with the
+  previous transmission operation and it may be appropriate to retry the current
+  request in that case.
+
   @param this_mac
     This parameter is a pointer to one of the global mss_mac_instance_t
     structures which identifies the MAC that the function is to operate on.
@@ -819,8 +833,16 @@ void MSS_MAC_change_speed
     completion handler registered by the application.
     
   @return
-    This function returns 1 on successfully assigning the packet to a 
-    transmit descriptor. It returns 0 otherwise.
+    This function returns the following values:
+
+      1 (MSS_MAC_ERR_OK) on successfully launching the packet.
+      0 (MSS_MAC_ERR_NOT_DONE) if the previous packet has not finished sending.
+     -1 (MSS_MAC_ERR_NOT_OK) for general errors.
+     -2 (MSS_MAC_ERR_TX_TIMEOUT) If the previous packet has not released the
+        queue buffers after the MAC completes the send.
+     -3 (MSS_MAC_ERR_TX_FAIL) If the previous packet has not released the
+        queue buffers after the MAC completes the send and there is an error
+        flagged in the tx descriptor.
 
   Example:
   This example demonstrates the use of the MSS_MAC_send_pkt() function. The
@@ -853,12 +875,12 @@ void MSS_MAC_change_speed
     
     void send_packet(app_packet_t * packet)
     {
-        MSS_MAC_send_pkt(packet->buffer, packet->length, packet);
+        MSS_MAC_send_pkt(void *this_mac, 0, packet->buffer, packet->length, packet);
     }
     
   @endcode
  */
-uint8_t 
+int32_t
 MSS_MAC_send_pkt
 (
     mss_mac_instance_t *this_mac,
@@ -867,6 +889,123 @@ MSS_MAC_send_pkt
     uint32_t tx_length,
     void * p_user_data
 );
+
+
+/***************************************************************************//**
+  The MSS_MAC_send_pkts() function initiates the transmission of one or more
+  packets on one or more queues. It initialises all the required transmit queues
+  and sets the transmit operation in motion.
+
+  Due to the requirement to keep an unused descriptor at the end of the
+  per-queue descriptor chains, this function will append at most
+  MSS_MAC_TX_RING_SIZE - 1 packets to any queue. Any packets above this limit
+  will be silently ignored.
+
+  This function is non-blocking. It will return immediately without waiting for
+  the packet(s) to be sent. The Ethernet MAC driver indicates that each packet
+  is sent by calling the transmit completion handler registered by a call to
+  MSS_MAC_set_tx_callback().
+
+  This function waits for all active transmission(s) on all queues to complete
+  before initiating a new transmission.
+
+  Some of the error responses for this function refer to issues with the
+  previous transmission operation and it may be appropriate to retry the current
+  request in that case.
+
+  @param this_mac
+    This parameter is a pointer to one of the global mss_mac_instance_t
+    structures which identifies the MAC that the function is to operate on.
+    There are between 1 and 4 such structures identifying pMAC0, eMAC0, pMAC1
+    and eMAC1.
+
+  @param queue_mask
+    This parameter identifies which queue(s) it is intended to transmit from so
+    that the driver can mask the appropriate queue interrupts. Queue 0 is always
+    assumed to be masked as the transmit operation must write to the queue 0
+    descriptor register even when queue 0 is not being used.
+
+    queue_mask indicates the queues which may be involved so that we can
+    properly handle ISR vs normal calling.
+
+    Set the mask to 0x0000000F to indicate all queues if there is any
+    uncertainty.
+
+    Set the mask to 0xFFFFFFF0 to indicate we are being called from a GEM ISR
+    context.
+
+    For single queue devices this should be set to 0 for compatibility
+    purposes.
+
+  @param p_packets
+    This parameter is a pointer to the list of packets to send. The list
+    consists of a sequence of mss_mac_tx_pkt_info_t structures with the last
+    entry having a length field of 0.
+
+  @return
+    This function returns the following values:
+
+      1 (MSS_MAC_ERR_OK) on successfully launching the packet.
+      0 (MSS_MAC_ERR_NOT_DONE) if the previous packet has not finished sending.
+     -1 (MSS_MAC_ERR_NOT_OK) for general errors.
+     -2 (MSS_MAC_ERR_TX_TIMEOUT) If the previous packet has not released the
+        queue buffers after the MAC completes the send.
+     -3 (MSS_MAC_ERR_TX_FAIL) If the previous packet has not released the
+        queue buffers after the MAC completes the send and there is an error
+        flagged in the tx descriptor.
+
+  Example:
+  This example demonstrates the use of the MSS_MAC_send_pkts() function. The
+  application builds a list of 10 arp packets over multiple queues and then
+  calls MSS_MAC_send_pkts() to transmit them in one go.
+
+  @code
+
+    int32_t send_arps()
+    {
+        int32_t tx_status;
+        mss_mac_tx_pkt_info_t packet_array[11];
+        int count;
+
+        for(count = 0; count != 10; count++)
+        {
+            packet_array[count].tx_buffer   = tx_pak_arp;
+            packet_array[count].length      = sizeof(tx_pak_arp);
+            packet_array[count].queue_no    = count % 4;
+            packet_array[count].p_user_data = (void *)0;
+        }
+
+        packet_array[count].tx_buffer   = (void *)0; // End of list
+        packet_array[count].length      = 0;
+        packet_array[count].queue_no    = 0;
+        packet_array[count].p_user_data = (void *)0;
+
+        memcpy(&tx_pak_arp[6], g_test_mac->mac_addr, 6);
+        tx_status = MSS_MAC_send_pkts(g_test_mac, 1, packet_array);
+    }
+
+  @endcode
+ */
+int32_t
+MSS_MAC_send_pkts
+(
+    mss_mac_instance_t    *this_mac,
+    uint32_t               queue_mask,
+    mss_mac_tx_pkt_info_t *p_packets
+);
+
+#if defined(MSS_MAC_SPEED_TEST)
+/***************************************************************************//**
+ * Non standard function for network saturation speed tests. Not for normal use.
+ */
+int32_t
+MSS_MAC_send_pkts_fast
+(
+    mss_mac_instance_t    *this_mac,
+    mss_mac_tx_desc_t *descriptors,
+    uint32_t tx_count
+);
+#endif
 
 /***************************************************************************//**
   The MSS_MAC_receive_pkt() function assigns a buffer to one of  the Ethernet
