@@ -9,16 +9,14 @@
  * Will need to modify FW based on MSS GPIO configuration.
  *
  */
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
-
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-#include "drivers/mss_mac/phy.h"
+#include "mpfs_hal/mss_hal.h"
 #include "hal/hal.h"
-#include "hal/hal_assert.h"
+
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
+#include "drivers/mss_ethernet_mac/phy.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -267,12 +265,12 @@ void MSS_MAC_VSC8662_phy_init(/* mss_mac_instance_t*/ const void *v_this_mac, ui
     {
         phy_mac = (mss_mac_instance_t *)this_mac;
     }
-
+#if defined(MSS_MAC_PHY_HW_RESET) || defined(MSS_MAC_PHY_HW_SRESET)
     if(0 == phy_mac->phy_hard_reset_done)
     {
         /* Active low reset pulse */
-        MSS_MAC_phy_reset(phy_mac, MSS_MAC_SOFT_RESET, false);
-        MSS_MAC_phy_reset(phy_mac, MSS_MAC_SOFT_RESET, true);
+        MSS_MAC_phy_reset(phy_mac, MSS_MAC_HARD_RESET, false);
+        MSS_MAC_phy_reset(phy_mac, MSS_MAC_HARD_RESET, true);
 
 #if defined(TARGET_G5_SOC)
         /*
@@ -301,6 +299,7 @@ void MSS_MAC_VSC8662_phy_init(/* mss_mac_instance_t*/ const void *v_this_mac, ui
         phy_mac->phy_hard_reset_done = true;
 #endif
     }
+#endif /* defined(MSS_MAC_PHY_HW_RESET) || defined(MSS_MAC_PHY_HW_RESET) */
 
     /* Select standard registers page */
     MSS_MAC_write_phy_reg(this_mac, phy_addr, 31, 0x0000U);

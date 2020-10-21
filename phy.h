@@ -11,7 +11,7 @@
  */
 #ifndef PSE_PHY_H
 #define PSE_PHY_H
-#include "../mss_mac/mss_ethernet_mac_types.h"
+#include "../mss_ethernet_mac/mss_ethernet_mac_types.h"
 
 #ifdef __cplusplus
 extern "C" {

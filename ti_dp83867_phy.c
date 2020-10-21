@@ -27,16 +27,13 @@
  * LED_0   - Strap option 2, SGMII_Enable = 1, Mirror Enable = 0
  *
  */
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
-
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-#include "drivers/mss_mac/phy.h"
+#include "mpfs_hal/mss_hal.h"
 #include "hal/hal.h"
-#include "hal/hal_assert.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
+#include "drivers/mss_ethernet_mac/phy.h"
 
 #ifdef __cplusplus
 extern "C" {
