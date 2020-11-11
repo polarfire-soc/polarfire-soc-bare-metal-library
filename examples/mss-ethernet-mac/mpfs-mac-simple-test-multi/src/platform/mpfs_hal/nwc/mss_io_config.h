@@ -61,7 +61,7 @@ extern "C" {
 #define USB                 0x4
 #define MMUART              0x5
 #define I2C                 0x6
-#define CAN                 0x7
+#define CAN_BUS             0x7
 #define MDIO                0x8
 #define Miscellaneous       0x9
 #define Reservedx           0xA
@@ -202,7 +202,7 @@ typedef struct MSSIO_Bank2_IO_Config_ {
   @endcode
 
  */
-int32_t
+uint8_t
 mssio_setup
 (
     void
@@ -229,6 +229,26 @@ int32_t
 gpio_toggle_test
 (
     void
+);
+
+/***************************************************************************//**
+  set_bank2_and_bank4_volts()
+  Sets bank 2 and 4 voltages, with Values coming from Libero
+
+  Example:
+
+  @code
+
+  set_bank2_and_bank4_volts();
+
+  @endcode
+
+ *
+ */
+void
+set_bank2_and_bank4_volts
+(
+   void
 );
 
 

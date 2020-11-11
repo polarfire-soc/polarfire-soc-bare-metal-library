@@ -12,13 +12,10 @@
  * abstraction layer.
  *
  */
+
 #include <stdio.h>
 #include "hal/hal.h"
-#include "mpfs_hal/atomic.h"
-#include "mpfs_hal/encoding.h"
-#include "mpfs_hal/mcall.h"
 #include "mpfs_hal/mss_util.h"
-#include "mpfs_hal/mtrap.h"
 
 #ifdef __cplusplus
 extern "C" {

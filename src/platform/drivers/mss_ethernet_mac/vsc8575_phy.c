@@ -8,21 +8,17 @@
  *
  */
 
-#include "mpfs_hal/mss_plic.h"
-
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-#include "drivers/mss_mac/phy.h"
-
-#include "drivers/mss_mac/mss_ethernet_mac_types.h"
-
-#include "mpfs_hal/mss_plic.h"
-#include "config/hardware/hw_platform.h"
-#include "mpfs_hal/mss_coreplex.h"
-
+#include "mpfs_hal/mss_hal.h"
 #include "hal/hal.h"
+
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
+#include "drivers/mss_ethernet_mac/phy.h"
+
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_types.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>

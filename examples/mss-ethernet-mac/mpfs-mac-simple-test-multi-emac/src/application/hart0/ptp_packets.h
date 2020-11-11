@@ -74,8 +74,8 @@ extern packet_info_t ptp_sync_packets[];
 
 extern mac_address_t mac_address_list[];
 
-extern volatile int g_vlan_tags0;
-extern volatile int g_vlan_tags1;
+extern volatile uint64_t g_vlan_tags0;
+extern volatile uint64_t g_vlan_tags1;
 
 extern volatile int g_address_swap;
 

@@ -14,7 +14,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include "drivers/mss_mac/mss_ethernet_mac_user_config.h"
+#include "mpfs_hal/mss_hal.h"
+#include "hal/hal.h"
+
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_sw_cfg.h"
 
 #if MSS_MAC_USE_PHY_VSC8575
 #include "vtss_api.h"   /* For BOOL and friends */
@@ -26,14 +29,13 @@
 #include "vtss_viper_phy_prototypes.h"
 #endif
 
-#include "mpfs_hal/mss_plic.h"
 
-#include "drivers/mss_mac/mss_ethernet_registers.h"
-#include "drivers/mss_mac/mss_ethernet_mac_regs.h"
-#include "drivers/mss_mac/mss_ethernet_mac.h"
-#include "drivers/mss_mac/phy.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_registers.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_regs.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac.h"
+#include "drivers/mss_ethernet_mac/phy.h"
 
-#include "drivers/mss_mac/mss_ethernet_mac_types.h"
+#include "drivers/mss_ethernet_mac/mss_ethernet_mac_types.h"
 
 #ifdef _ZL303XX_FMC_BOARD
 /* Only needed if SPI interfaces required */

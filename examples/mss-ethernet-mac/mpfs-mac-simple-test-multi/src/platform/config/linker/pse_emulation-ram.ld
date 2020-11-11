@@ -1,10 +1,11 @@
-/***********************************************************************************
+/*******************************************************************************
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
  * file name : pse_emulation-ram.ld
- * fpr use with G5SoC emulation board
+ * fpr use with MPFS emulation board
+ *
  */
  
 OUTPUT_ARCH( "riscv" )
