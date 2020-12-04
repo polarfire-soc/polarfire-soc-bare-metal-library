@@ -13,7 +13,6 @@
 | mss_mmuart driver | 1.7.105 | 2020-08-10 | 
 | mss_mpfs_hal driver | 1.7.106 | 2020-10-13 | 
 | mss_pdma driver | 1.7.102 | 2020-08-13 | 
-| mss_platform_config driver | 1.6.100 | 2020-04-24 |
 | mss_qspi driver | 1.7.101 | 2020-08-02 | 
 | mss_rtc driver | 1.7.102 | 2020-08-13 | 
 | mss_spi driver | 1.7.104 | 2020-08-13 | 
