@@ -163,7 +163,7 @@
                                     								
                                 </option>
                                 								
-                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.linker.printmap.1284834755" name="Print link map (-Xlinker --print-map)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.linker.printmap" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.linker.printmap.1284834755" name="Print link map (-Xlinker --print-map)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.linker.printmap" useByScannerDiscovery="false" value="false" valueType="boolean"/>
                                 								
                                 <inputType id="ilg.gnumcueclipse.managedbuild.cross.riscv.tool.c.linker.input.188806602" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.tool.c.linker.input">
                                     									

@@ -44,7 +44,9 @@ void e51(void)
 {
     mss_rtc_calender_t calendar_count;
 
-    /* RTC */
+    /* All clocks ON */
+    SYSREG->SUBBLK_CLOCK_CR = 0xffffffff;
+
     SYSREG->SOFT_RESET_CR &= ~((1u << 0u) | (1u << 4u) | (1u << 5u) |
                         (1u << 19u) | (1u << 23u) | (1u << 28u) | (1u << 18u)) ;
 
