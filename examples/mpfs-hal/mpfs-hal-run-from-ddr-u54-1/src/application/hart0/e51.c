@@ -18,7 +18,6 @@
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
 #include "drivers/mss_uart/mss_uart.h"
-#include "ymodem/ymodem.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
