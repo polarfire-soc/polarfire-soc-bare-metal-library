@@ -14,11 +14,11 @@
  *
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
-#include "mss_ddr_debug.h"
 
 /*******************************************************************************
  * Local Defines
@@ -46,9 +46,9 @@ extern void delay(uint32_t n);
  * Local function declarations
  */
 static uint32_t ddr_write ( volatile uint64_t *DDR_word_ptr,\
-        uint32_t no_of_access, uint8_t data_ptrn );
+        uint32_t no_of_access, uint8_t data_ptrn, DDR_ACCESS_SIZE data_size );
 static uint32_t ddr_read ( volatile uint64_t *DDR_word_ptr,\
-        uint32_t no_of_access, uint8_t data_ptrn );
+        uint32_t no_of_access, uint8_t data_ptrn,  DDR_ACCESS_SIZE data_size );
 #ifdef DEBUG_DDR_INIT
 extern mss_uart_instance_t *g_debug_uart;
 #endif
@@ -165,12 +165,17 @@ static uint32_t ddr_write
 (
     volatile uint64_t *DDR_word_ptr,
     uint32_t no_of_access,
-    uint8_t data_ptrn
+    uint8_t data_ptrn,
+    DDR_ACCESS_SIZE data_size
 )
 {
     uint32_t i;
     uint64_t DATA;
     uint32_t error_count = 0U;
+
+    uint32_t *DDR_32_ptr = (uint32_t *)DDR_word_ptr;
+    uint16_t *DDR_16_ptr = (uint16_t *)DDR_word_ptr;
+    uint8_t *DDR_8_ptr   = (uint8_t *)DDR_word_ptr;
 
     switch (data_ptrn)
     {
@@ -197,8 +202,30 @@ static uint32_t ddr_write
 
     for( i = 0; i< (no_of_access); i++)
     {
-        *DDR_word_ptr = DATA;
-        DDR_word_ptr = DDR_word_ptr + 1;
+        switch(data_size)
+        {
+            case DDR_8_BIT:
+                DATA &= 0xFFUL;
+                *DDR_8_ptr = (uint8_t)DATA;
+                DDR_8_ptr = DDR_8_ptr + 1;
+                break;
+            case DDR_16_BIT:
+                DATA &= 0xFFFFUL;
+                *DDR_16_ptr = (uint16_t)DATA;
+                DDR_16_ptr = DDR_16_ptr + 1;
+                break;
+            case DDR_32_BIT:
+                DATA &= 0xFFFFFFFFUL;
+                *DDR_32_ptr = (uint32_t)DATA;
+                DDR_32_ptr = DDR_32_ptr + 1;
+                break;
+            default:
+            case DDR_64_BIT:
+                *DDR_word_ptr = DATA;
+                DDR_word_ptr = DDR_word_ptr + 1;
+                break;
+        }
+
 #ifdef DEBUG_DDR_INIT
         if((i%0x1000000UL) ==0UL)
         {
@@ -254,7 +281,8 @@ uint32_t ddr_read
 (
     volatile uint64_t *DDR_word_ptr,
     uint32_t no_of_access,
-    uint8_t data_ptrn
+    uint8_t data_ptrn,
+    DDR_ACCESS_SIZE data_size
 )
 {
     uint32_t i;
@@ -263,9 +291,16 @@ uint32_t ddr_read
     volatile uint64_t ddr_data;
     volatile uint64_t *DDR_word_pt_t, *first_DDR_word_pt_t;
     uint32_t rand_addr_offset;
+    uint8_t *DDR_8_pt_t;
+    uint16_t *DDR_16_pt_t;
+    uint32_t *DDR_32_pt_t;
 
     err_cnt = 0U;
     first_DDR_word_pt_t = DDR_word_ptr;
+    DDR_8_pt_t = (uint8_t *)DDR_word_ptr;
+    DDR_16_pt_t = (uint16_t *)DDR_word_ptr;
+    DDR_32_pt_t = (uint32_t *)DDR_word_ptr;
+
     switch (data_ptrn)
     {
         case PATTERN_INCREMENTAL : DATA = 0x00000000; break;
@@ -275,6 +310,9 @@ uint32_t ddr_read
         case PATTERN_RANDOM :
             DATA = (uint64_t)rand ( );
             *DDR_word_ptr = DATA;
+            *DDR_8_pt_t =  (uint8_t)DATA;
+            *DDR_16_pt_t = (uint16_t)DATA;
+            *DDR_32_pt_t = (uint32_t)DATA;
             break;
         case PATTERN_0xCCCCCCCC :
             DATA = 0xCCCCCCCCCCCCCCCC;
@@ -295,8 +333,26 @@ uint32_t ddr_read
     }
     for( i = 0; i< (no_of_access); i++)
     {
-        DDR_word_pt_t = DDR_word_ptr;
-        ddr_data = *DDR_word_pt_t;
+        switch(data_size)
+        {
+            case DDR_8_BIT:
+                DATA &= 0xFFUL;
+                ddr_data = *DDR_8_pt_t;
+                break;
+            case DDR_16_BIT:
+                DATA &= 0xFFFFUL;
+                ddr_data = *DDR_16_pt_t;
+                break;
+            case DDR_32_BIT:
+                DATA &= 0xFFFFFFFFUL;
+                ddr_data = *DDR_32_pt_t;
+                break;
+            default:
+            case DDR_64_BIT:
+                DDR_word_pt_t = DDR_word_ptr;
+                ddr_data = *DDR_word_pt_t;
+                break;
+        }
 
 #ifdef DEBUG_DDR_INIT
         if((i%0x1000000UL) ==0UL)
@@ -333,6 +389,9 @@ uint32_t ddr_read
 #endif
         }
         DDR_word_ptr = DDR_word_ptr + 1U;
+        DDR_8_pt_t   = DDR_8_pt_t +1U;
+        DDR_16_pt_t  = DDR_16_pt_t +1U;
+        DDR_32_pt_t  = DDR_32_pt_t +1U;
         switch (data_ptrn)
         {
             case PATTERN_INCREMENTAL : DATA = DATA + 0x01; break;
@@ -358,7 +417,13 @@ uint32_t ddr_read
                 DATA = (uint64_t)rand ( );
                 rand_addr_offset = (uint32_t)(rand() & 0xFFFFCUL);
                 DDR_word_ptr = first_DDR_word_pt_t + rand_addr_offset;
-                *DDR_word_ptr = DATA;
+                DDR_8_pt_t   = (uint8_t *)(first_DDR_word_pt_t + rand_addr_offset);
+                DDR_16_pt_t  = (uint16_t *)(first_DDR_word_pt_t + rand_addr_offset);
+                DDR_32_pt_t  = (uint32_t *)(first_DDR_word_pt_t + rand_addr_offset);
+                *DDR_word_ptr   = DATA;
+                *DDR_8_pt_t     = (uint8_t)DATA;
+                *DDR_16_pt_t    = (uint16_t)DATA;
+                *DDR_32_pt_t    = (uint32_t)DATA;
                 break;
             case PATTERN_0xCCCCCCCC :
                 DATA = 0xCCCCCCCCCCCCCCCC;
@@ -399,12 +464,24 @@ uint32_t ddr_read_write_fn (uint64_t* DDR_word_ptr, uint32_t no_access,\
 #ifdef DEBUG_DDR_INIT
                 uprint32(g_debug_uart,"\n\r\t Pattern: 0x", pattern_shift);
 #endif
+
+#if TEST_64BIT_ACCESS == 1
                 /* write the pattern */
                 error_cnt += ddr_write ((uint64_t *)DDR_word_ptr,\
-                        no_access, pattern_mask);
+                        no_access, pattern_mask, DDR_64_BIT);
                 /* read back and verifies */
                 error_cnt += ddr_read ((uint64_t *)DDR_word_ptr, \
-                        no_access, pattern_mask);
+                        no_access, pattern_mask, DDR_64_BIT);
+#endif
+
+#if TEST_32BIT_ACCESS == 1
+                /* write the pattern */
+                error_cnt += ddr_write ((uint64_t *)DDR_word_ptr,\
+                        no_access, pattern_mask, DDR_32_BIT);
+                /* read back and verifies */
+                error_cnt += ddr_read ((uint64_t *)DDR_word_ptr, \
+                        no_access, pattern_mask, DDR_32_BIT);
+#endif
             }
         }
         DDR_word_ptr++; /* increment the address */
