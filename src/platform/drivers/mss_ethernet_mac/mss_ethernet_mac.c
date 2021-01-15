@@ -149,8 +149,8 @@ static void tx_desc_ring_init(mss_mac_instance_t *this_mac);
 static void rx_desc_ring_init(mss_mac_instance_t *this_mac);
 static void assign_station_addr(mss_mac_instance_t *this_mac, const uint8_t mac_addr[MSS_MAC_MAC_LEN]);
 static void generic_mac_irq_handler(mss_mac_instance_t *this_mac, uint64_t queue_no);
-static void rxpkt_handler(mss_mac_instance_t *this_mac, uint32_t queue_no);
-static void txpkt_handler(mss_mac_instance_t *this_mac, uint32_t queue_no);
+static void rxpkt_handler(mss_mac_instance_t *this_mac, uint64_t queue_no);
+static void txpkt_handler(mss_mac_instance_t *this_mac, uint64_t queue_no);
 static void update_mac_cfg(const mss_mac_instance_t *this_mac);
 static uint8_t probe_phy(const mss_mac_instance_t *this_mac);
 static void instances_init(mss_mac_instance_t *this_mac, mss_mac_cfg_t *cfg);
@@ -1640,11 +1640,11 @@ MSS_MAC_receive_pkt
                     
                     if(0U != this_mac->is_emac)
                     {
-                        temp_cr = this_mac->emac_base->NETWORK_CONFIG;
+                        temp_cr = this_mac->emac_base->NETWORK_CONTROL;
                     }
                     else
                     {
-                        temp_cr = this_mac->mac_base->NETWORK_CONFIG;
+                        temp_cr = this_mac->mac_base->NETWORK_CONTROL;
                     }
                     if(0U == (temp_cr & GEM_ENABLE_RECEIVE))
                     {
@@ -1688,6 +1688,31 @@ MSS_MAC_receive_pkt
     return status;
 }
 
+#if defined(MSS_MAC_UNH_TEST)
+/******************************************************************************
+ * We take a lot of short cuts here as we "know" we are called from ISR and
+ * are only supposed to be called for pMAC queue 0, we assume the packet buffer
+ * for this descriptor has not changed,  we ignore caller_info etc...
+ */
+void
+MSS_MAC_receive_pkt_isr
+(
+    mss_mac_instance_t *this_mac
+)
+{
+    mss_mac_queue_t *p_queue = &this_mac->queue[0];
+
+    --p_queue->nb_available_rx_desc;
+
+    /* clear used bit and time stamp present bit */
+    p_queue->rx_desc_tab[p_queue->next_free_rx_desc_index].addr_low &= 0xFFFFFFFA;
+
+    /* Point the next_rx_desc to next free descriptor in the ring */
+    /* Wrap around in case next descriptor is pointing to last in the ring */
+    ++p_queue->next_free_rx_desc_index;
+    p_queue->next_free_rx_desc_index %= MSS_MAC_RX_RING_SIZE;
+}
+#endif
 
 /*******************************************************************************
  * See mss_ethernet_mac.h for details of how to use this function.
@@ -1817,6 +1842,8 @@ MSS_MAC_send_pkt
             this_mac->queue[queue_no].tx_desc_tab[0].addr_high = (uint32_t)((uint64_t)tx_buffer >> 32);
             this_mac->queue[queue_no].tx_desc_tab[0].unused    = 0U;
 #endif
+
+            this_mac->queue[queue_no].tx_desc_tab[1].status   =  GEM_TX_DMA_WRAP | GEM_TX_DMA_LAST |  GEM_TX_DMA_USED ;
 
             this_mac->queue[queue_no].tx_caller_info[0] = p_user_data;
 
@@ -3099,7 +3126,7 @@ static void generic_mac_irq_handler(mss_mac_instance_t *this_mac, uint64_t queue
     
     p_queue->in_isr = 1U;
     int_status  = p_queue->int_status;
-    int_pending =  *int_status & ~(*p_queue->int_mask);
+    int_pending =  *int_status;
 
     if(0U != this_mac->is_emac)
     {
@@ -3152,7 +3179,7 @@ static void generic_mac_irq_handler(mss_mac_instance_t *this_mac, uint64_t queue
     /*
      * RX and TX are the majority cases so see if all done rather than testing
      * remaining one by one. Move on to one by one testing if not finished. Cuts
-     * down on interrupt processing impact...
+     * down on interrupt processing impact for 'normal' case...
      */
     if((int_pending & ~(GEM_RECEIVE_COMPLETE | GEM_TRANSMIT_COMPLETE)) != 0U)
     {
@@ -3162,7 +3189,6 @@ static void generic_mac_irq_handler(mss_mac_instance_t *this_mac, uint64_t queue
 #if !defined(GEM_FLAGS_CLR_ON_RD)
             *int_status = GEM_RECEIVE_OVERRUN_INT;
 #endif
-            rxpkt_handler(this_mac, queue_no);
             p_queue->overflow_counter++;
             p_queue->rx_overflow++;
         }
@@ -3185,7 +3211,6 @@ static void generic_mac_irq_handler(mss_mac_instance_t *this_mac, uint64_t queue
     #if !defined(GEM_FLAGS_CLR_ON_RD)
             *int_status = GEM_RESP_NOT_OK_INT;
     #endif
-            rxpkt_handler(this_mac, queue_no);
             if(0U != this_mac->is_emac)
             {
                 this_mac->emac_base->NETWORK_CONTROL |= GEM_ENABLE_RECEIVE;
@@ -5013,12 +5038,13 @@ bool MSS_MAC_get_pause_frame_copy_to_mem(const mss_mac_instance_t *this_mac)
 static void 
 rxpkt_handler
 (
-    mss_mac_instance_t *this_mac, uint32_t queue_no
+    mss_mac_instance_t *this_mac, uint64_t queue_no
 )
 {
     mss_mac_queue_t *this_queue = &this_mac->queue[queue_no];
     mss_mac_rx_desc_t * cdesc = &this_queue->rx_desc_tab[this_queue->first_rx_desc_index];
-    
+    uint64_t burst = MSS_MAC_RX_RING_SIZE;
+
     if(0U != (cdesc->addr_low & GEM_RX_DMA_USED)) /* Check in case we already got it... */
     {
         /* Execution comes here because at-least one packet is received. */
@@ -5041,18 +5067,22 @@ rxpkt_handler
 #endif
             p_rx_packet = (uint8_t *)addr_temp;
             /*
-             * Pass received packet up to application layer - if enabled... 
+             * Pass received packet up to application layer - if enabled...
              *
              * Note if rx_packet comes back as 0 we can't recover and will leave a
              * used packet stuck in the queue...
              */
+#if !defined(MSS_MAC_UNH_TEST)
             if((NULL_POINTER != this_queue->pckt_rx_callback) && (NULL_POINTER != p_rx_packet) && (0U == this_mac->rx_discard))
+#endif
             {
                 pckt_length = cdesc->status & (GEM_RX_DMA_BUFF_LEN | GEM_RX_DMA_JUMBO_BIT_13);
                 this_queue->ingress += pckt_length;
 
                 this_queue->pckt_rx_callback(this_mac, queue_no, p_rx_packet, pckt_length, cdesc, this_queue->rx_caller_info[this_queue->first_rx_desc_index]);
             }
+
+#if !defined(MSS_MAC_UNH_TEST)
             if((NULL_POINTER != p_rx_packet) && (0U != this_mac->rx_discard))
             {
                 /*
@@ -5061,16 +5091,21 @@ rxpkt_handler
                  */
                 (void)MSS_MAC_receive_pkt(this_mac, queue_no, p_rx_packet, this_queue->rx_caller_info[this_queue->first_rx_desc_index], MSS_MAC_INT_ENABLE);
             }
-
-            cdesc->addr_low &= ~GEM_RX_DMA_USED; /* Mark buffer as unused again */
+#endif
 
             /* Point the curr_rx_desc to next descriptor in the ring */
             /* Wrap around in case next descriptor is pointing to last in the ring */
             ++this_queue->first_rx_desc_index;
             this_queue->first_rx_desc_index %= MSS_MAC_RX_RING_SIZE;
 
-           cdesc = &this_queue->rx_desc_tab[this_queue->first_rx_desc_index];
-        } while(0 != (cdesc->addr_low & GEM_RX_DMA_USED)); /* loop while there are packets available */
+            cdesc = &this_queue->rx_desc_tab[this_queue->first_rx_desc_index];
+            burst--;
+        } while(0 != (cdesc->addr_low & GEM_RX_DMA_USED) && (0 != burst)); /* loop while there are packets available */
+    }
+
+    if(0U == (this_mac->mac_base->NETWORK_CONTROL & GEM_ENABLE_RECEIVE))
+    {
+        this_mac->mac_base->NETWORK_CONTROL |= GEM_ENABLE_RECEIVE;
     }
 }
 
@@ -5084,7 +5119,7 @@ rxpkt_handler
 static void 
 txpkt_handler
 (
-        mss_mac_instance_t *this_mac, uint32_t queue_no
+        mss_mac_instance_t *this_mac, uint64_t queue_no
 )
 {
 #if defined(MSS_MAC_SIMPLE_TX_QUEUE)
