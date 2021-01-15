@@ -191,6 +191,31 @@ const uint8_t *speed_strings[7] =
 #define PACKET_MAX   16384U
 volatile int g_capture = PACKET_IDLE;
 uint8_t      g_packet_data[PACKET_MAX];
+
+/* pair of buffers and flags etc for user mode loopback */
+
+/* States used to track buffer availability */
+#define PKT_STATE_FREE 0
+#define PKT_STATE_RXED 1
+#define PKT_STATE_SENT 2
+
+volatile int      g_user_loopback = 0;
+uint8_t           g_packet_data_0[PACKET_MAX];
+uint8_t           g_packet_data_1[PACKET_MAX];
+volatile uint32_t g_packet_length_0 = 0;
+volatile uint32_t g_packet_length_1 = 0;
+volatile int      g_packet_select = 0;
+volatile int      g_packet_state_0 = PKT_STATE_FREE;
+volatile int      g_packet_state_1 = PKT_STATE_FREE;
+volatile int      g_tx_loop_count  = 0;
+volatile int      g_rx_dropped     = 0;
+volatile uint64_t g_launch_0 = 0;
+volatile uint64_t g_launch_1 = 0;
+volatile uint64_t g_done_0 = 0;
+volatile uint64_t g_done_1 = 0;
+
+volatile uint64_t g_tick_counter = 0;
+
 volatile uint32_t g_packet_length = 0;
 volatile int g_reload = PACKET_IDLE;
 
@@ -421,13 +446,48 @@ static void packet_tx_complete_handler(/* mss_mac_instance_t*/ void *this_mac,
     (void)this_mac;
     (void)queue_no;
 
-    // Unblock the task by releasing the semaphore.
     tx_count++;
+    if(g_user_loopback)
+    {
+        /*
+         * Free up the currently active buffer and switch to alternate if it is
+         * waiting for transmission completion too.
+         */
+        if(0 == g_packet_select)
+        {
+            g_done_0 = g_tick_counter;
+            g_packet_state_0 = PKT_STATE_FREE;
+            if(PKT_STATE_FREE != g_packet_state_1)
+            {
+                g_packet_select = 1;
+            }
+        }
+        else
+        {
+            g_done_1 = g_tick_counter;
+            g_packet_state_1 = PKT_STATE_FREE;
+            if(PKT_STATE_FREE != g_packet_state_0)
+            {
+                g_packet_select = 0;
+            }
+        }
+
+        g_tx_loop_count = 0;
+    }
 }
 
 
 static volatile uint64_t rx_count = 0;
 static volatile uint8_t *tx_loc = (uint8_t *)0x08000000;
+
+
+static void copyby8(uint64_t *dest, uint64_t *source, uint32_t count);
+static void copyby8(uint64_t *dest, uint64_t *source, uint32_t count)
+{
+    count = (count + 7) / 8;
+    while(count--)
+        *dest++ = *source++;
+}
 
 /**=============================================================================
     Bottom-half of receive packet handler
@@ -447,52 +507,112 @@ static void mac_rx_callback
     (void)cdesc;
     (void)queue_no;
     uint64_t retry_start;
-    if(PACKET_ARMED == g_capture) /* Looking for packet so grab a copy */
+
+    if(g_user_loopback) /* Check first and ignore others for speed reasons... */
     {
-        if(pckt_length > PACKET_MAX)
+        if(0 == g_packet_select)
         {
-            pckt_length = PACKET_MAX;
-        }
-
-        memcpy(g_packet_data, p_rx_packet, pckt_length);
-
-        g_packet_length = pckt_length;
-        g_capture = PACKET_DONE; /* and say we go it */
-    }
-
-    if(g_loopback) /* Send what we receive if set to loopback */
-    {
-        /*
-         * We send back any packets we receive (with an optional extra byte to
-         * make the returned packets stand out in Wireshark).
-         *
-         * We may need to wait for the last packet to finish sending as we only
-         * have a single transmit queue so 100% back to back operation will not
-         * work but... The MSS MAC ISR checks to see if we already handled the
-         * current TX so that we don't double dip on the TX handler.
-         */
-
-        retry_start = g_tx_retry;
-        do
-        {
-            if(g_tx_add_1)
+            if(PKT_STATE_FREE == g_packet_state_0)
             {
-                tx_status = MSS_MAC_send_pkt(((mss_mac_instance_t *)this_mac),
-                                             0, p_rx_packet,
-                                             (pckt_length + (uint32_t)g_tx_adjust) | g_crc, (void *)0);
+                copyby8((uint64_t *)g_packet_data_0, (uint64_t *)p_rx_packet, pckt_length);
+                g_packet_state_0 = PKT_STATE_RXED;
+                g_packet_length_0 = pckt_length;
+            }
+            else if(PKT_STATE_FREE == g_packet_state_1)
+            {
+                copyby8((uint64_t *)g_packet_data_1, (uint64_t *)p_rx_packet, pckt_length);
+                g_packet_state_1 = PKT_STATE_RXED;
+                g_packet_length_1 = pckt_length;
             }
             else
             {
-                tx_status = MSS_MAC_send_pkt(((mss_mac_instance_t *)this_mac),
-                                             0, p_rx_packet, pckt_length | g_crc, (void *)0);
+                /*
+                 * At this point, we have received two packets and not re-sent
+                 * them. We disable these RX interrupts for now as we know that
+                 * we cannot handle full line rate bursts of 64 byte frames
+                 * without starving the rest of the system due to the interrupt
+                 * rates involved...
+                 */
+                g_test_mac->mac_base->INT_DISABLE  = GEM_RECEIVE_COMPLETE | GEM_RX_USED_BIT_READ;
+                g_rx_dropped++;
+            }
+        }
+        else
+        {
+            if(PKT_STATE_FREE == g_packet_state_1)
+            {
+                copyby8((uint64_t *)g_packet_data_1, (uint64_t *)p_rx_packet, pckt_length);
+                g_packet_state_1 = PKT_STATE_RXED;
+                g_packet_length_1 = pckt_length;
+            }
+            else if(PKT_STATE_FREE == g_packet_state_0)
+            {
+                copyby8((uint64_t *)g_packet_data_0, (uint64_t *)p_rx_packet, pckt_length);
+                g_packet_state_0 = PKT_STATE_RXED;
+                g_packet_length_0 = pckt_length;
+            }
+            else
+            {
+                /*
+                 * At this point, we have received two packets and not re-sent
+                 * them. We disable these RX interrupts for now as we know that
+                 * we cannot handle full line rate bursts of 64 byte frames
+                 * without starving the rest of the system due to the interrupt
+                 * rates involved...
+                 */
+                g_test_mac->mac_base->INT_DISABLE  = GEM_RECEIVE_COMPLETE | GEM_RX_USED_BIT_READ;
+                g_rx_dropped++;
+            }
+        }
+    }
+    else
+    {
+        if(PACKET_ARMED == g_capture) /* Looking for packet so grab a copy */
+        {
+            if(pckt_length > PACKET_MAX)
+            {
+                pckt_length = PACKET_MAX;
             }
 
-            if(MSS_MAC_SUCCESS != tx_status)
+            memcpy(g_packet_data, p_rx_packet, pckt_length);
+
+            g_packet_length = pckt_length;
+            g_capture = PACKET_DONE; /* and say we go it */
+        }
+
+        if(g_loopback) /* Send what we receive if set to loopback */
+        {
+            /*
+             * We send back any packets we receive (with an optional extra byte to
+             * make the returned packets stand out in Wireshark).
+             *
+             * We may need to wait for the last packet to finish sending as we only
+             * have a single transmit queue so 100% back to back operation will not
+             * work but... The MSS MAC ISR checks to see if we already handled the
+             * current TX so that we don't double dip on the TX handler.
+             */
+
+            retry_start = g_tx_retry;
+            do
             {
-                g_tx_retry++;
-                if(((mss_mac_instance_t *)this_mac)->mac_base->INT_STATUS &
-                   GEM_TRANSMIT_COMPLETE)
+                if(g_tx_add_1)
                 {
+                    tx_status = MSS_MAC_send_pkt(((mss_mac_instance_t *)this_mac),
+                                                 0, p_rx_packet,
+                                                 (pckt_length + (uint32_t)g_tx_adjust) | g_crc, (void *)0);
+                }
+                else
+                {
+                    tx_status = MSS_MAC_send_pkt(((mss_mac_instance_t *)this_mac),
+                                                 0, p_rx_packet, pckt_length | g_crc, (void *)0);
+                }
+
+                if(MSS_MAC_SUCCESS != tx_status)
+                {
+                    g_tx_retry++;
+                    if(((mss_mac_instance_t *)this_mac)->mac_base->INT_STATUS &
+                       GEM_TRANSMIT_COMPLETE)
+                    {
 #if 0 /* This is doing it by the book... */
                     if(0 != ((mss_mac_instance_t *)this_mac)->tx_complete_handler)
                     {
@@ -500,18 +620,23 @@ static void mac_rx_callback
                                 ((mss_mac_instance_t *)this_mac)->tx_caller_info[0]);
                     }
 #else /* This is cutting corners because we know we can in this instance... */
-                    tx_count++;
+                        tx_count++;
 #endif
 
-                    ((mss_mac_instance_t *)this_mac)->queue[0].nb_available_tx_desc = MSS_MAC_TX_RING_SIZE; /* Release transmit queue... */
-                    ((mss_mac_instance_t *)this_mac)->mac_base->TRANSMIT_STATUS = GEM_STAT_TRANSMIT_COMPLETE;
-                    ((mss_mac_instance_t *)this_mac)->mac_base->INT_STATUS = GEM_TRANSMIT_COMPLETE;
+                        ((mss_mac_instance_t *)this_mac)->queue[0].nb_available_tx_desc = MSS_MAC_TX_RING_SIZE; /* Release transmit queue... */
+                        ((mss_mac_instance_t *)this_mac)->mac_base->TRANSMIT_STATUS = GEM_STAT_TRANSMIT_COMPLETE;
+                        ((mss_mac_instance_t *)this_mac)->mac_base->INT_STATUS = GEM_TRANSMIT_COMPLETE;
+                    }
                 }
-            }
-        } while((tx_status != MSS_MAC_SUCCESS) && ((g_tx_retry - retry_start) < 100));
+            } while((tx_status != MSS_MAC_SUCCESS) && ((g_tx_retry - retry_start) < 100));
+        }
     }
 
+#if defined(MSS_MAC_UNH_TEST)
+    MSS_MAC_receive_pkt_isr((mss_mac_instance_t *)this_mac);
+#else
     MSS_MAC_receive_pkt((mss_mac_instance_t *)this_mac, 0, p_rx_packet, 0, 1);
+#endif
     rx_count++;
 }
 
@@ -939,7 +1064,6 @@ if(g_test_mac == &g_mac1) /* Change MAC to avoid confusing Ethernet switch */
  *
  */
 
-volatile uint64_t g_tick_counter = 0;
 uint64_t link_status_timer = 0;
 
 volatile uint8_t g_test_linkup = 0;
@@ -1166,6 +1290,8 @@ static void print_help(void)
             PRINT_STRING("Recovered clock transmission mode)\n\r");
         }
     }
+    sprintf(info_string,"q - Enter user mode loopback test\n\r");
+    PRINT_STRING(info_string);
     sprintf(info_string,"r - Reset statistics counts\n\r");
     PRINT_STRING(info_string);
     sprintf(info_string,"s - Show statistics\n\r");
@@ -3109,6 +3235,178 @@ PLIC_EnableIRQ(USART0_PLIC_4);
 
                 /* Select standard registers page */
                 MSS_MAC_write_phy_reg(g_test_mac, (uint8_t)g_test_mac->phy_addr, 31, 0x0000U);
+            }
+            else if(rx_buff[0] == 'q')
+            {
+                volatile int32_t tx_status;
+                int64_t q_loops = 0;
+
+                /*
+                 * The user mode loopback is designed to cope with high traffic
+                 * situations and will try and throttle receive interrupts when
+                 * things get too busy as otherwise the system will spend all
+                 * it's time handling them and not get a chance to do anything
+                 * else.
+                 */
+                PRINT_STRING("User mode loopback enabled. Press any key except s and r to exit.\n\r");
+                PRINT_STRING("Press s to display stats and r to reset them.\n\r");
+                g_loopback = 0; /* Disable other loopback support */
+                g_packet_select = 0;
+                g_packet_state_0 = PKT_STATE_FREE;
+                g_packet_state_1 = PKT_STATE_FREE;
+
+                g_user_loopback = 1;
+
+                /* Ignore these as we are expecting possible heavy traffic when using this command */
+                g_test_mac->mac_base->INT_DISABLE  = GEM_RECEIVE_OVERRUN_INT | GEM_RESP_NOT_OK_INT;
+
+                for(;;)
+                {
+                    if(0 == (q_loops % 1000000))
+                    {
+                        rx_size = MSS_UART_get_rx(&g_mss_uart0_lo, rx_buff,
+                                                  (uint8_t)sizeof(rx_buff));
+                        if(rx_size > 0)
+                        {
+                            if(rx_buff[0] == 's')
+                            {
+                                int count;
+
+                                sprintf(info_string,"\n\rRX %lu (%lu pkts), TX %lu (%lu pkts)\n\rRX Over Flow %lu, TX Retries %lu\n\r",
+                                        g_test_mac->queue[0].ingress, rx_count,
+                                        g_test_mac->queue[0].egress, tx_count,
+                                        g_test_mac->queue[0].rx_overflow, g_tx_retry);
+                                PRINT_STRING(info_string);
+                                sprintf(info_string,"TX Pause %lu, RX Pause %lu, Pause Elapsed %lu\n\r",
+                                        g_test_mac->tx_pause, g_test_mac->rx_pause,
+                                        g_test_mac->pause_elapsed);
+                                PRINT_STRING(info_string);
+
+                                sprintf(info_string,"HRESP not ok %lu RX Restarts %lu\n\r\n\r",
+                                        g_test_mac->queue[0].hresp_error,
+                                        g_test_mac->queue[0].rx_restart);
+                                PRINT_STRING(info_string);
+                                stats_dump();
+                                sprintf(info_string,"User loopback dropped packets = % 10d\n\r", g_rx_dropped);
+                                PRINT_STRING(info_string);
+
+                                sprintf(info_string,"transit 0 = %lu Transit 1 = %lu\n\r",
+                                        g_done_0 - g_launch_0,
+                                        g_done_1 - g_launch_1);
+                                PRINT_STRING(info_string);
+                                for(count = 0; count != MSS_MAC_RX_RING_SIZE; count++)
+                                {
+                                    sprintf(info_string,"RX status[%d] = %08X, RX addr[%d] = %08X\n\r", count, g_test_mac->queue[0].rx_desc_tab[count].status, count, g_test_mac->queue[0].rx_desc_tab[count].addr_low);
+                                    PRINT_STRING(info_string);
+                                }
+                                sprintf(info_string,"Next free RX descriptor = %d, First RX descriptor = %d\n\r", g_test_mac->queue[0].next_free_rx_desc_index, g_test_mac->queue[0].first_rx_desc_index);
+                                PRINT_STRING(info_string);
+                            }
+                            else if(rx_buff[0] == 'r')
+                            {
+                                PRINT_STRING("GEM stats reset\n\r");
+                                memset(stats, 0, sizeof(stats));
+                                MSS_MAC_clear_statistics(g_test_mac);
+                                rx_count = 0;
+                                tx_count = 0;
+                                g_rx_dropped = 0;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    q_loops++;
+
+                    if(0 == g_packet_select)
+                    {
+                        if(PKT_STATE_RXED == g_packet_state_0)
+                        {
+                            /* Set sent state to avoid race condition, we may change our mind later... */
+                            g_packet_state_0 = PKT_STATE_SENT;
+                            g_launch_0 = g_tick_counter;
+                            tx_status = MSS_MAC_send_pkt(g_test_mac, 0, g_packet_data_0,
+                                    g_packet_length_0 | g_crc, (void *)0);
+
+                            if(MSS_MAC_ERR_OK != tx_status) /* Failed to send so reset */
+                            {
+                                g_packet_state_0 = PKT_STATE_RXED;
+                            }
+                            else
+                            {
+                                g_tx_loop_count = 0;
+                            }
+                        }
+
+                        if((PKT_STATE_SENT == g_packet_state_0) && (g_tx_loop_count > 200000))
+                        {
+                            /* Does not seem to be sending so try again */
+                            g_tx_loop_count = 0;
+                            tx_status = MSS_MAC_send_pkt(g_test_mac, 0, g_packet_data_0,
+                                    g_packet_length_0 | g_crc, (void *)0);
+                        }
+                    }
+                    else
+                    {
+                        if(PKT_STATE_RXED == g_packet_state_1)
+                        {
+                            /* Set sent state to avoid race condition, we may change our mind later... */
+                            g_packet_state_1 = PKT_STATE_SENT;
+                            g_launch_1 = g_tick_counter;
+                            tx_status = MSS_MAC_send_pkt(g_test_mac, 0, g_packet_data_1,
+                                    g_packet_length_1 | g_crc, (void *)0);
+
+                            if(MSS_MAC_ERR_OK != tx_status) /* Failed to send so reset */
+                            {
+                                g_packet_state_1 = PKT_STATE_RXED;
+                            }
+                        }
+
+                        if((PKT_STATE_SENT == g_packet_state_1) && (g_tx_loop_count > 200000))
+                        {
+                            /* Does not seem to be sending so try again */
+                            g_tx_loop_count = 0;
+                            tx_status = MSS_MAC_send_pkt(g_test_mac, 0, g_packet_data_1,
+                                    g_packet_length_1 | g_crc, (void *)0);
+                        }
+
+                    }
+
+                    if((PKT_STATE_SENT == g_packet_state_1) || (PKT_STATE_SENT == g_packet_state_0))
+                    {
+                        g_tx_loop_count++;
+                    }
+
+                    if(0 == (q_loops % 16))
+                    {
+                        /*
+                         * To allow us cope when short packet line rate traffic
+                         * hits us, we periodically disable these interrupts to
+                         * allow us handle other things and need to re-enable
+                         * them after a while.
+                         *
+                         * We will lose packets in this instance but we were
+                         * doing that anyway and at least this way we get a
+                         * chance to return some of the packets...
+                         *
+                         * We write to INT_MASK as well to trigger a receive int
+                         * so that any packets left unserviced at the end of a
+                         * burst get hoovered up...
+                         */
+                        if(0 != (g_test_mac->mac_base->INT_MASK & (GEM_RECEIVE_COMPLETE | GEM_RX_USED_BIT_READ)))
+                        {
+                            g_test_mac->mac_base->INT_ENABLE  = GEM_RECEIVE_COMPLETE | GEM_RX_USED_BIT_READ;
+                            g_test_mac->mac_base->INT_MASK    = GEM_RECEIVE_COMPLETE;
+                        }
+                    }
+                }
+
+                /* Make sure all RX interrupts are enabled again */
+                g_test_mac->mac_base->INT_ENABLE  = GEM_RECEIVE_OVERRUN_INT | GEM_RX_USED_BIT_READ | GEM_RESP_NOT_OK_INT | GEM_RECEIVE_COMPLETE;
+                g_user_loopback = 0;
+                PRINT_STRING("User mode loopback disabled.\n\r");
             }
             else if(rx_buff[0] == 'r')
             {
