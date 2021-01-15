@@ -8,6 +8,13 @@ with the Peripheral Daughter Board and the Icicle Kit. This program targets
 designs with two GEM devices and provides support for eMAC and pMAC operation
 with multiple queues.
 
+Please note that the sample application assigns a MAC address for the GEM 0 pMAC
+of 00:FC:00:12:34:56 and 00:FC:00:12:34:57 for GEM 1 pMAC. The GEM 0 eMAC is
+assigned a MAC address of 00:FC:00:12:34:58 and 00:FC:00:12:34:59 for the GEM 1
+eMAC.If you are using multiple instances of this software on the same network,
+you will need to modify low_level_init() in e51.c to ensure each GEM device has
+a unique MAC address for the pMAC and eMAC. 
+
 The following project defines are used to configure the system:
 
 Configurations for VTSS API for VSC8575

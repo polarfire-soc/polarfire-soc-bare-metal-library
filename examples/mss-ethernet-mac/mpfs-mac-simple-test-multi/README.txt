@@ -7,6 +7,11 @@ driver which can be used to exercise the driver on the  G5 SoC Emulation
 platform with the Peripheral Daughter Board and the Icicle Kit. This program
 targets designs with two GEM devices using only the pMAC.
 
+Please note that the sample application assigns a MAC address for the GEM 0 of
+00:FC:00:12:34:56 and 00:FC:00:12:34:57 for GEM 1. If you are using multiple 
+instances of this software on the same network, you will need to modify 
+low_level_init() in e51.c to ensure each GEM device has a unique MAC address.
+
 The following project defines are used to configure the system:
 
 Configurations for VTSS API for VSC8575

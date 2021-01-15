@@ -7,6 +7,11 @@ LwIP TCP/IP stack with the PolarFire SoC MSS MAC Ethernet driver. This can be
 used to exercise the driver on the G5 SoC Emulation Platform with the Peripheral
 Daughter Board or the Icicle Kit.
 
+Please note that the sample application assigns a MAC address for the GEM 0 of
+00:FC:00:12:34:56 and 00:FC:00:12:34:57 for GEM 1. If you are using multiple 
+instances of this software on the same network, you will need to modify 
+low_level_init() in e51.c to ensure each GEM device has a unique MAC address.
+
 The software has a fixed IP address of 10.2.2.20/255.255.255.0 If you point
 a browser at that address you should see a simple web page display some
 information about the system and a count that updates each time the page

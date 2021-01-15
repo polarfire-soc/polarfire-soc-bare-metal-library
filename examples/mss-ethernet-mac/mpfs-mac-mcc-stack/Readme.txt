@@ -6,6 +6,13 @@ This program implements a test shell for the PSE MSS MAC Ethernet driver which
 can be used to exercise the driver and the MCC TCP/IP stack on the G5 SoC 
 Emulation Platform with the Peripheral Daughter Board and the Icicle Kit.
 
+Please note that the sample application assigns a MAC address for the GEM 0 of
+00:FC:00:12:34:56 and 00:FC:00:12:34:57 for GEM 1. If you are using multiple 
+instances of this software on the same network, you will need to modify 
+low_level_init() in e51.c to ensure each GEM device has a unique MAC address.
+This example uses DHCP for IP address allocation and so requires a DHCP server
+to be present on the test network.
+
 In addition the software implements a simple BACnet/IP server to test UDP
 operation and an FTP client and simple web server to test TCP/IP operation (The 
 TCP/IP examples are not yet complete). 

@@ -663,7 +663,7 @@
                                 								
                                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals.305650810" name="Show totals" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals" value="true" valueType="boolean"/>
                                 								
-                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other.1029108965" name="Other flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other" value="--radix-16" valueType="string"/>
+                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other.1029108965" name="Other flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other" useByScannerDiscovery="false" value="--radix=16" valueType="string"/>
                                 							
                             </tool>
                             						
