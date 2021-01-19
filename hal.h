@@ -1,4 +1,4 @@
-/*******************************************************************************
+/***************************************************************************//**
  * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
@@ -49,7 +49,7 @@ void HAL_enable_interrupts( void );
 
 /***************************************************************************//**
  * Disable all interrupts at the processor core level.
- * Return the interrupts enable state before disabling occured so that it can 
+ * Return the interrupts enable state before disabling occurred so that it can
  * later be restored. 
  */
 psr_t HAL_disable_interrupts( void );
