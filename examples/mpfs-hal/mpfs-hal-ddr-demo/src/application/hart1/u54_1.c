@@ -17,8 +17,7 @@
 #include "inc/common.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_uart/mss_uart.h"
-#include "mpfs_hal/mss_ints.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
@@ -27,7 +26,7 @@ volatile uint32_t count_sw_ints_h1 = 0U;
 
 extern uint64_t uart_lock;
 extern MEM_TYPE mem_area;
-extern uint64_t hart1_jump_ddr;
+extern uint64_t hart_jump_ddr;
 extern mss_uart_instance_t *g_uart;
 
 /* Main function for the HART1(U54_1 processor).
@@ -42,9 +41,9 @@ void u54_1(void)
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
 
-    /*Clear pending software interrupt in case there was any.
-      Enable only the software interrupt so that the E51 core can bring this
-      core out of WFI by raising a software interrupt.*/
+    /* Clear pending software interrupt in case there was any.
+       Enable only the software interrupt so that the E51 core can bring this
+       core out of WFI by raising a software interrupt. */
     clear_soft_interrupt();
     set_csr(mie, MIP_MSIP);
 
@@ -54,8 +53,8 @@ void u54_1(void)
         __asm("wfi");
     }while(0 == (read_csr(mip) & MIP_MSIP));
 
-    /*The hart is out of WFI, clear the SW interrupt. Hear onwards Application
-     * can enable and use any interrupts as required*/
+    /* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
+     * can enable and use any interrupts as required */
     clear_soft_interrupt();
 
     __enable_irq();
@@ -73,7 +72,7 @@ void u54_1(void)
             MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string,(uint32_t)strlen(info_string));
             mss_release_mutex((uint64_t)&uart_lock);
         }
-        if(hart1_jump_ddr == 1U)
+        if(hart_jump_ddr == 1U)
         {
             mss_take_mutex((uint64_t)&uart_lock);
             MSS_UART_polled_tx_string(g_uart,

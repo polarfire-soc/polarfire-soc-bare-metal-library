@@ -16,8 +16,7 @@
 #include "mpfs_hal/mss_hal.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_uart/mss_uart.h"
-#include "mpfs_hal/mss_ints.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
@@ -25,6 +24,11 @@
 volatile uint32_t count_sw_ints_h1 = 0U;
 
 extern uint64_t uart_lock;
+mss_uart_instance_t *g_debug_uart= &g_mss_uart1_lo ;
+
+static void ddr_read_write (uint32_t no_access);
+
+#define small_ver 0x00010000UL
 
 /* Main function for the HART1(U54_1 processor).
  * Application code running on HART1 is placed here
@@ -38,33 +42,18 @@ void u54_1(void)
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
 
-    /*Clear pending software interrupt in case there was any.
-      Enable only the software interrupt so that the E51 core can bring this
-      core out of WFI by raising a software interrupt.*/
+    /* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
+       can enable and use any interrupts as required */
     clear_soft_interrupt();
-    set_csr(mie, MIP_MSIP);
-
-#ifndef MPFS_HAL_BOOT2
-    /*Put this hart into WFI.*/
-    do
-    {
-        __asm("wfi");
-    }while(0 == (read_csr(mip) & MIP_MSIP));
-#endif
-
-    /*The hart is out of WFI, clear the SW interrupt. Hear onwards Application
-     * can enable and use any interrupts as required*/
-    clear_soft_interrupt();
-
-    __enable_irq();
+    //__enable_irq();
 
     /* Turn on UART0 clock */
     SYSREG->SUBBLK_CLOCK_CR |= SUBBLK_CLOCK_CR_MMUART1_MASK;
     /* Remove soft reset */
     SYSREG->SOFT_RESET_CR   &= ~SOFT_RESET_CR_MMUART1_MASK;
 
-    /*This mutex is used to serialize accesses to UART0 when all harts want to
-     * TX/RX on UART0. This mutex is shared across all harts.*/
+    /* This mutex is used to serialize accesses to UART0 when all harts want to
+       TX/RX on UART0. This mutex is shared across all harts. */
     //fixme:does not like being called twice- to resolve  mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( &g_mss_uart1_lo,
@@ -76,10 +65,14 @@ void u54_1(void)
             "Hello World from u54 core 1 - hart1 running from DDR\r\n");
     //fixme:does not like being called twice- to resolve mss_release_mutex((uint64_t)&uart_lock);
 
+#ifdef TEST_DDR_ACCESS
+            ddr_read_write (small_ver);
+#endif
+
     while (1U)
     {
         icount++;
-        if (0x7FFFFFFFU == icount)
+        if (0x7FFFFFU == icount)
         {
             icount = 0U;
             sprintf(info_string,"Hart = %d, Readtime = %d  running from DDR\r\n"\
@@ -87,6 +80,9 @@ void u54_1(void)
             mss_take_mutex((uint64_t)&uart_lock);
             MSS_UART_polled_tx(&g_mss_uart1_lo, info_string,strlen(info_string));
             mss_release_mutex((uint64_t)&uart_lock);
+#ifdef TEST_DDR_ACCESS
+            ddr_read_write (small_ver);
+#endif
         }
     }
     /* never return */
@@ -97,4 +93,27 @@ void Software_h1_IRQHandler(void)
 {
     uint64_t hart_id = read_csr(mhartid);
     count_sw_ints_h1++;
+}
+
+/**
+ *
+ */
+static void ddr_read_write (uint32_t no_access)
+{
+#ifdef TEST_NON_CACHE_DDR_PATH
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\r             Accessing 2Gb DDR Non Cached ");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+    ddr_read_write_fn((uint64_t*)(LIBERO_SETTING_DDR_64_NON_CACHE + (1024 * 128)),(uint32_t)no_access,SW_CONFIG_PATTERN);
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\r             Finished ");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+#endif
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\r             Accessing 2Gb DDR Cached ");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+    ddr_read_write_fn((uint64_t*)(LIBERO_SETTING_DDR_64_CACHE + (1024 * 128)),(uint32_t)(no_access * 32),SW_CONFIG_PATTERN);
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\r             Finished ");
+    MSS_UART_polled_tx_string(&g_mss_uart1_lo,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
 }

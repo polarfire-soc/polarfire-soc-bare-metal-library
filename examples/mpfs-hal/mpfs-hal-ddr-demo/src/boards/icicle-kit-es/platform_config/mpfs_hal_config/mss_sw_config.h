@@ -153,5 +153,19 @@
  * the default settings
  */
 
+/*
+ *  For the Icicle kit we need to override the default settings coming from
+ *  the MSS Configurator
+ *  The valid AXI range should be set to a value matching the DDR being used.
+ *  The default setting should match the size of the DDR being used in the design.
+ *  The following are the registers that need adjusting based on the DDR being
+ *  used.
+ *  using 2MB ( Icicle kit)
+*/
+#define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_0    0x7FFFFFFFUL
+#define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_1    0x00000000UL
+#define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_0    0x7FFFFFFFUL
+#define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_1    0x00000000UL
+
 #endif /* USER_CONFIG_MSS_USER_CONFIG_H_ */
 
