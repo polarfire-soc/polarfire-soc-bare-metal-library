@@ -41,7 +41,7 @@
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.addtools.printsize.1469004354" name="Print size" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.addtools.printsize" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                             							
-                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.level.21962103" name="Optimization Level" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.level" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.level.more" valueType="enumerated"/>
+                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.level.21962103" name="Optimization Level" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.level" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.level.none" valueType="enumerated"/>
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.messagelength.1911902368" name="Message length (-fmessage-length=0)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.messagelength" useByScannerDiscovery="true" value="true" valueType="boolean"/>
                             							
@@ -106,14 +106,6 @@
                                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.other.2110164306" name="Other assembler flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.other" useByScannerDiscovery="false" value="" valueType="string"/>
                                 								
                                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.include.paths.1122608232" name="Include paths (-I)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.include.paths" useByScannerDiscovery="true" valueType="includePath">
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/mpfs-hal-simple-demo/src/application}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/middleware}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/mpfs-hal-simple-demo/src/platform}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es/platform_config}&quot;"/>
                                     								
@@ -315,8 +307,6 @@
                             							
                             <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.compressed.100875669" name="Compressed extension (RVC)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.isa.compressed" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                             							
-                            <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.codemodel.731384312" name="Code model" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.codemodel" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.target.codemodel.low" valueType="enumerated"/>
-                            							
                             <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnumcueclipse.managedbuild.cross.riscv.targetPlatform.1801563061" isAbstract="false" osList="all" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.targetPlatform"/>
                             							
                             <builder buildPath="${workspace_loc:/mpfs-hal-simple-demo}/Release" id="ilg.gnumcueclipse.managedbuild.cross.riscv.builder.793974522" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.builder"/>
@@ -332,14 +322,6 @@
                                 </option>
                                 								
                                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.include.paths.1386847425" name="Include paths (-I)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.include.paths" useByScannerDiscovery="true" valueType="includePath">
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/application}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/modules}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es/platform_config}&quot;"/>
                                     								

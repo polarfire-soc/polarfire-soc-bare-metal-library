@@ -16,9 +16,10 @@
 #include <string.h>
 #include "inc/common.h"
 #include "mpfs_hal/mss_hal.h"
+#include "mpfs_hal/mpfs_hal_version.h"
 
 #ifndef SIFIVE_HIFIVE_UNLEASHED
-#include "drivers/mss_uart/mss_uart.h"
+#include "drivers/mss_mmuart/mss_uart.h"
 #include "../../middleware/ymodem/ymodem.h"
 #else
 #include "drivers/FU540_uart/FU540_uart.h"
@@ -30,8 +31,7 @@
  ******************************************************************************/
 #ifdef DEBUG_DDR_INIT
 const uint8_t g_message[] =
-        "\r\n\r\n\r\n\
-MPFS HAL DDR example version 0.3.3\r\n\
+        "\r\n\
 This program is run from E51\r\n\
 This program can load a program to DDR using ymodem\r\n\
 and has option to run the image using hart1 \r\n\
@@ -43,7 +43,10 @@ Type 4  Display clock values\r\n\
 Type 5  Print debug messages from hart0\r\n\
 Type 6  load image to DDR\r\n\
 Type 7  Start U54_1 running image in DDR\r\n\
-Type 8  Display MSS PLL registers\r\n\
+Type 8  Start U54_2 running image in DDR\r\n\
+Type 9  Start U54_3 running image in DDR\r\n\
+Type a  Start U54_4 running image in DDR\r\n\
+Type b  Display MSS PLL registers\r\n\
 ";
 #else
 const uint8_t g_message[] =
@@ -54,12 +57,16 @@ This program can load a program to DDR using ymodem\r\n\
 and has option to run the image using hart1 \r\n\
 Type 0  Show this menu\r\n\
 Type 1  Not used\r\n\
-Type 2  Raise sw int hart 2\r\n\
-Type 3  Raise sw int hart 3\r\n\
-Type 4  Raise sw int hart 4\r\n\
+Type 2  Soft reset the MSS\r\n\
+Type 3  Not used\r\n\
+Type 4  Not used\r\n\
 Type 5  Print debug messages from hart0\r\n\
 Type 6  load image to DDR\r\n\
 Type 7  Start U54_1 running image in DDR\r\n\
+Type 8  Start U54_2 running image in DDR\r\n\
+Type 9  Start U54_3 running image in DDR\r\n\
+Type a  Start U54_4 running image in DDR\r\n\
+Type b  Display MSS PLL registers\r\n\
 ";
 #endif
 
@@ -71,7 +78,7 @@ Type 7  Start U54_1 running image in DDR\r\n\
 static volatile uint32_t count_sw_ints_h0 = 0U;
 volatile uint32_t g_10ms_count;
 uint8_t data_block[256];
-uint64_t hart1_jump_ddr = 0U;
+uint64_t hart_jump_ddr = 0U;
 #ifndef DDR_BASE_BOARD
 mss_uart_instance_t *g_uart= &g_mss_uart0_lo ;
 mss_uart_instance_t *g_debug_uart= &g_mss_uart0_lo ;
@@ -81,6 +88,7 @@ mss_uart_instance_t *g_debug_uart= &g_mss_uart3_lo ;
 #endif
 uint64_t uart_lock;
 MEM_TYPE mem_area = E51_DDR_START_CACHE;
+uint8_t *bin_base = (uint8_t *)LIBERO_SETTING_DDR_32_CACHE;
 static uint8_t file_name[FILE_NAME_LENGTH + 1]; /* +1 for nul */
 
 /*
@@ -125,7 +133,7 @@ void jump_to_application( MEM_TYPE mem_area_choice)
             break;
     }
     __asm volatile("ret");
-    /*User application execution should now start and never return here.... */
+    /* User application execution should now start and never return here.... */
 }
 
 /* Main function for the HART0(E51 processor).
@@ -142,8 +150,6 @@ void e51(void)
     uint8_t rx_size = 0;
     uint8_t debug_hart0 = 0U;
     volatile uint32_t  received = 0;
-
-    uint8_t *bin_base = (uint8_t *)0xC0000000;
     uint32_t g_rx_size = 1024 * 128;
 
     /* Turn on UART0 clock */
@@ -161,8 +167,8 @@ void e51(void)
             SUBBLK_CLOCK_CR_MMUART4_MASK |\
             SUBBLK_CLOCK_CR_CFM_MASK);
 
-    /*This mutex is used to serialize accesses to UART0 when all harts want to
-     * TX/RX on UART0. This mutex is shared across all harts.*/
+    /* This mutex is used to serialize accesses to UART0 when all harts want to
+     * TX/RX on UART0. This mutex is shared across all harts. */
     mss_init_mutex((uint64_t)&uart_lock);
 
     MSS_UART_init( g_uart,
@@ -189,7 +195,6 @@ void e51(void)
         MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
 #endif
 
-    MSS_UART_polled_tx_string (g_uart, g_message);
 #ifdef debug_uarts
     MSS_UART_polled_tx_string (&g_mss_uart1_lo, g_message);
     MSS_UART_polled_tx_string (&g_mss_uart2_lo, g_message);
@@ -205,13 +210,15 @@ void e51(void)
     ddr_read_write_nc (small_ver);
 #endif
 
+    MSS_UART_polled_tx_string (g_uart, g_message);
+
 //#define SOFT_RESET_TEST
 #ifdef SOFT_RESET_TEST
     /* Implement a soft reset */
     SYSREG->MSS_RESET_CR = 0xdead;
 #endif
 
-    /* Start the other harts with appropriate UART input from user*/
+    /* Start the other harts with appropriate UART input from user */
     while (1)
     {
         mcycle_start = readmcycle();
@@ -235,7 +242,10 @@ void e51(void)
             switch(rx_buff[0])
             {
                 case '0':
+                    sprintf(info_string,"MPFS HAL Version Major %d, Minor %d patch %d\r\n",\
+                             MPFS_HAL_VERSION_MAJOR,MPFS_HAL_VERSION_MINOR, MPFS_HAL_VERSION_PATCH);
                     mss_take_mutex((uint64_t)&uart_lock);
+                    MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string,(uint32_t)strlen(info_string));
                     MSS_UART_polled_tx_string (g_uart, g_message );
                     mss_release_mutex((uint64_t)&uart_lock);
                     break;
@@ -251,7 +261,9 @@ void e51(void)
                     SYSREG->MSS_RESET_CR = 0xdead;
                     break;
                 case '3':
+#ifdef DEBUG_DDR_INIT
                     ddr_read_write_nc (twoGb);
+#endif
                     break;
                 case '4':
                     display_clocks();
@@ -268,7 +280,7 @@ void e51(void)
                     if(received != 0U)
                     {
                         mss_take_mutex((uint64_t)&uart_lock);
-                        MSS_UART_polled_tx_string (g_uart,(const uint8_t*)"\n\rNow choose option 7\n\r" );
+                        MSS_UART_polled_tx_string (g_uart,(const uint8_t*)"\n\rNow choose option 7,8,9 or a to run loaded program\n\r" );
                         mss_release_mutex((uint64_t)&uart_lock);
                     }
                     else
@@ -280,13 +292,37 @@ void e51(void)
                     break;
                 case '7':
                     raise_soft_interrupt(1u);
-                    hart1_jump_ddr = 1U;
+                    hart_jump_ddr = 1U;
 #ifdef E51_ENTER_SLEEP_STATE
                     SysTick_off();
                     loop_in_dtim();
 #endif
                     break;
                 case '8':
+                    raise_soft_interrupt(2u);
+                    hart_jump_ddr = 2U;
+#ifdef E51_ENTER_SLEEP_STATE
+                    SysTick_off();
+                    loop_in_dtim();
+#endif
+                    break;
+                case '9':
+                    raise_soft_interrupt(3u);
+                    hart_jump_ddr = 3U;
+#ifdef E51_ENTER_SLEEP_STATE
+                    SysTick_off();
+                    loop_in_dtim();
+#endif
+                    break;
+                case 'a':
+                    raise_soft_interrupt(4u);
+                    hart_jump_ddr = 4U;
+#ifdef E51_ENTER_SLEEP_STATE
+                    SysTick_off();
+                    loop_in_dtim();
+#endif
+                    break;
+                case 'b':
                     display_mss_regs();
                     break;
 
@@ -380,7 +416,7 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Non Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)MSS_BASE_ADD_DRC_NC_AXI_NC,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
@@ -388,7 +424,7 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)MSS_BASE_ADD_DRC_CACHE_AXI_L2,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");

@@ -53,7 +53,7 @@
 
 void sf2bl_ymodem_init(void);
 void sf2bl_ymodem_deinit(void);
-uint32_t ymodem_receive(uint8_t *buf, uint32_t length);
+uint32_t ymodem_receive(uint8_t *buf, uint32_t length, uint8_t *file_name);
 uint16_t sf2bl_crc16(const uint8_t *buf, uint32_t count);
 void _putchar(int32_t data);
 void _putstring(uint8_t *string);

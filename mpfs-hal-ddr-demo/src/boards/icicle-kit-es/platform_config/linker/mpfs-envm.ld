@@ -100,8 +100,8 @@ MEMORY
     /* eNVM can be made into 128K section or split as required */
     /* In this example, our reset vector is set to point to the */
     /* start of SEC2 at  0x20220000. */
-    eNVM_SEC_2_0_1_3 (rx) : ORIGIN  = 0x20220000, LENGTH = 120k
-    ram_LIM (rwx) : ORIGIN  = 0x08000000, LENGTH = 128k
+    eNVM_SEC_2_0_1_3 (rx) : ORIGIN  = 0x20220000, LENGTH = 128k
+    ram_LIM (rwx) : ORIGIN  = 0x08000000, LENGTH = 1024k
     ram_dtm (rwx) : ORIGIN  = 0x01000000, LENGTH = 7k       /* DTIM */
     scratchpad(rwx):  ORIGIN = 0x0A000000, LENGTH = 512k
     /* This 1K of DTIM is used to run code when switching the eNVM clock */
@@ -165,6 +165,7 @@ SECTIONS
         KEEP (*crtend.o(.dtors))
 
         *(.rodata .rodata.* .gnu.linkonce.r.*)
+        *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
         *(.gcc_except_table) 
         *(.eh_frame_hdr)
         *(.eh_frame)
@@ -183,6 +184,10 @@ SECTIONS
         KEEP (*(.fini_array))
         KEEP (*(SORT(.fini_array.*)))
         PROVIDE_HIDDEN (__fini_array_end = .);
+        
+        *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+        *(.srodata*)
+        
         . = ALIGN(0x10);
         __text_end = .;
     } > eNVM_SEC_2_0_1_3
@@ -244,22 +249,11 @@ SECTIONS
         /* If sdata more than 4K, linker used direct addressing. 
            Perhaps we should add check/warning to linker script if sdata is > 4k */
         __global_pointer$ = . + 0x800;
-        *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
-        *(.srodata*)
         *(.sdata .sdata.* .gnu.linkonce.s.*)
         . = ALIGN(0x10);
         __sdata_end = .;
     } > ram_LIM AT > eNVM_SEC_2_0_1_3
     
-    /*
-     * The s2data section is required when using cetrtain versions of newlib-nano
-     * The _global_impure_ptr used in that libary is initialised to point here.
-     */
-    .sdata2 : ALIGN(0x10)
-    {
-        *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
-    } > ram_LIM
-
     /* data section */
     .data : ALIGN(0x10)
     { 
@@ -340,6 +334,9 @@ SECTIONS
         . += STACK_SIZE_U54_4_APPLICATION;
         PROVIDE(__app_stack_top_h4 = .);
         PROVIDE(__stack_top_h4$ = .);
+        /* place __start_of_free_lim$ after last allocation of l2_lim */
+        . = ALIGN(0x10);
+        PROVIDE(__start_of_free_lim$ = .);
     } > ram_LIM
 }
 

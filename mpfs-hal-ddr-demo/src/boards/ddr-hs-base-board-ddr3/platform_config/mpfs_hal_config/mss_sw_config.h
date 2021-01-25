@@ -148,13 +148,6 @@
 //#define DEBUG_DDR_CFG_DDR_SGMII_PHY
 //#define DEBUG_DDR_DDRCFG
 
-/*
- * During development we need to locally overwrite some values coming from
- * Libero
- * These are placed below here
- */
-
-#define SPECIAL_TRAINIG_RESET
 /* set to 6 for DDR3/DDR4 */
 #define SW_TRAING_BCLK_SCLK_OFFSET                  0x00000006UL
 

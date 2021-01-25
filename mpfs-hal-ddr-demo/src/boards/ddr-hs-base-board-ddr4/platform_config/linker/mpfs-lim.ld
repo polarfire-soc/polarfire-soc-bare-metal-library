@@ -130,11 +130,11 @@ HEAP_SIZE           = 8k;               /* needs to be calculated for your appli
  * These are the stack sizes that will be allocated to each hart before starting
  * each hart's application function, e51(), u54_1(), u54_2(), u54_3(), u54_4().
  */
-STACK_SIZE_E51_APPLICATION = 1k;
-STACK_SIZE_U54_1_APPLICATION = 1k;
-STACK_SIZE_U54_2_APPLICATION = 1k;
-STACK_SIZE_U54_3_APPLICATION = 1k;
-STACK_SIZE_U54_4_APPLICATION = 1k;
+STACK_SIZE_E51_APPLICATION = 8k;
+STACK_SIZE_U54_1_APPLICATION = 8k;
+STACK_SIZE_U54_2_APPLICATION = 8k;
+STACK_SIZE_U54_3_APPLICATION = 8k;
+STACK_SIZE_U54_4_APPLICATION = 8k;
 
 SECTIONS
 {
@@ -161,6 +161,7 @@ SECTIONS
     KEEP (*crtend.o(.dtors))
     
     *(.rodata .rodata.* .gnu.linkonce.r.*)
+    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     *(.gcc_except_table) 
     *(.eh_frame_hdr)
     *(.eh_frame)
@@ -179,6 +180,10 @@ SECTIONS
     KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
+    
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+    *(.srodata*)
+    
     . = ALIGN(0x10);
     __text_end = .;
   } > ram
@@ -221,20 +226,9 @@ SECTIONS
     /* offset used with gp(gloabl pointer) are +/- 12 bits, so set point to middle of expected sdata range */
     /* If sdata more than 4K, linker used direct addressing. Perhaps we should add check/warning to linker script if sdata is > 4k */
     __global_pointer$ = . + 0x800;
-    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
-    *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
-  } > ram
-
-  /*
-   * The s2data section is required when using cetrtain versions of newlib-nano
-   * The _global_impure_ptr used in that libary is initialised to point here.
-   */
-  .sdata2 : ALIGN(0x10)
-  {
-      *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
   } > ram
 
   /* data section */
