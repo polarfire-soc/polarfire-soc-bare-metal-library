@@ -109,7 +109,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform/platform_config_reference}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es/platform_config}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es}&quot;"/>
                                     								
@@ -131,7 +131,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform/platform_config_reference}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es/platform_config}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es}&quot;"/>
                                     								
@@ -219,7 +219,7 @@
                                 								
                                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.format.1560359624" name="Size format" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.format" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.format.sysv" valueType="enumerated"/>
                                 								
-                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals.672718224" name="Show totals" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals.672718224" name="Show totals" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other.2053218754" name="Other flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other" useByScannerDiscovery="false" value="--radix=16" valueType="string"/>
                                 							
@@ -231,7 +231,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="src/platform/drivers/mss_timer|src/platform/drivers/mss_sys_services|src/platform/drivers/mss_spi|src/platform/drivers/mss_rtc|src/platform/drivers/mss_qspi|src/platform/drivers/mss_pdma|src/platform/drivers/mss_mmc|src/platform/drivers/mss_i2c|src/platform/drivers/mss_ethernet_mac|src/platform/drivers/mss_can|src/platform/drivers/pf_pcie|src/platform/drivers/mss_usb|src/platform/drivers/mss_watchdog" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="src/platform/drivers/mss_timer|src/platform/drivers/mss_qspi|src/platform/drivers/mss_mmc|src/platform/drivers/mss_sys_services|src/platform/drivers/mss_rtc|src/platform/drivers/mss_pdma|src/platform/drivers/pf_pcie|src/platform/drivers/mss_ethernet_mac|src/platform/drivers/mss_can|src/platform/drivers/mss_i2c|src/platform/drivers/mss_spi|src/platform/drivers/mss_usb|src/platform/drivers/mss_watchdog" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				
@@ -345,7 +345,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform/platform_config_reference}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es/platform_config}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es}&quot;"/>
                                     								
@@ -375,7 +375,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/platform/platform_config_reference}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es/platform_config}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/boards/icicle-kit-es}&quot;"/>
                                     								
@@ -459,7 +459,7 @@
                                 								
                                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.format.1474998753" name="Size format" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.format" useByScannerDiscovery="false" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.format.sysv" valueType="enumerated"/>
                                 								
-                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals.379278446" name="Show totals" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+                                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals.379278446" name="Show totals" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.totals" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other.1916231829" name="Other flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.printsize.other" useByScannerDiscovery="false" value="--radix=16" valueType="string"/>
                                 							
@@ -471,7 +471,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="src/platform/drivers/mss_timer|src/platform/drivers/mss_sys_services|src/platform/drivers/mss_spi|src/platform/drivers/mss_rtc|src/platform/drivers/mss_qspi|src/platform/drivers/mss_pdma|src/platform/drivers/mss_mmc|src/platform/drivers/mss_i2c|src/platform/drivers/mss_ethernet_mac|src/platform/drivers/mss_can|src/platform/drivers/pf_pcie|src/platform/drivers/mss_usb|src/platform/drivers/mss_watchdog" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="src/platform/drivers/mss_timer|src/platform/drivers/mss_qspi|src/platform/drivers/mss_mmc|src/platform/drivers/mss_sys_services|src/platform/drivers/mss_rtc|src/platform/drivers/mss_pdma|src/platform/drivers/pf_pcie|src/platform/drivers/mss_ethernet_mac|src/platform/drivers/mss_can|src/platform/drivers/mss_i2c|src/platform/drivers/mss_spi|src/platform/drivers/mss_usb|src/platform/drivers/mss_watchdog" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				
