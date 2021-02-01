@@ -17,7 +17,7 @@ extern void uart_tx_with_mutex (mss_uart_instance_t * this_uart,
                                 const uint8_t * pbuff);
 
 volatile uint32_t count_sw_ints_h1 = 0u;
-volatile uint8_t h1_triggered = 0u,h1_mvrp = 0u,h2_triggered = 0u, h2_mvrp = 0u;
+extern volatile uint8_t h1_triggered, h1_mvrp, h2_triggered, h2_mvrp;
 
 mss_watchdog_config_t wd1lo_config;
 
@@ -48,12 +48,15 @@ void u54_1(void)
      * can enable and use any interrupts as required */
     clear_soft_interrupt();
 
+    /* Reading the default config */
+    MSS_WD_get_config(MSS_WDOG1_LO, &wd1lo_config);
+
     /* Set WD1 such that the MVRP interrupt will happen after 10 seconds after
      * reset and the Trigger interrupt will happen after 25 Sec */
     wd1lo_config.forbidden_en = MSS_WDOG_DISABLE;
     wd1lo_config.timeout_val = 0x3e0u;
-    wd1lo_config.mvrp_val = 0xBEBC2u ;
-    wd1lo_config.time_val = 0xBEBC2u + 0xBEBC2u;
+    wd1lo_config.mvrp_val = (10000000UL);
+    wd1lo_config.time_val = (10000000UL);
 
     mss_take_mutex((uint64_t)&wd_lock);
     MSS_WD_configure(MSS_WDOG1_LO, &wd1lo_config);
