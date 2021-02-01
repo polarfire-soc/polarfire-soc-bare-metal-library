@@ -995,7 +995,7 @@ MSS_SYS_digest_check
                 digesterr,
                 (uint16_t)MSS_SYS_DIGEST_CHECK_SERVICE_RESP_LEN,
                 mb_offset,
-                MSS_SYS_COMMON_RET_OFFSET);
+                MSS_SYS_DIGEST_CHECK_RET_OFFSET);
     }
     else
     {
@@ -1006,7 +1006,7 @@ MSS_SYS_digest_check
                  digesterr,
                  (uint16_t)MSS_SYS_DIGEST_CHECK_SERVICE_RESP_LEN,
                  mb_offset,
-                 MSS_SYS_COMMON_RET_OFFSET);
+                 MSS_SYS_DIGEST_CHECK_RET_OFFSET);
     }
 
     return status;
@@ -1455,13 +1455,17 @@ MSS_SYS_debug_read_apb
     uint16_t mb_offset
 )
 {
-     uint16_t status = MSS_SYS_PARAM_ERR;
+    uint16_t status = MSS_SYS_PARAM_ERR;
     uint8_t mb_format[24] = {0};
-
     *(uint32_t *)mb_format = apb_addr;
+
     mb_format[4] = apb_wsize;
     *(uint16_t *)(mb_format + 8u)  = max_bytes;
-    *(uint64_t *)(mb_format + 16u) = mss_addr;
+
+    for (uint8_t index  = 12u; index < 20u; index++)
+    {
+        mb_format[index] = (mss_addr >> (8u * (index - 12u)));
+    }
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
@@ -1504,12 +1508,16 @@ MSS_SYS_debug_write_apb
 )
 {
     uint16_t status = MSS_SYS_PARAM_ERR;
-    uint8_t mb_format[24] = {0};
+    uint8_t mb_format[20] = {0};
 
     *(uint32_t *)mb_format = apb_addr;
     mb_format[4] = apb_wsize;
     *(uint16_t *)(mb_format + 8u)  = max_bytes;
-    *(uint64_t *)(mb_format + 16u) = mss_addr;
+
+    for (uint8_t index  = 12u; index < 20u; index++)
+    {
+        mb_format[index] = (mss_addr >> (8u * (index - 12u)));
+    }
 
     if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
     {
