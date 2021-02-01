@@ -117,8 +117,8 @@
 /*
  * If not using item, comment out line below
  */
-//#define SGMII_SUPPORT
-//#define DDR_SUPPORT
+#define SGMII_SUPPORT
+#define DDR_SUPPORT
 #define MSSIO_SUPPORT
 //#define SIMULATION_TEST_FEEDBACK
 //#define E51_ENTER_SLEEP_STATE

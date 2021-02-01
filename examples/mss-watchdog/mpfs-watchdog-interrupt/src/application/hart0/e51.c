@@ -22,18 +22,16 @@ uint64_t wd_lock;
 volatile uint8_t h0_triggered = 0u, h0_mvrp =0u, h0_plic_mvrp = 0u;
 volatile uint8_t h0_plic_triggered = 0u, h1_plic_mvrp = 0u;
 volatile uint8_t h1_plic_triggered = 0u, h2_plic_mvrp = 0u, h2_plic_triggered = 0u;
-extern volatile uint8_t h1_triggered, h1_mvrp, h2_triggered, h2_mvrp;
+volatile uint8_t h1_triggered = 0u, h1_mvrp = 0u, h2_triggered = 0u, h2_mvrp = 0u;
 
 #define RX_BUFF_SIZE    64
 
 const uint8_t g_message2[] =
-"WD0 is configured from E51\r\n\
-WD1 is configured from U54_1\r\n\
-WD2 is configured from U54_2\r\n\
+"\r\nWD0 is configured by E51 (hart0)\r\n\
+WD1 is configured by U54_1(hart1)\r\n\
+WD2 is configured by U54_2(hart2)\r\n\
 \r\n\
-After hart0 Times out, the system is reset; The program will terminate \r\n\
-and debug connection will be lost\r\n\
-";
+The system will reset after WD0 Times out. \r\n";
 
 /* Interrupt handlers */
 void wdog0_mvrp_e51_local_IRQHandler_10(void)
@@ -56,48 +54,48 @@ void wdog0_mvrp_e51_local_IRQHandler_10(void)
 
 void wdog0_tout_e51_local_IRQHandler_9(void)
 {
-    h0_triggered = 1;
+    h0_triggered = 1u;
     MSS_WD_clear_timeout_irq(MSS_WDOG0_LO);
 }
 
 uint8_t wdog0_tout_plic_IRQHandler(void)
 {
-    h0_plic_triggered = 1;
+    h0_plic_triggered = 1u;
     MSS_WD_clear_timeout_irq(MSS_WDOG0_LO);
     return(1u);
 }
 
 uint8_t wdog0_mvrp_plic_IRQHandler(void)
 {
-    h0_plic_mvrp = 1;
+    h0_plic_mvrp = 1u;
     MSS_WD_clear_mvrp_irq(MSS_WDOG0_LO);
     return(1u);
 }
 
 uint8_t wdog1_tout_plic_IRQHandler(void)
 {
-    h1_plic_triggered = 1;
+    h1_plic_triggered = 1u;
     MSS_WD_clear_timeout_irq(MSS_WDOG0_LO);
     return(1u);
 }
 
 uint8_t wdog1_mvrp_plic_IRQHandler(void)
 {
-    h1_plic_mvrp = 1;
+    h1_plic_mvrp = 1u;
     MSS_WD_clear_mvrp_irq(MSS_WDOG0_LO);
     return(1u);
 }
 
 uint8_t wdog2_tout_plic_IRQHandler(void)
 {
-    h2_plic_triggered = 1;
+    h2_plic_triggered = 1u;
     MSS_WD_clear_timeout_irq(MSS_WDOG0_LO);
     return(1u);
 }
 
 uint8_t wdog2_mvrp_plic_IRQHandler(void)
 {
-    h2_plic_mvrp = 1;
+    h2_plic_mvrp = 1u;
     MSS_WD_clear_mvrp_irq(MSS_WDOG0_LO);
     return(1u);
 }
@@ -133,14 +131,30 @@ void e51(void)
     {
         SYSREG->SOFT_RESET_CR &=  ~(1u << 5u); /* mmuart0 */
 
+        /* Turn on peripheral clocks */
+        SYSREG->SOFT_RESET_CR &= ~(SOFT_RESET_CR_MMUART0_MASK |\
+                SOFT_RESET_CR_MMUART1_MASK |\
+                SOFT_RESET_CR_MMUART2_MASK |\
+                SOFT_RESET_CR_MMUART3_MASK |\
+                SOFT_RESET_CR_MMUART4_MASK |\
+                SOFT_RESET_CR_CFM_MASK);
+
+        /* Turn on peripheral clocks */
+        SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MMUART0_MASK |\
+                SUBBLK_CLOCK_CR_MMUART1_MASK |\
+                SUBBLK_CLOCK_CR_MMUART2_MASK |\
+                SUBBLK_CLOCK_CR_MMUART3_MASK |\
+                SUBBLK_CLOCK_CR_MMUART4_MASK |\
+                SUBBLK_CLOCK_CR_CFM_MASK);
+
         mss_take_mutex(uart_lock);
         MSS_UART_init(&g_mss_uart0_lo,
-                      MSS_UART_115200_BAUD,
-                      MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+             MSS_UART_115200_BAUD,
+             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
         mss_release_mutex(uart_lock);
 
         uart_tx_with_mutex (&g_mss_uart0_lo, (uint64_t)&uart_lock,
-                            "\n\n\rPolarFire SoC MSS Watchdog Example \r\n");
+             "\n\n\r    ****     PolarFire SoC MSS Watchdog Example      ****\r\n");
 
         uart_tx_with_mutex(&g_mss_uart0_lo, (uint64_t)&uart_lock, g_message2);
 
@@ -161,36 +175,26 @@ void e51(void)
          * need to enable the corresponding local interrupt on E51 */
         __enable_local_irq((int8_t)WDOG0_TOUT_E51_INT);
 
-        /* Bring the hart1 out of WFI.*/
-        raise_soft_interrupt(1u);
-
-        /* Software interrupt to hart1. The first software interrupt will
+        /* Software interrupt to hart2. The first software interrupt will
          * bring the hart2 out of WFI. */
         raise_soft_interrupt(2u);
-
-        mss_take_mutex((uint64_t)&wd_lock);
+        /* Bring the hart1 out of WFI.*/
+        raise_soft_interrupt(1u);
 
         /* Reading the default config */
         MSS_WD_get_config(MSS_WDOG0_LO, &wd0lo_config);
 
-        /* Set such that the MVRP interrupt will happen after 10 seconds after
-         * reset and the Trigger interrupt will happen after 25 Sec */
+        /* Set such that the MVRP interrupt will happen after ~13 seconds after
+         * reset and the Trigger interrupt will happen after ~25 seconds */
         wd0lo_config.forbidden_en = MSS_WDOG_DISABLE;
         wd0lo_config.timeout_val = 0x3e0u;
+        wd0lo_config.mvrp_val = (10000000UL);
+        wd0lo_config.time_val = (2UL*10000000UL);
 
-        /* MVRP interrupt after 15 Sec (Difference from Trigger value is 10) */
-        wd0lo_config.mvrp_val = 0xBEBC2u + 0xBEBC2u;
-
-        /* MVRP interrupt after 25 Sec */
-        wd0lo_config.time_val = 0xBEBC2u + 0xBEBC2u + 0xBEBC2u;
-
+        mss_take_mutex((uint64_t)&wd_lock);
         MSS_WD_configure(MSS_WDOG0_LO, &wd0lo_config);
+        MSS_WD_reload(MSS_WDOG2_LO);
         MSS_WD_enable_mvrp_irq(MSS_WDOG0_LO);
-        snprintf((char *)display_buffer, sizeof(display_buffer),
-                             "\n\r WD2status = %x\r\n",wdog_hw_base[2]->STATUS);
-
-        uart_tx_with_mutex (&g_mss_uart0_lo, (uint64_t)&uart_lock, 
-                            display_buffer);
         mss_release_mutex((uint64_t)&wd_lock);
 
         uart_tx_with_mutex (&g_mss_uart0_lo,  (uint64_t)&uart_lock,
@@ -200,7 +204,7 @@ void e51(void)
         {
             icount++;
 
-            if (0x50000u == icount)
+            if (0x90000u == icount)
             {
                 icount = 0u;
                 current_value = MSS_WD_current_value(MSS_WDOG0_LO);
@@ -263,7 +267,7 @@ void e51(void)
 
             if(h1_triggered)
             {
-                h1_triggered = 0;
+                h1_triggered = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                          "H1 timeout Local\r\n");
 
@@ -274,7 +278,7 @@ void e51(void)
 
             if(h0_plic_mvrp)
             {
-                h0_plic_mvrp = 0;
+                h0_plic_mvrp = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                          "H0 MVRP PLIC\r\n");
 
@@ -285,7 +289,7 @@ void e51(void)
 
             if(h0_plic_triggered)
             {
-                h0_plic_triggered = 0;
+                h0_plic_triggered = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                           "H0 timeout PLIC\r\n");
 
@@ -296,7 +300,7 @@ void e51(void)
 
             if(h1_plic_mvrp)
             {
-                h1_plic_mvrp = 0;
+                h1_plic_mvrp = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                           "H1 MVRP PLIC\r\n");
 
@@ -307,7 +311,7 @@ void e51(void)
 
             if(h1_plic_triggered)
             {
-                h1_plic_triggered = 0;
+                h1_plic_triggered = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                          "H1 timeout PLIC\r\n");
 
@@ -318,7 +322,7 @@ void e51(void)
 
             if(h2_plic_mvrp)
             {
-                h2_plic_mvrp = 0;
+                h2_plic_mvrp = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                          "H2 MVRP PLIC\r\n");
 
@@ -329,7 +333,7 @@ void e51(void)
 
             if(h2_plic_triggered)
             {
-                h2_plic_triggered = 0;
+                h2_plic_triggered = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                          "H2 timeout PLIC\r\n");
 
@@ -340,7 +344,7 @@ void e51(void)
 
             if(h2_mvrp)
             {
-                h2_mvrp = 0;
+                h2_mvrp = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                           "H2 MVRP Local\r\n");
 
@@ -351,7 +355,7 @@ void e51(void)
 
             if(h2_triggered)
             {
-                h2_triggered = 0;
+                h2_triggered = 0u;
                 snprintf((char *)display_buffer, sizeof(display_buffer),
                           "H2 timeout Local\r\n");
 

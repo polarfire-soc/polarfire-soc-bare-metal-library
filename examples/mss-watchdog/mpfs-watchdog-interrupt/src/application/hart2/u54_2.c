@@ -46,12 +46,15 @@ void u54_2(void)
      * application can enable and use any interrupts as required */
     clear_soft_interrupt();
 
+    /* Reading the default config */
+    MSS_WD_get_config(MSS_WDOG2_LO, &wd2lo_config);
+
     /* Set WD1 such that the MVRP interrupt will happen after 10 seconds after
      * reset and the Trigger interrupt will happen after 25Sec */
     wd2lo_config.forbidden_en = MSS_WDOG_DISABLE;
     wd2lo_config.timeout_val = 0x3e0u;
-    wd2lo_config.mvrp_val = 0xBEBC2u ;
-    wd2lo_config.time_val = 0xBEBC2u + 0xBEBC2u;
+    wd2lo_config.mvrp_val = (10000000UL);
+    wd2lo_config.time_val = (10000000UL);
 
     mss_take_mutex((uint64_t)&wd_lock);
     MSS_WD_configure(MSS_WDOG2_LO, &wd2lo_config);

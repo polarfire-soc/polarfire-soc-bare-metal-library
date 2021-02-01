@@ -3,8 +3,8 @@
 ================================================================================
 
 This example project demonstrates the use of the PolarFire SoC MSS Watchdog. It 
-demonstrates the watchdog configurations, the time-out and the Maximum Value 
-up to which Refresh is Permitted (MVRP) interrupts and their handling.
+demonstrates the watchdog configurations, the time-out interrupt and the Maximum 
+Value up to which Refresh is Permitted (MVRP) interrupt and their handling.
 
 --------------------------------------------------------------------------------
                             How to use this example
@@ -18,7 +18,7 @@ To use this project you will nee a UART terminal configured as below:
 
 The example project will display instructions over the serial port. A greeting
 message is displayed on the UART terminal. Watchdog0, 1 and 2 are configured to 
-generate MVRP and time-out interrupt at 10sec and 25sec after system reset 
+generate MVRP and time-out interrupt at ~13sec and ~25sec after system reset 
 respectively. Messages are displayed on the UART terminal as and when the events
 happen. Finally the system will reset when the watchdog0 down counter reaches
 zero value.
