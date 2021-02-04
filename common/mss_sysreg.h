@@ -4058,7 +4058,7 @@ typedef struct _mss_sysreg
 #define SYSREG_SOFTRESET_FIC3       (1U << 27U)
 #define SYSREG_SOFTRESET_ATHENA     (1U << 28U)
 
-extern mss_sysreg_t*   SYSREG;
+#define SYSREG   ((volatile mss_sysreg_t * ) BASE32_ADDR_MSS_SYSREG)
 
 #ifdef __cplusplus
 }

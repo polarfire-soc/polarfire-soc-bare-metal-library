@@ -14,15 +14,6 @@
 #include "mpfs_hal/mss_hal.h"
 #include "mss_cfm.h"
 
-
-/*   #include "../../CMSIS/mss_assert.h"  */
-
-#ifdef __cplusplus
-extern "C" {
-#endif 
-
-
-
 /***************************************************************************//**
  * See mss_cfm.h for description of this function.
  */
@@ -182,8 +173,3 @@ cfm_error_id_t MSS_CFM_get_count(cfm_count_id_t ch, uint32_t *count)
     return CFM_OK;
 
 }
-
-#ifdef __cplusplus
-}
-#endif
-
