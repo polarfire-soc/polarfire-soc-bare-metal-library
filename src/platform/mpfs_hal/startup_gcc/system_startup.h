@@ -102,6 +102,20 @@ char * config_copy(void *dest, const void * src, size_t len);
 char * config_32_copy(void *dest, const void * src, size_t len);
 char * config_64_copy(void *dest, const void * src, size_t len);
 
+void turn_on_fic0(void);
+void turn_on_fic1(void);
+void turn_on_fic2(void);
+void turn_on_fic3(void);
+void turn_on_mac0(void);
+void turn_on_mac1(void);
+
+void turn_off_fic0(void);
+void turn_off_fic1(void);
+void turn_off_fic2(void);
+void turn_off_fic3(void);
+void turn_off_mac0(void);
+void turn_off_mac1(void);
+
 void copy_section
 (
     uint64_t * p_load,

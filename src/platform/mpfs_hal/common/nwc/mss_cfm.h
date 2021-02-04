@@ -301,4 +301,9 @@ void MSS_CFM_channel_mode(cfmChannelMode  chMode);
 cfm_error_id_t MSS_CFM_get_count(cfm_count_id_t ch, uint32_t *count);
 
 
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif  /* __COREPLEX_PLATFORM_CFM_H_ */
