@@ -7,7 +7,6 @@
  */
 #include <string.h>
 #include "mpfs_hal/mss_hal.h"
-#include "mss_rtc_regs.h"
 #include "mss_rtc.h"
 
 #ifdef __cplusplus
@@ -42,6 +41,7 @@ extern "C" {
 #define MASK_32_BIT                 0xFFFFFFFFu
 #define MAX_PRESCALAR_COUNT         0x03FFFFFFu
 #define CALENDAR_SHIFT              8u
+#define COMPARE_ALL_BITS            0xFFFFFFFFu
 
 /*-------------------------------------------------------------------------*//**
  * Index into look-up table.
