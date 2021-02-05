@@ -188,8 +188,6 @@
 #ifndef MSS_RTC_H_
 #define MSS_RTC_H_
 
-#include "mss_rtc_regs.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif 
@@ -233,6 +231,13 @@ extern "C" {
 #define MSS_RTC_FRIDAY      6u
 #define MSS_RTC_SATURDAY    7u
 
+
+/**************************************************************************//**
+ MSS RTC module instance base addresses
+*/
+#define MSS_RTC_LO_ADDR                  0x20124000u
+#define MSS_RTC_HI_ADDR                  0x28124000u
+
 /***************************************************************************//**
   MSS RTC base addresses.
   These definitions provides access to the MSS RTC mapped at two different
@@ -272,6 +277,42 @@ typedef struct mss_rtc_calender
     uint8_t weekday;
     uint8_t week;
 } mss_rtc_calender_t ;
+
+/******************************************************************************/
+/*                Device Specific Peripheral registers structures             */
+/******************************************************************************/
+typedef struct
+{
+    volatile uint32_t CONTROL_REG             ;
+    volatile uint32_t MODE_REG                ;
+    volatile uint32_t PRESCALER_REG           ;
+    volatile uint32_t ALARM_LOWER_REG         ;
+    volatile uint32_t ALARM_UPPER_REG         ;
+    volatile uint32_t COMPARE_LOWER_REG       ;
+    volatile uint32_t COMPARE_UPPER_REG       ;
+             uint32_t RESERVED0               ;
+    volatile uint32_t DATE_TIME_LOWER_REG     ;
+    volatile uint32_t DATE_TIME_UPPER_REG     ;
+
+             uint32_t RESERVED1[2]            ;
+    volatile uint32_t SECONDS_REG             ;
+    volatile uint32_t MINUTES_REG             ;
+    volatile uint32_t HOURS_REG               ;
+    volatile uint32_t DAY_REG                 ;
+    volatile uint32_t MONTH_REG               ;
+    volatile uint32_t YEAR_REG                ;
+    volatile uint32_t WEEKDAY_REG             ;
+    volatile uint32_t WEEK_REG                ;
+
+    volatile uint32_t SECONDS_CNT_REG         ;
+    volatile uint32_t MINUTES_CNT_REG         ;
+    volatile uint32_t HOURS_CNT_REG           ;
+    volatile uint32_t DAY_CNT_REG             ;
+    volatile uint32_t MONTH_CNT_REG           ;
+    volatile uint32_t YEAR_CNT_REG            ;
+    volatile uint32_t WEEKDAY_CNT_REG         ;
+    volatile uint32_t WEEK_CNT_REG            ;
+} RTC_TypeDef;
 
 /*-------------------------------------------------------------------------*//**
   The MSS_RTC_init() function initializes the RTC driver and hardware to a known

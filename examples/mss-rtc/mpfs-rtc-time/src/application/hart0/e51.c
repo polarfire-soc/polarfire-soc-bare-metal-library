@@ -47,8 +47,7 @@ void e51(void)
     /* All clocks ON */
     SYSREG->SUBBLK_CLOCK_CR = 0xffffffff;
 
-    SYSREG->SOFT_RESET_CR &= ~((1u << 0u) | (1u << 4u) | (1u << 5u) |
-                        (1u << 19u) | (1u << 23u) | (1u << 28u) | (1u << 18u)) ;
+    SYSREG->SOFT_RESET_CR &= ~((1u << 5u) | (1u << 18u)) ; /* RTC and MMUART0 */
 
     MSS_UART_init(&g_mss_uart0_lo,
             MSS_UART_115200_BAUD,
@@ -62,7 +61,7 @@ void e51(void)
     MSS_UART_polled_tx_string(&g_mss_uart0_lo, g_greeting_msg);
 
     SYSREG->RTC_CLOCK_CR &= ~BIT_SET;
-    SYSREG->RTC_CLOCK_CR = LIBERO_SETTING_MSS_RTC_TOGGLE_CLK / 100000UL;
+    SYSREG->RTC_CLOCK_CR = LIBERO_SETTING_MSS_EXT_SGMII_REF_CLK / LIBERO_SETTING_MSS_RTC_TOGGLE_CLK;
     SYSREG->RTC_CLOCK_CR |= BIT_SET;
 
     /* Initialize RTC. */
