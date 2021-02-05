@@ -33,7 +33,7 @@
 | mss-mpfs-hal examples | 1.8.100 | 2021-01-25 | 
 | mss-pdma examples | 1.7.111 | 2021-02-04 | 
 | mss-qspi examples | 1.7.104 | 2020-08-17 | 
-| mss-rtc examples | 1.7.113 | 2020-12-10 | 
+| mss-rtc examples | 1.7.115 | 2021-02-05 | 
 | mss-spi examples | 1.7.106 | 2020-08-26 | 
 | mss-sys-services examples | 1.7.107 | 2020-08-26 | 
 | mss-timer examples | 1.7.109 | 2020-08-26 | 
