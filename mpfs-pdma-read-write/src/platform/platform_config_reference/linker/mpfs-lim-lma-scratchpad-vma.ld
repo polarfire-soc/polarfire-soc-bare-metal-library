@@ -117,7 +117,17 @@ HEAP_SIZE           = 8k;               /* needs to be calculated for your appli
 /* TLS hart 1   */
 /* etc */
 /* note: HLS_DEBUG_AREA_SIZE is defined in mss_sw_config.h */
-STACK_SIZE_PER_HART = 1k;                     
+
+/*
+ * Stack size for each hart's application.
+ * These are the stack sizes that will be allocated to each hart before starting
+ * each hart's application function, e51(), u54_1(), u54_2(), u54_3(), u54_4().
+ */
+STACK_SIZE_E51_APPLICATION = 8k;
+STACK_SIZE_U54_1_APPLICATION = 8k;
+STACK_SIZE_U54_2_APPLICATION = 8k;
+STACK_SIZE_U54_3_APPLICATION = 8k;
+STACK_SIZE_U54_4_APPLICATION = 8k;
 
 
 SECTIONS
@@ -131,6 +141,7 @@ SECTIONS
      *mss_h2f.o (.text .text* .rodata .rodata* .srodata*)
      *mss_l2_cache.o (.text .text* .rodata .rodata* .srodata*)
      *mss_mpu.o (.text .text* .rodata .rodata* .srodata*)
+     *mss_pmp.o (.text .text* .rodata .rodata* .srodata*)
      *mss_mutex.o (.text .text* .rodata .rodata* .srodata*)
      *mss_stubs.o (.text .text* .rodata .rodata* .srodata*)
      *mss_util.o (.text .text* .rodata .rodata* .srodata*)
@@ -164,6 +175,7 @@ SECTIONS
     KEEP (*crtend.o(.dtors))
     
     *(.rodata .rodata.* .gnu.linkonce.r.*)
+    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     *(.gcc_except_table) 
     *(.eh_frame_hdr)
     *(.eh_frame)
@@ -182,6 +194,10 @@ SECTIONS
     KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
+    
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+    *(.srodata*)
+        
     . = ALIGN(0x10);
     __text_end = .;
   } >scratchpad AT> l2_lim
@@ -204,22 +220,11 @@ SECTIONS
     /* offset used with gp(gloabl pointer) are +/- 12 bits, so set point to middle of expected sdata range */
     /* If sdata more than 4K, linker used direct addressing. Perhaps we should add check/warning to linker script if sdata is > 4k */
     __global_pointer$ = . + 0x800;
-    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
-    *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
   } >scratchpad AT> l2_lim
   
-  /*
-   * The s2data section is required when using cetrtain versions of newlib-nano
-   * The _global_impure_ptr used in that libary is initialised to point here.
-   */
-  .sdata2 : ALIGN(0x10)
-  {
-      *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
-  } > scratchpad
-
   /* data section */
   .data : ALIGN(0x10)
   { 
@@ -270,23 +275,33 @@ SECTIONS
   .stack : ALIGN(0x1000)
   {
     PROVIDE(__stack_bottom_h0$ = .);
-    . += STACK_SIZE_PER_HART;
+    PROVIDE(__app_stack_bottom_h0 = .);
+    . += STACK_SIZE_E51_APPLICATION;
+    PROVIDE(__app_stack_top_h0 = .);
     PROVIDE(__stack_top_h0$ = .);
     
     PROVIDE(__stack_bottom_h1$ = .);
-    . += STACK_SIZE_PER_HART;
+    PROVIDE(__app_stack_bottom_h1$ = .);
+    . += STACK_SIZE_U54_1_APPLICATION;
+    PROVIDE(__app_stack_top_h1 = .);
     PROVIDE(__stack_top_h1$ = .);
     
     PROVIDE(__stack_bottom_h2$ = .);
-    . += STACK_SIZE_PER_HART;
+    PROVIDE(__app_stack_bottom_h2 = .);
+    . += STACK_SIZE_U54_2_APPLICATION;
+    PROVIDE(__app_stack_top_h2 = .);
     PROVIDE(__stack_top_h2$ = .);
     
     PROVIDE(__stack_bottom_h3$ = .);
-    . += STACK_SIZE_PER_HART;
+    PROVIDE(__app_stack_bottom_h3 = .);
+    . += STACK_SIZE_U54_3_APPLICATION;
+    PROVIDE(__app_stack_top_h3 = .);
     PROVIDE(__stack_top_h3$ = .);
     
     PROVIDE(__stack_bottom_h4$ = .);
-    . += STACK_SIZE_PER_HART;
+    PROVIDE(__app_stack_bottom_h4 = .);
+    . += STACK_SIZE_U54_4_APPLICATION;
+    PROVIDE(__app_stack_top_h4 = .);
     PROVIDE(__stack_top_h4$ = .);
   } > l2_lim
 
@@ -307,8 +322,10 @@ SECTIONS
     *(.ram_coderodata*)
     . = ALIGN (4);
     __sc_end = .;
+    /* place __start_of_free_lim$ after last allocation of l2_lim */
+    PROVIDE(__start_of_free_lim$ = .);
   } >switch_code AT> l2_lim     /* On the MPFS for startup code use,  >switch_code AT>eNVM */
-
+  
 }
 
  

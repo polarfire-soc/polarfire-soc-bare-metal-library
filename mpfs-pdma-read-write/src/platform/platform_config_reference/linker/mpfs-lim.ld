@@ -95,18 +95,17 @@ See mpfs-lim.ld example linker script when runing from LIM.
 
 MEMORY
 {
-    /* eNVM can be made into 128K section or split as required */
-    /* In this example, our reset vector is set to point to the */
-    /* start of SEC0 at  0x20222000. The initial 8K is reserved for data 
-    /* storage in this example */
-    eNVM_SEC2 (rx) : ORIGIN  = 0x20220000, LENGTH = 8k
-    eNVM_SEC0_1_3 (rx) : ORIGIN  = 0x20222000, LENGTH = 120k
-    /* LIM - we place code here in this example */
-    ram (rwx) :     ORIGIN  = 0x08000000, LENGTH = 1024k
-    ram_DTIM (rwx) : ORIGIN  = 0x01000000, LENGTH = 7k
-    scratchpad(rwx):  ORIGIN = 0x0A000000, LENGTH = 512k
-    /* This 1k of DTIM is used to run code when switching the eNVM clock */
-    switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k     
+    envm (rx) : ORIGIN = 0x20220000, LENGTH = 128k
+    dtim (rwx) : ORIGIN = 0x01000000, LENGTH = 7k
+    switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k
+    e51_itim (rwx) : ORIGIN = 0x01800000, LENGTH = 28k
+    u54_1_itim (rwx) : ORIGIN = 0x01808000, LENGTH = 28k
+    u54_2_itim (rwx) : ORIGIN = 0x01810000, LENGTH = 28k
+    u54_3_itim (rwx) : ORIGIN = 0x01818000, LENGTH = 28k
+    u54_4_itim (rwx) : ORIGIN = 0x01820000, LENGTH = 28k
+    l2lim (rwx) : ORIGIN = 0x08000000, LENGTH = 1024k
+    l2zerodevice (rwx) : ORIGIN = 0x0A000000, LENGTH = 512k
+    ddr (rwx) : ORIGIN = 0x80000000, LENGTH = 1024m  
 }
 
 HEAP_SIZE           = 8k;               /* needs to be calculated for your application if using */
@@ -123,24 +122,44 @@ HEAP_SIZE           = 8k;               /* needs to be calculated for your appli
 /* TLS hart 1   */
 /* etc */
 /* note: HLS_DEBUG_AREA_SIZE is defined in mss_sw_config.h */
-/* STACK_SIZE_PER_HART = 1k; */                     
+/* STACK_SIZE_PER_HART = 8k; */                     
 
 /*
  * Stack size for each hart's application.
  * These are the stack sizes that will be allocated to each hart before starting
  * each hart's application function, e51(), u54_1(), u54_2(), u54_3(), u54_4().
  */
-STACK_SIZE_E51_APPLICATION = 1k;
-STACK_SIZE_U54_1_APPLICATION = 1k;
-STACK_SIZE_U54_2_APPLICATION = 1k;
-STACK_SIZE_U54_3_APPLICATION = 1k;
-STACK_SIZE_U54_4_APPLICATION = 1k;
+STACK_SIZE_E51_APPLICATION = 8k;
+STACK_SIZE_U54_1_APPLICATION = 8k;
+STACK_SIZE_U54_2_APPLICATION = 8k;
+STACK_SIZE_U54_3_APPLICATION = 8k;
+STACK_SIZE_U54_4_APPLICATION = 8k;
 
 SECTIONS
 {
+    PROVIDE(__envm_start = ORIGIN(envm));
+    PROVIDE(__envm_end = ORIGIN(envm) + LENGTH(envm));
+    PROVIDE(__l2lim_start = ORIGIN(l2lim));
+    PROVIDE(__l2lim_end = ORIGIN(l2lim) + LENGTH(l2lim));
+    PROVIDE(__ddr_start = ORIGIN(ddr));
+    PROVIDE(__ddr_end = ORIGIN(ddr) + LENGTH(ddr));
+    PROVIDE(__dtim_start = ORIGIN(dtim));
+    PROVIDE(__dtim_end = ORIGIN(dtim) + LENGTH(dtim));
+    PROVIDE(__e51itim_start = ORIGIN(e51_itim));
+    PROVIDE(__e51itim_end = ORIGIN(e51_itim) + LENGTH(e51_itim));
+    PROVIDE(__u54_1_itim_start = ORIGIN(u54_1_itim));
+    PROVIDE(__u54_1_itim_end = ORIGIN(u54_1_itim) + LENGTH(u54_1_itim));
+    PROVIDE(__u54_2_itim_start = ORIGIN(u54_2_itim));
+    PROVIDE(__u54_2_itim_end = ORIGIN(u54_2_itim) + LENGTH(u54_2_itim));
+    PROVIDE(__u54_3_itim_start = ORIGIN(u54_3_itim));
+    PROVIDE(__u54_3_itim_end = ORIGIN(u54_3_itim) + LENGTH(u54_3_itim));
+    PROVIDE(__u54_4_itim_start = ORIGIN(u54_4_itim));
+    PROVIDE(__u54_4_itim_end = ORIGIN(u54_4_itim) + LENGTH(u54_4_itim));
+    PROVIDE(__l2lim_start = ORIGIN(l2lim));
+    PROVIDE(__l2lim_end = ORIGIN(l2lim) + LENGTH(l2lim));
 
-/* text: test code section */
-  . = 0x08000000;
+  /* text: text code section */
+  . = __l2lim_start;
   .text : ALIGN(0x10)
   {
     __text_load = LOADADDR(.text);
@@ -161,6 +180,7 @@ SECTIONS
     KEEP (*crtend.o(.dtors))
     
     *(.rodata .rodata.* .gnu.linkonce.r.*)
+    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     *(.gcc_except_table) 
     *(.eh_frame_hdr)
     *(.eh_frame)
@@ -179,12 +199,18 @@ SECTIONS
     KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
+    
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+    *(.srodata*)
+    
     . = ALIGN(0x10);
     __text_end = .;
-  } > ram
+    . = ALIGN(0x10);
+  } > l2lim
  
   .l2_scratchpad : ALIGN(0x10)
   { 
+    . = ALIGN (0x10);
     __l2_scratchpad_load = LOADADDR(.l2_scratchpad);
     __l2_scratchpad_start = .;
     __l2_scratchpad_vma_start = .; 
@@ -192,7 +218,7 @@ SECTIONS
     . = ALIGN(0x10);
     __l2_scratchpad_end = .;
     __l2_scratchpad_vma_end = .;
-  } >scratchpad AT> ram
+  } >l2zerodevice AT> l2lim
   
   /* 
    *   The .ram_code section will contain the code That is run from RAM.
@@ -211,7 +237,7 @@ SECTIONS
     *(.ram_coderodata*)
     . = ALIGN (4);
     __sc_end = .;
-  } >switch_code AT> ram     /* On the MPFS for startup code use,  >switch_code AT>eNVM */
+  } >switch_code AT> l2lim     /* On the MPFS for startup code use,  >switch_code AT>eNVM */
 
   /* short/global data section */
   .sdata : ALIGN(0x10)
@@ -221,21 +247,10 @@ SECTIONS
     /* offset used with gp(gloabl pointer) are +/- 12 bits, so set point to middle of expected sdata range */
     /* If sdata more than 4K, linker used direct addressing. Perhaps we should add check/warning to linker script if sdata is > 4k */
     __global_pointer$ = . + 0x800;
-    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
-    *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
-  } > ram
-
-  /*
-   * The s2data section is required when using cetrtain versions of newlib-nano
-   * The _global_impure_ptr used in that libary is initialised to point here.
-   */
-  .sdata2 : ALIGN(0x10)
-  {
-      *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
-  } > ram
+  } > l2lim
 
   /* data section */
   .data : ALIGN(0x10)
@@ -247,7 +262,7 @@ SECTIONS
     *(.data .data.* .gnu.linkonce.d.*)
     . = ALIGN(0x10);
     __data_end = .;
-  } > ram
+  } > l2lim
 
   /* sbss section */
   .sbss : ALIGN(0x10)
@@ -257,7 +272,7 @@ SECTIONS
     *(.scommon)
     . = ALIGN(0x10);
     __sbss_end = .;
-  } > ram
+  } > l2lim
   
   /* sbss section */
   .bss : ALIGN(0x10)
@@ -268,7 +283,7 @@ SECTIONS
     *(COMMON)
     . = ALIGN(0x10);
     __bss_end = .;
-  } > ram
+  } > l2lim
 
   /* End of uninitialized data segment */
   _end = .;
@@ -280,7 +295,7 @@ SECTIONS
     __heap_end = .;
     . = ALIGN(0x10);
     _heap_end = __heap_end;
-  } > ram
+  } > l2lim
   
   /* must be on 4k boundary- corresponds to page size */
   .stack : ALIGN(0x1000)
@@ -314,7 +329,11 @@ SECTIONS
     . += STACK_SIZE_U54_4_APPLICATION;
     PROVIDE(__app_stack_top_h4 = .);
     PROVIDE(__stack_top_h4$ = .);
-    
-  } > ram
+    /* place __start_of_free_lim$ after last allocation of l2_lim */
+	. = ALIGN(0x10);
+    PROVIDE(__start_of_free_lim$ = .);
+  } > l2lim
+  
+  
 }
 

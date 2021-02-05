@@ -283,7 +283,7 @@ MSS_PDMA_init
            The function returns error signals of type mss_pdma_error_id_t.
 
   Example:
-  The following call will configure channel 0
+  The following call will configure channel 0.
   @code
                 g_pdma_error_code = MSS_PDMA_setup_transfer(PDMA_CHANNEL_0,
                                                           &pdma_config_ch0);
@@ -315,6 +315,10 @@ MSS_PDMA_setup_transfer
                 /*Setup the PDMA channel for transfer
                 g_pdma_error_code = MSS_PDMA_setup_transfer(PDMA_CHANNEL_0,
                                                           &pdma_config_ch0);
+                if (g_pdma_error_code != 0u)
+                {
+                    check_pdma_error(g_pdma_error_code);
+                }
 
                 /*Initiate the transfer for channel 0.
                 MSS_PDMA_start_transfer(PDMA_CHANNEL_0);
@@ -352,13 +356,15 @@ MSS_PDMA_start_transfer
   Example:
   The following call will configure channel 0 transaction to 32bytes.
   @code
-                MSS_PDMA_set_transction_size(PDMA_CHANNEL_0,
-                                             write_size,
-                                             read_size)
+                uint8_t g_pdma_error_code = 0u;
+
+                g_pdma_error_code = MSS_PDMA_set_transaction_size(PDMA_CHANNEL_0,
+                                                                  write_size,
+                                                                  read_size)
   @endcode
  */
 mss_pdma_error_id_t
-MSS_PDMA_set_transction_size
+MSS_PDMA_set_transaction_size
 (
     mss_pdma_channel_id_t channel_id,
     uint8_t write_size,
@@ -384,7 +390,10 @@ MSS_PDMA_set_transction_size
   The following call will return the Channel (0) active transfer type.
 
   @code
-                MSS_PDMA_get_active_transfer_type(PDMA_CHANNEL_0);
+            uint32_t active_tx_type = 0U;
+
+            /* Read active transfer type
+            active_tx_type = MSS_PDMA_get_active_transfer_type(PDMA_CHANNEL_0);
   @endcode
  */
 uint32_t
@@ -409,7 +418,10 @@ MSS_PDMA_get_active_transfer_type
   The following call will return the number of bytes remaining Channel (0).
 
   @code
-                MSS_PDMA_get_number_bytes_remaining(PDMA_CHANNEL_0);
+
+           uint64_t exec_bytes;
+
+           exec_bytes = MSS_PDMA_get_number_bytes_remaining(PDMA_CHANNEL_0);
   @endcode
  */
 uint64_t
@@ -435,7 +447,10 @@ MSS_PDMA_get_number_bytes_remaining
   value.
 
   @code
-                MSS_PDMA_get_destination_current_addr(PDMA_CHANNEL_0);
+
+        uint64_t exec_destination;
+
+        exec_destination = MSS_PDMA_get_destination_current_addr(PDMA_CHANNEL_0);
   @endcode
  */
 uint64_t
@@ -461,7 +476,9 @@ MSS_PDMA_get_destination_current_addr
   value.
 
   @code
-                MSS_PDMA_get_source_current_addr(PDMA_CHANNEL_0);
+                uint64_t exec_source;
+
+                exec_source = MSS_PDMA_get_source_current_addr(PDMA_CHANNEL_0);
   @endcode
  */
 uint64_t
@@ -486,7 +503,10 @@ MSS_PDMA_get_source_current_addr
   The following call will return the Channel (0) transfer status.
 
   @code
-                MSS_PDMA_get_transfer_complete_status(PDMA_CHANNEL_0);
+
+     uint8_t tx_complete_status = 0U;
+
+     tx_complete_status = MSS_PDMA_get_transfer_complete_status(PDMA_CHANNEL_0);
   @endcode
 
  */
@@ -512,7 +532,9 @@ MSS_PDMA_get_transfer_complete_status
   The following call will return the Channel (0) transfer error status.
 
   @code
-                MSS_PDMA_get_transfer_error_status(PDMA_CHANNEL_0);
+      uint8_t tx_error_status = 0U;
+
+     tx_error_status = MSS_PDMA_get_transfer_error_status(PDMA_CHANNEL_0);
   @endcode
 
  */
@@ -540,7 +562,15 @@ MSS_PDMA_get_transfer_error_status
            interrupt status of the last DMA transfer
 
   @code
-                MSS_PDMA_clear_transfer_complete_status(PDMA_CHANNEL_0);
+         uint8_t g_done_int_processed = 0u;
+        g_done_int_processed |= MSS_PDMA_clear_transfer_complete_status(MSS_PDMA_CHANNEL_0)
+                                                              << MSS_PDMA_CHANNEL_0;
+
+         if (g_done_int_processed)
+         {
+
+         }
+
   @endcode
  */
 uint8_t
@@ -567,8 +597,15 @@ MSS_PDMA_clear_transfer_complete_status
            interrupt status of the last DMA transfer
 
   @code
-                MSS_PDMA_clear_transfer_complete_status(PDMA_CHANNEL_0);
-  @endcode
+         uint8_t g_err_int_processed = 0u;
+         g_err_int_processed |= MSS_PDMA_clear_transfer_error_status(MSS_PDMA_CHANNEL_0)
+                                                              << MSS_PDMA_CHANNEL_0;
+
+         if (g_err_int_processed)
+         {
+
+         }
+       @endcode
 
  */
 uint8_t

@@ -26,7 +26,7 @@ uint8_t g_channel_nextcfg_rsize[MSS_PDMA_lAST_CHANNEL] =
                                                 { 0x0Fu, 0x0Fu, 0x0Fu, 0x0Fu };
 /*-------------------------------------------------------------------------*//**
  * MSS_PDMA_init()
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 void
 MSS_PDMA_init
@@ -39,7 +39,7 @@ MSS_PDMA_init
 
 /*-------------------------------------------------------------------------*//**
  * MSS_PDMA_setup_transfer()
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 mss_pdma_error_id_t
 MSS_PDMA_setup_transfer
@@ -132,10 +132,10 @@ MSS_PDMA_setup_transfer
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 mss_pdma_error_id_t
-MSS_PDMA_set_transction_size
+MSS_PDMA_set_transaction_size
 (
     mss_pdma_channel_id_t channel_id,
     uint8_t write_size,
@@ -166,7 +166,7 @@ MSS_PDMA_set_transction_size
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 mss_pdma_error_id_t
 MSS_PDMA_start_transfer
@@ -190,7 +190,7 @@ MSS_PDMA_start_transfer
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint32_t
 MSS_PDMA_get_active_transfer_type
@@ -210,7 +210,7 @@ MSS_PDMA_get_active_transfer_type
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint64_t
 MSS_PDMA_get_number_bytes_remaining
@@ -230,7 +230,7 @@ MSS_PDMA_get_number_bytes_remaining
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint64_t
 MSS_PDMA_get_destination_current_addr
@@ -250,7 +250,7 @@ MSS_PDMA_get_destination_current_addr
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint64_t
 MSS_PDMA_get_source_current_addr
@@ -270,7 +270,7 @@ MSS_PDMA_get_source_current_addr
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint8_t
 MSS_PDMA_get_transfer_complete_status
@@ -297,7 +297,7 @@ MSS_PDMA_get_transfer_complete_status
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint8_t
 MSS_PDMA_get_transfer_error_status
@@ -324,7 +324,7 @@ MSS_PDMA_get_transfer_error_status
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdma.h for description of this function.
  */
 uint8_t
 MSS_PDMA_clear_transfer_complete_status
@@ -352,7 +352,7 @@ MSS_PDMA_clear_transfer_complete_status
 }
 
 /***************************************************************************//**
- * See pse_pdma.h for description of this function.
+ * See mss_pdmaF.h for description of this function.
  */
 uint8_t
 MSS_PDMA_clear_transfer_error_status
