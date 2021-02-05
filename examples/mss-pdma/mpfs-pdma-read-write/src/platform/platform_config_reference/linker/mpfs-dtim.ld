@@ -95,7 +95,7 @@ See mpfs-lim.ld example linker script when runing from LIM.
 
 MEMORY
 {
-    eNVM (rx) :     ORIGIN  = 0x20230000, LENGTH = 56k
+    eNVM (rx) :     ORIGIN  = 0x20220000, LENGTH = 64k
     ram_LIM (rwx) : ORIGIN  = 0x08000000, LENGTH = 1024k
     ram (rwx) :     ORIGIN  = 0x01000000, LENGTH = 8k
     scratchpad(rwx):  ORIGIN = 0x0A000000, LENGTH = 512k
@@ -154,6 +154,7 @@ SECTIONS
     KEEP (*crtend.o(.dtors))
     
     *(.rodata .rodata.* .gnu.linkonce.r.*)
+    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     *(.gcc_except_table) 
     *(.eh_frame_hdr)
     *(.eh_frame)
@@ -172,6 +173,10 @@ SECTIONS
     KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
+    
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+    *(.srodata*)
+        
     . = ALIGN(0x10);
     __text_end = .;
   } > ram
@@ -214,22 +219,11 @@ SECTIONS
     /* offset used with gp(gloabl pointer) are +/- 12 bits, so set point to middle of expected sdata range */
     /* If sdata more than 4K, linker used direct addressing. Perhaps we should add check/warning to linker script if sdata is > 4k */
     __global_pointer$ = . + 0x800;
-    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
-    *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
   } > ram
-  
-  /*
-   * The s2data section is required when using cetrtain versions of newlib-nano
-   * The _global_impure_ptr used in that libary is initialised to point here.
-   */
-  .sdata2 : ALIGN(0x10)
-  {
-      *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
-  } > ram
-
+ 
   /* data section */
   .data : ALIGN(0x10)
   { 
