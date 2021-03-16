@@ -240,7 +240,7 @@ _start:
     li a3, HLS_MAIN_HART_STARTED
     la a1, (__stack_top_h0$ - HLS_DEBUG_AREA_SIZE)
 .wait_main_hart:
-    LOAD a2, 0(a1)
+    LWU a2, 0(a1)
     bne a3, a2, .wait_main_hart
     # Flag we are here to the main hart
     li a1, HLS_OTHER_HART_IN_WFI
