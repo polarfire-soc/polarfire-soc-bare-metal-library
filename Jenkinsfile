@@ -1,2 +1,2 @@
 @Library('automated-testing-library') _
-pipelineBareMetalDriverSrc(examplesRepoBranch: 'coremark-review')
+pipelineBareMetalDriverSrc(examplesRepoBranch: 'ddr-test-update')

@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
- * 
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
+ *
  */
 /*=========================================================================*//**
   @mainpage PolarFire MSS Frequency Meter Bare Metal Driver.
@@ -21,7 +21,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 
 
