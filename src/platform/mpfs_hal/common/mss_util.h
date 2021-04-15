@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@
  * @brief MACROs defines and prototypes associated with utility functions
  *
  */
-#ifndef G5SOC_UTIL_H
-#define G5SOC_UTIL_H
+#ifndef MSS_UTIL_H
+#define MSS_UTIL_H
 
 #include <stdint.h>
 #include "encoding.h"
@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 /*
- * Useful macros 
+ * Useful macros
  */
 #define WRITE_REG8(x, y) (*((volatile uint8_t *)(x)) = (y))
 #define READ_REG8(x)     (*((volatile uint8_t *)(x)))
@@ -71,4 +71,4 @@ void mss_release_mutex(uint64_t address);
 }
 #endif
 
-#endif  /* G5SOC_UTIL_H */
+#endif  /* MSS_UTIL_H */
