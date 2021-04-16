@@ -8,9 +8,8 @@
  */
 /*******************************************************************************
  * 
- * file name : mpfs-lim-lma-scratchpad-vma.ld
- * Used when debugging code. The debugger loads the code to LIM.
- * Code starts from LIM and relocates itself to an L2 cache scratchpad mapped in
+ * file name : mpfs-lim-lma-scratchpad-vma-envm.ld
+ * Code starts from eNVM and relocates itself to an L2 cache scratchpad mapped in
  * the Zero Device address range.
  * 
  * You can find details on the PolarFireSoC Memory map here:
@@ -45,6 +44,8 @@ See mpfs-lim.ld example linker script when runing from LIM.
 
 MEMORY
 {
+    /* In this example, our reset vector is set to point to the */
+    /* start at page 1 of the envm */
     envm (rx) : ORIGIN  = 0x20220100, LENGTH = 128k - 0x100
     dtim (rwx) : ORIGIN  = 0x01000000, LENGTH = 7k       /* DTIM */
     e51_itim (rwx)     : ORIGIN = 0x01800000, LENGTH = 28k
@@ -52,8 +53,8 @@ MEMORY
     u54_2_itim (rwx)   : ORIGIN = 0x01810000, LENGTH = 28k
     u54_3_itim (rwx)   : ORIGIN = 0x01818000, LENGTH = 28k
     u54_4_itim (rwx)   : ORIGIN = 0x01820000, LENGTH = 28k
-    l2lim (rwx)        : ORIGIN = 0x08000000, LENGTH = 256k
-    scratchpad(rwx)    : ORIGIN = 0x0A000000, LENGTH = 256k
+    l2lim (rwx) :          ORIGIN = 0x08000000, LENGTH = 256k
+    scratchpad(rwx):        ORIGIN = 0x0A000000, LENGTH = 256k
     /* This 1k of DTIM is used to run code when switching the envm clock */
     switch_code (rx) :      ORIGIN = 0x01001c00, LENGTH = 1k     
     /* DDR sections example */
@@ -123,7 +124,7 @@ SECTIONS
     PROVIDE(__u54_4_itim_start = ORIGIN(u54_4_itim));
     PROVIDE(__u54_4_itim_end = ORIGIN(u54_4_itim) + LENGTH(u54_4_itim));
     
-  . = __l2lim_start;
+  . = __envm_start;
   .text_init : ALIGN(0x10)
   {
      *(.text.init)
@@ -146,7 +147,7 @@ SECTIONS
      *memset.o (.text .text* .rodata .rodata* .srodata*)
      *u54_1.o (.text .text* .rodata .rodata* .srodata*) 
     . = ALIGN(0x10);
-  } >l2lim 
+  } >envm 
   
   .text : ALIGN(0x10)
   {
@@ -170,7 +171,6 @@ SECTIONS
     KEEP (*crtend.o(.dtors))
     
     *(.rodata .rodata.* .gnu.linkonce.r.*)
-    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     *(.gcc_except_table) 
     *(.eh_frame_hdr)
     *(.eh_frame)
@@ -189,23 +189,19 @@ SECTIONS
     KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
     PROVIDE_HIDDEN (__fini_array_end = .);
-    
-    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
-    *(.srodata*)
-        
     . = ALIGN(0x10);
     __text_end = .;
     __l2_scratchpad_end = .;
-  } >scratchpad AT> l2lim
+  } >scratchpad AT> envm
  
    
-  .l2_scratchpad : ALIGN(0x10)
-  { 
-  /*  __l2_scratchpad_load = LOADADDR(.l2_scratchpad); */
-  /*  __l2_scratchpad_start = .;    */
-    *(.l2_scratchpad)
-    . = ALIGN(0x10);
-  /*  __l2_scratchpad_end = .;  */
+   .l2_scratchpad : ALIGN(0x10)
+    { 
+    /*  __l2_scratchpad_load = LOADADDR(.l2_scratchpad); */
+    /*  __l2_scratchpad_start = .;    */
+      *(.l2_scratchpad)
+      . = ALIGN(0x10);
+    /*  __l2_scratchpad_end = .;  */
   } >scratchpad AT> l2lim
   
   /* short/global data section */
@@ -216,11 +212,22 @@ SECTIONS
     /* offset used with gp(gloabl pointer) are +/- 12 bits, so set point to middle of expected sdata range */
     /* If sdata more than 4K, linker used direct addressing. Perhaps we should add check/warning to linker script if sdata is > 4k */
     __global_pointer$ = . + 0x800;
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2)
+    *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
-  } >scratchpad AT> l2lim
+  } >scratchpad AT> envm
   
+  /*
+   * The s2data section is required when using cetrtain versions of newlib-nano
+   * The _global_impure_ptr used in that libary is initialised to point here.
+   */
+  .sdata2 : ALIGN(0x10)
+  {
+      *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
+  } > scratchpad
+
   /* data section */
   .data : ALIGN(0x10)
   { 
@@ -231,7 +238,7 @@ SECTIONS
     *(.data .data.* .gnu.linkonce.d.*)
     . = ALIGN(0x10);
     __data_end = .;
-  } > scratchpad AT> l2lim
+  } > scratchpad AT> envm
 
   /* sbss section */
   .sbss : ALIGN(0x10)
@@ -266,6 +273,7 @@ SECTIONS
     _heap_end = __heap_end;
     __l2_scratchpad_vma_end = .;
   } > scratchpad
+  
   
     /* must be on 4k boundary- corresponds to page size */
     .stack_e51 : /* ALIGN(0x1000) */
@@ -343,6 +351,8 @@ SECTIONS
     __sc_end = .;
     /* place __start_of_free_lim$ after last allocation of l2lim */
     PROVIDE(__start_of_free_lim$ = .);
-  } >switch_code AT> l2lim     /* On the MPFS for startup code use,  >switch_code AT>envm */
+  } >switch_code AT> envm     /* On the MPFS for startup code use,  >switch_code AT>envm */
   
 }
+
+ 
