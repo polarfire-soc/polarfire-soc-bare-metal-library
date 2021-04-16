@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,66 +9,16 @@
 /*******************************************************************************
  * 
  * file name : mpfs_lim.ld
- * Code located in LIM. Used when debugging start-up code.
+ * Used when debugging code. The debugger loads the code to LIM.
+ * 
+ * You can find details on the PolarFireSoC Memory map here:
+ * https://github.com/polarfire-soc/polarfire-soc-documentation/blob/master/memory-hierarchy/mpfs-memory-hierarchy.md
+ * 
  */
  
 OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
 
-
-/*-----------------------------------------------------------------------------
-
-  -- PolarFire SoC Memorp map
-
-
-     0x0800_0000  +-----------------------+
-                  |   DTIM  Len=8K        |
-                  +-----------------------+
-
-     0x0180_0000  +-----------------------+
-                  |   ITIM Hart 0         |
-                  +-----------------------+
-                                                        eNVM detail
-     0x0180_8000  +-----------------------+        +-------------------+   -
-                  |   ITIM Hart 1 Len=28K |        |Sector 2           |   ^
-                  +-----------------------+        |0x2022_0000 8K     |   |
-                                                   +-------------------+   |
-     0x0181_0000  +-----------------------+        |Sector 0           |   1
-                  |   ITIM Hart 2 Len=28K |        |0x2022_2000 56K    |   2
-                  +-----------------------+        +-------------------+   8
-                                                   |Sector 1           |   k
-     0x0181_8000  +-----------------------+        |0x2022_3000 56K    |   |
-                  |   ITIM Hart 3 Len=28K |        +-------------------+   |
-                  +-----------------------+        |Sector 3           |   |
-                                                   |0x2022_3E00 8K     |   v
-     0x0182_0000  +-----------------------+        +-------------------+   -
-                  |   ITIM Hart 4 Len=28K |
-                  +-----------------------+
-
-     0x0800_0000  +-----------------------+
-                  |   LIM  Len max=1920K  |  +------>+------+
-                  +-----------------------+  |       |      |
-                                             |       |      |
-     0x2022_0000  +-----------------------+  |       |      |
-                  |   eNVM 128K           |  |       |      |
-                  +-----------------------+  |       |      |
-                                             |       |      |
-     0x8000_0000  +-----------------------+--+       |  DDR |
-  0x10_0000_0000  | DDR cached            |          |      |
-                  |   SEG0                |     +--->|      |
-                  +-----------------------+     |    |      |
-                                                |    |      |
-     0xC000_0000  +-----------------------+-----+    |      |
-  0x14_0000_0000  | DDR non-cached        |          |      |
-                  |    SEG1               |          |      |
-                  +-----------------------+      +-->+      |
-                                                 |   |      |
-     0xD000_0000  +-----------------------+------+   |      |
-  0x18_0000_0000  | Write Combine buffer  |          +------+
-                  |    SEG1               |
-                  +-----------------------+
-  ----------------------------------------------------------------------------*/
-  
 /*-----------------------------------------------------------------------------
 
 -- MSS hart Reset vector
@@ -95,7 +45,7 @@ See mpfs-lim.ld example linker script when runing from LIM.
 
 MEMORY
 {
-    envm (rx) : ORIGIN = 0x20220000, LENGTH = 128k
+    envm (rx) : ORIGIN  = 0x20220100, LENGTH = 128k - 0x100
     dtim (rwx) : ORIGIN = 0x01000000, LENGTH = 7k
     switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k
     e51_itim (rwx) : ORIGIN = 0x01800000, LENGTH = 28k
@@ -103,9 +53,15 @@ MEMORY
     u54_2_itim (rwx) : ORIGIN = 0x01810000, LENGTH = 28k
     u54_3_itim (rwx) : ORIGIN = 0x01818000, LENGTH = 28k
     u54_4_itim (rwx) : ORIGIN = 0x01820000, LENGTH = 28k
-    l2lim (rwx) : ORIGIN = 0x08000000, LENGTH = 1024k
-    l2zerodevice (rwx) : ORIGIN = 0x0A000000, LENGTH = 512k
-    ddr (rwx) : ORIGIN = 0x80000000, LENGTH = 1024m  
+    l2lim (rwx) : ORIGIN = 0x08000000, LENGTH = 1920k
+    scratchpad (rwx) : ORIGIN = 0x0A000000, LENGTH = 512k
+    /* DDR sections example */
+    ddr_cached_32bit (rwx) : ORIGIN  = 0x80000000, LENGTH = 768M
+    ddr_non_cached_32bit (rwx) : ORIGIN  = 0xC0000000, LENGTH = 256M
+    ddr_wcb_32bit (rwx) : ORIGIN  = 0xD0000000, LENGTH = 256M
+    ddr_cached_38bit (rwx) : ORIGIN  = 0x1000000000, LENGTH = 1024M
+    ddr_non_cached_38bit (rwx) : ORIGIN  = 0x1400000000 + 28M, LENGTH = 0k
+    ddr_wcb_38bit (rwx) : ORIGIN  = 0x1800000000 + 30M , LENGTH  = 0k 
 }
 
 HEAP_SIZE           = 8k;               /* needs to be calculated for your application if using */
@@ -141,8 +97,18 @@ SECTIONS
     PROVIDE(__envm_end = ORIGIN(envm) + LENGTH(envm));
     PROVIDE(__l2lim_start = ORIGIN(l2lim));
     PROVIDE(__l2lim_end = ORIGIN(l2lim) + LENGTH(l2lim));
-    PROVIDE(__ddr_start = ORIGIN(ddr));
-    PROVIDE(__ddr_end = ORIGIN(ddr) + LENGTH(ddr));
+    PROVIDE(__ddr_cached_32bit_start = ORIGIN(ddr_cached_32bit));
+    PROVIDE(__ddr_cached_32bit_end = ORIGIN(ddr_cached_32bit) + LENGTH(ddr_cached_32bit));
+    PROVIDE(__ddr_non_cached_32bit_start = ORIGIN(ddr_non_cached_32bit));
+    PROVIDE(__ddr_non_cached_32bit_end = ORIGIN(ddr_non_cached_32bit) + LENGTH(ddr_non_cached_32bit));
+    PROVIDE(__ddr_wcb_32bit_start = ORIGIN(ddr_wcb_32bit));
+    PROVIDE(__ddr_wcb_32bit_end = ORIGIN(ddr_wcb_32bit) + LENGTH(ddr_wcb_32bit));
+    PROVIDE(__ddr_cached_38bit_start = ORIGIN(ddr_cached_38bit));
+    PROVIDE(__ddr_cached_38bit_end = ORIGIN(ddr_cached_38bit) + LENGTH(ddr_cached_38bit));
+    PROVIDE(__ddr_non_cached_38bit_start = ORIGIN(ddr_non_cached_38bit));
+    PROVIDE(__ddr_non_cached_38bit_end = ORIGIN(ddr_non_cached_38bit) + LENGTH(ddr_non_cached_38bit));
+    PROVIDE(__ddr_wcb_38bit_start = ORIGIN(ddr_wcb_38bit));
+    PROVIDE(__ddr_wcb_38bit_end = ORIGIN(ddr_wcb_38bit) + LENGTH(ddr_wcb_38bit));
     PROVIDE(__dtim_start = ORIGIN(dtim));
     PROVIDE(__dtim_end = ORIGIN(dtim) + LENGTH(dtim));
     PROVIDE(__e51itim_start = ORIGIN(e51_itim));
@@ -155,9 +121,6 @@ SECTIONS
     PROVIDE(__u54_3_itim_end = ORIGIN(u54_3_itim) + LENGTH(u54_3_itim));
     PROVIDE(__u54_4_itim_start = ORIGIN(u54_4_itim));
     PROVIDE(__u54_4_itim_end = ORIGIN(u54_4_itim) + LENGTH(u54_4_itim));
-    PROVIDE(__l2lim_start = ORIGIN(l2lim));
-    PROVIDE(__l2lim_end = ORIGIN(l2lim) + LENGTH(l2lim));
-
   /* text: text code section */
   . = __l2lim_start;
   .text : ALIGN(0x10)
@@ -218,7 +181,7 @@ SECTIONS
     . = ALIGN(0x10);
     __l2_scratchpad_end = .;
     __l2_scratchpad_vma_end = .;
-  } >l2zerodevice AT> l2lim
+  } >scratchpad AT> l2lim
   
   /* 
    *   The .ram_code section will contain the code That is run from RAM.
@@ -329,11 +292,14 @@ SECTIONS
     . += STACK_SIZE_U54_4_APPLICATION;
     PROVIDE(__app_stack_top_h4 = .);
     PROVIDE(__stack_top_h4$ = .);
-    /* place __start_of_free_lim$ after last allocation of l2_lim */
-	. = ALIGN(0x10);
-    PROVIDE(__start_of_free_lim$ = .);
+    
   } > l2lim
   
+  /* free LIM */
+  .free_lim : ALIGN(0x20)
+  {
+      PROVIDE(__start_of_free_lim$ = .);
+  } > l2lim
   
 }
 

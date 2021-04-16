@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+
+
 #==============================================================================
 # This script takes an xml file which describes hardware options and produces
 # header files in the directory hardware which are used by the embedded
@@ -15,6 +16,9 @@ import sys
 
 # -----------------------------------------------------------------------------
 # mpfs_configuration_generator.py version
+# 0.3.6 added support for multiple xml file found in input folder
+#       /empty xml file check/ xml filename arg in current folder/
+# 0.3.5 changed target folder name from fpga_config to fpga_config
 # 0.3.4 fixed comment formatting bug in hw_memory.h generation
 # 0.3.3 updated copyright format
 # 0.3.2 removed leading zeros from decimal values ( clock rates)
@@ -60,7 +64,7 @@ xml_tag_file = 'hardware_des_xml,src_example,mpfs_hw_tag_reference.xml'
 # xml tags, the structure here should follow the readme.md description
 # contained in the root folder for tags
 # Please note: The tag in the first column ( mss_xxx) is the same as the
-# directory name (/soc_config/mss_xxx)
+# directory name (/fpga_config/mss_xxx)
 # the fourth item lets program know how to format info in header file
 # the six item lets program know how to format value, decimal or hex
 # -----------------------------------------------------------------------------
@@ -104,41 +108,41 @@ xml_tags = ('mss_memory_map,map,mem_elements,fm_define,none,hex',
 # -----------------------------------------------------------------------------
 #  Header files to generate
 # -----------------------------------------------------------------------------
-header_files = ('soc_config,memory_map,hw_memory.h',
-                'soc_config,memory_map,hw_apb_split.h',
-                'soc_config,memory_map,hw_cache.h',
-                'soc_config,memory_map,hw_pmp_hart0.h',
-                'soc_config,memory_map,hw_pmp_hart1.h',
-                'soc_config,memory_map,hw_pmp_hart2.h',
-                'soc_config,memory_map,hw_pmp_hart3.h',
-                'soc_config,memory_map,hw_pmp_hart4.h',
-                'soc_config,memory_map,hw_mpu_fic0.h',
-                'soc_config,memory_map,hw_mpu_fic1.h',
-                'soc_config,memory_map,hw_mpu_fic2.h',
-                'soc_config,memory_map,hw_mpu_crypto.h',
-                'soc_config,memory_map,hw_mpu_gem0.h',
-                'soc_config,memory_map,hw_mpu_gem1.h',
-                'soc_config,memory_map,hw_mpu_usb.h',
-                'soc_config,memory_map,hw_mpu_mmc.h',
-                'soc_config,memory_map,hw_mpu_scb.h',
-                'soc_config,memory_map,hw_mpu_trace.h',
-                'soc_config,io,hw_mssio_mux.h',
-                'soc_config,io,hw_hsio_mux.h',
-                'soc_config,sgmii,hw_sgmii_tip.h',
-                'soc_config,ddr,hw_ddr_options.h',
-                'soc_config,ddr,hw_ddr_io_bank.h',
-                'soc_config,ddr,hw_ddr_mode.h',
-                'soc_config,ddr,hw_ddr_off_mode.h',
-                'soc_config,ddr,hw_ddr_segs.h',
-                'soc_config,ddr,hw_ddrc.h',
-                'soc_config,clocks,hw_mss_clks.h',
-                'soc_config,clocks,hw_clk_sysreg.h',
-                'soc_config,clocks,hw_clk_mss_pll.h',
-                'soc_config,clocks,hw_clk_sgmii_pll.h',
-                'soc_config,clocks,hw_clk_ddr_pll.h',
-                'soc_config,clocks,hw_clk_mss_cfm.h',
-                'soc_config,clocks,hw_clk_sgmii_cfm.h',
-                'soc_config,general,hw_gen_peripherals.h')
+header_files = ('fpga_config,memory_map,hw_memory.h',
+                'fpga_config,memory_map,hw_apb_split.h',
+                'fpga_config,memory_map,hw_cache.h',
+                'fpga_config,memory_map,hw_pmp_hart0.h',
+                'fpga_config,memory_map,hw_pmp_hart1.h',
+                'fpga_config,memory_map,hw_pmp_hart2.h',
+                'fpga_config,memory_map,hw_pmp_hart3.h',
+                'fpga_config,memory_map,hw_pmp_hart4.h',
+                'fpga_config,memory_map,hw_mpu_fic0.h',
+                'fpga_config,memory_map,hw_mpu_fic1.h',
+                'fpga_config,memory_map,hw_mpu_fic2.h',
+                'fpga_config,memory_map,hw_mpu_crypto.h',
+                'fpga_config,memory_map,hw_mpu_gem0.h',
+                'fpga_config,memory_map,hw_mpu_gem1.h',
+                'fpga_config,memory_map,hw_mpu_usb.h',
+                'fpga_config,memory_map,hw_mpu_mmc.h',
+                'fpga_config,memory_map,hw_mpu_scb.h',
+                'fpga_config,memory_map,hw_mpu_trace.h',
+                'fpga_config,io,hw_mssio_mux.h',
+                'fpga_config,io,hw_hsio_mux.h',
+                'fpga_config,sgmii,hw_sgmii_tip.h',
+                'fpga_config,ddr,hw_ddr_options.h',
+                'fpga_config,ddr,hw_ddr_io_bank.h',
+                'fpga_config,ddr,hw_ddr_mode.h',
+                'fpga_config,ddr,hw_ddr_off_mode.h',
+                'fpga_config,ddr,hw_ddr_segs.h',
+                'fpga_config,ddr,hw_ddrc.h',
+                'fpga_config,clocks,hw_mss_clks.h',
+                'fpga_config,clocks,hw_clk_sysreg.h',
+                'fpga_config,clocks,hw_clk_mss_pll.h',
+                'fpga_config,clocks,hw_clk_sgmii_pll.h',
+                'fpga_config,clocks,hw_clk_ddr_pll.h',
+                'fpga_config,clocks,hw_clk_mss_cfm.h',
+                'fpga_config,clocks,hw_clk_sgmii_cfm.h',
+                'fpga_config,general,hw_gen_peripherals.h')
 
 MAX_LINE_WIDTH = 80
 
@@ -439,7 +443,7 @@ def generate_reference_header_file(ref_header_file, root, header_files):
         index = 0
         for child in header_files:
             c = header_files[index].split(',')
-            c.remove('soc_config')
+            c.remove('fpga_config')
             # include_file = os.path.join(*c)
             # as we need formatting correct for linux and windows
             include_file = c[0] + '/' + c[1]
@@ -461,6 +465,7 @@ def generate_reference_header_file(ref_header_file, root, header_files):
 def generate_header_files(output_header_files, input_xml_file, input_xml_tags):
     # read in an xml file
     s = input_xml_file.split(',')
+
     root = read_xml_file(s)
     index = 0
     while index < len(input_xml_tags):
@@ -486,7 +491,7 @@ def generate_header_files(output_header_files, input_xml_file, input_xml_tags):
     '''
     generate a header which references all the generated headers
     '''
-    file_name = 'soc_config,hw_platform.h'
+    file_name = 'fpga_config,hw_platform.h'
     generate_reference_header_file(file_name, root, output_header_files)
 
 
@@ -497,21 +502,37 @@ def generate_header_files(output_header_files, input_xml_file, input_xml_tags):
 def get_full_path(in_path):
     cwd = os.getcwd()
     filename = ''
+    temp = in_path
     if in_path.endswith('.xml'):
         path_comp = in_path.split('/')
         last = len(path_comp) - 1
         filename = path_comp[last]
+        
         in_path = in_path.replace(filename, '')
+    if in_path == '':
+        filename = temp 
+        in_path = os.getcwd()
+        
     else:
+        xml_list = [] 
         dir_entries = os.listdir(in_path)
         for dir_entry in dir_entries:
+
             print(dir_entry)
             if dir_entry.endswith('.xml'):
-                filename = dir_entry
+                xml_list.append(dir_entry)
             else:
                 if dir_entry.endswith('_mss_cfg.xml'):
-                    filename = dir_entry
+                    xml_list.append(dir_entry) 
                     break
+        
+        if len(xml_list) > 1:
+
+            xml_list = sort_by_timestamp(xml_list,in_path)
+            filename = xml_list[-1]
+        else:
+            if len(xml_list) != 0:
+                filename = xml_list[0] 
 
     try:
         os.chdir(in_path)
@@ -521,8 +542,40 @@ def get_full_path(in_path):
 
     os.chdir(cwd)
     full_path = full_path + '/' + filename
-    return full_path
+    if is_empty_file(full_path):
+        print("\nxml File is empty")
+        sys.exit()
+    else:
+        return full_path
 
+
+# -------------------------------------------------------
+# check is fpath is a file and empty 
+# -------------------------------------------------------
+def is_empty_file(fpath):  
+    return os.path.isfile(fpath) and os.path.getsize(fpath) == 0
+
+# -------------------------------------------------------
+# sort file names on the basis of time stamp 
+# -------------------------------------------------------
+def sort_by_timestamp(file_name,file_path):
+    cwd = os.getcwd()
+    try :
+        os.chdir(file_path)
+        path = os.getcwd()
+    except IOError : 
+        print("not a valid folder name--------------")
+        sys.exit()
+
+
+    Files = [path + '/' + file_name[i] for i in range(len(file_name))]
+    Files.sort(key=os.path.getmtime)
+    s_file_name = []
+    for i in range(len(Files)):
+        s_file_name.append(Files[i].split('/')[-1])
+    
+    print("sorted list of files\n",s_file_name)
+    return s_file_name
 
 # -----------------------------------------------------------------------------
 # helper for showing help information
@@ -544,7 +597,7 @@ def main_config_generator():
     '''
     Currently four command line arguments
     arg0: required- the xml file to be parsed. Only one used in normal flow.
-    arg1: name of the folder where the soc_config will be generated. This is optional unless arg2 and arg3 are required.
+    arg1: name of the folder where the fpga_config will be generated. This is optional unless arg2 and arg3 are required.
     arg2: Command parsed, if prent and equals 'generate_reference_xml' creates
         xml example file, If so, an example xml is generated from .csv
         definitions located in the reg_descriptions directory
@@ -602,14 +655,14 @@ def main_config_generator():
     #
     # Create directory structure for the header files
     #
-    root_folder = 'soc_config'
+    root_folder = 'fpga_config'
     TOP = ['clocks', 'ddr', 'io', 'memory_map', 'sgmii', 'general']
     create_hw_dir_struct(root_folder, TOP)
     #
     # Next, read in XML content and create header files
     #
     generate_header_files(header_files, input_xml_file, xml_tags)
-    print('Hardware configuration header files created in directory:', os.path.join(output_folder_name, 'soc_config'))
+    print('Hardware configuration header files created in directory:', os.path.join(output_folder_name, 'fpga_config'))
     #
     #  generate an xml example with tags - only for reference
     #
