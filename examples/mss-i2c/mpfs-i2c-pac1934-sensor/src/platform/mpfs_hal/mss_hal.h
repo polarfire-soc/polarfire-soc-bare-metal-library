@@ -29,7 +29,7 @@ typedef long            ssize_t;
 
 #include "common/mss_assert.h"
 #include "common/nwc/mss_ddr_defs.h"
-#include "common/nwc/mss_ddr_SGMII_regs.h"
+#include "common/nwc/mss_ddr_sgmii_regs.h"
 #include "common/nwc/mss_io_config.h"
 #include "common/nwc/mss_pll.h"
 #include "common/nwc/mss_scb_nwc_regs.h"
@@ -47,7 +47,7 @@ typedef long            ssize_t;
 #include "common/atomic.h"
 #include "common/bits.h"
 #include "common/encoding.h"
-#include "soc_config/hw_platform.h"
+#include "fpga_config/hw_platform.h"
 #include "common/nwc/mss_ddr.h"
 #include "common/mss_clint.h"
 #include "common/mss_h2f.h"

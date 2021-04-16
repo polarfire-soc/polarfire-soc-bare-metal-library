@@ -1,5 +1,5 @@
-#ifndef MPFS_HAL_VERSION_H
-#define MPFS_HAL_VERSION_H
+#ifndef HAL_VERSION_H
+#define HAL_VERSION_H
 
 /*******************************************************************************
  * Copyright 2019-2020 Microchip Corporation.
@@ -29,9 +29,9 @@
  */
 
 /*******************************************************************************
- * @file mpfs_hal_version.h
+ * @file mpfs_halversion.h
  * @author Microchip-FPGA Embedded Systems Solutions
- * @brief PolareFire SoC Hardware Abstraction layer - MPFS HAL version.
+ * @brief MICROCHIP FPGA Embedded Software Hardware Abstraction layer - HAL
  *
  */
 
@@ -39,9 +39,9 @@
 extern "C" {
 #endif
 
-#define MPFS_HAL_VERSION_MAJOR 1
-#define MPFS_HAL_VERSION_MINOR 8
-#define MPFS_HAL_VERSION_PATCH 116
+#define HAL_VERSION_MAJOR 1
+#define HAL_VERSION_MINOR 8
+#define HAL_VERSION_PATCH 0
 
 #ifdef __cplusplus
 }

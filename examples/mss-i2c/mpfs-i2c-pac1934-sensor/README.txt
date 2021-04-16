@@ -29,7 +29,7 @@ The hardware configurations are located in ./src/boards/<target_board> folder.
 The default software configurations are stored under 
 .src/platform/platform_config_reference folder.
 
-The include files in the "./src/boards/<target_board>/soc_config" folder define 
+The include files in the "./src/boards/<target_board>/fpga_config" folder define 
 the hardware configurations such as clocks. You must make sure that the 
 configurations in this example project match the actual configurations of your 
 target Libero design that you are using to test this example project.
@@ -42,7 +42,7 @@ modifications there. It would look like
 The include files in the "platform_config" folder define the software 
 configurations such as how many harts are being used in the software, what is 
 the tick rate of the internal timer of each hart. These configurations have no 
-dependency on the hardware configurations in "soc_config" folder. Note that 
+dependency on the hardware configurations in "fpga_config" folder. Note that 
 changing these software configurations may require a change in your application 
 code.
 

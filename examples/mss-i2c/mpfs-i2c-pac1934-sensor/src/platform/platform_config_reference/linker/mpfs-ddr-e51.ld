@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,66 +9,22 @@
 /*******************************************************************************
  * 
  * file name : mpfs-ddr-e51.ld
- * Runs from LIM on rest. Used when debugging start-up code.
+ * Use this linker script when the program is fully located in DDR. The 
+ * assumption is DDR has already been initialized by another program.
+ * This linker script can be used with a debugger or when compiled and loaded
+ * by a boot-loader.
+ * Please see the project mpfs-hal-run-from-ddr-1 located in the Bare Metal
+ * library under examples/mpfs-hal for an example of it use.
+ * https://github.com/polarfire-soc/polarfire-soc-bare-metal-library
+ * 
+ * You can find details on the PolarFireSoC Memory map here:
+ * https://github.com/polarfire-soc/polarfire-soc-documentation/blob/master/memory-hierarchy/mpfs-memory-hierarchy.md
+ * 
  */
  
 OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
 
-
-/*-----------------------------------------------------------------------------
-
-  -- PolarFire SoC Memorp map
-
-
-     0x0800_0000  +-----------------------+
-                  |   DTIM  Len=8K        |
-                  +-----------------------+
-
-     0x0180_0000  +-----------------------+
-                  |   ITIM Hart 0         |
-                  +-----------------------+
-                                                        eNVM detail
-     0x0180_8000  +-----------------------+        +-------------------+   -
-                  |   ITIM Hart 1 Len=28K |        |Sector 2           |   ^
-                  +-----------------------+        |0x2022_0000 8K     |   |
-                                                   +-------------------+   |
-     0x0181_0000  +-----------------------+        |Sector 0           |   1
-                  |   ITIM Hart 2 Len=28K |        |0x2022_2000 56K    |   2
-                  +-----------------------+        +-------------------+   8
-                                                   |Sector 1           |   k
-     0x0181_8000  +-----------------------+        |0x2022_3000 56K    |   |
-                  |   ITIM Hart 3 Len=28K |        +-------------------+   |
-                  +-----------------------+        |Sector 3           |   |
-                                                   |0x2022_3E00 8K     |   v
-     0x0182_0000  +-----------------------+        +-------------------+   -
-                  |   ITIM Hart 4 Len=28K |
-                  +-----------------------+
-
-     0x0800_0000  +-----------------------+
-                  |   LIM  Len max=1920K  |  +------>+------+
-                  +-----------------------+  |       |      |
-                                             |       |      |
-     0x2022_0000  +-----------------------+  |       |      |
-                  |   eNVM 128K           |  |       |      |
-                  +-----------------------+  |       |      |
-                                             |       |      |
-     0x8000_0000  +-----------------------+--+       |  DDR |
-  0x10_0000_0000  | DDR cached            |          |      |
-                  |   SEG0                |     +--->|      |
-                  +-----------------------+     |    |      |
-                                                |    |      |
-     0xC000_0000  +-----------------------+-----+    |      |
-  0x14_0000_0000  | DDR non-cached        |          |      |
-                  |    SEG1               |          |      |
-                  +-----------------------+      +-->+      |
-                                                 |   |      |
-     0xD000_0000  +-----------------------+------+   |      |
-  0x18_0000_0000  | Write Combine buffer  |          +------+
-                  |    SEG1               |
-                  +-----------------------+
-  ----------------------------------------------------------------------------*/
-  
 /*-----------------------------------------------------------------------------
 
 -- MSS hart Reset vector
@@ -95,20 +51,12 @@ See mpfs-lim.ld example linker script when runing from LIM.
 
 MEMORY
 {
-    /* eNVM can be made into 128K section or split as required */
-    /* In this example, our reset vector is set to point to the */
-    /* start of SEC0 at  0x20222000. The initial 8K is reserved for data 
-    /* storage in this example */
-    eNVM_SEC2 (rx) : ORIGIN  = 0x20220000, LENGTH = 8k
-    eNVM_SEC0_1_3 (rx) : ORIGIN  = 0x20222000, LENGTH = 120k
-    /* LIM - we place code here in this example */
-    ram (rwx) :     ORIGIN  = 0x08000000, LENGTH = 1024k
-    ram_DTIM (rwx) : ORIGIN  = 0x01000000, LENGTH = 7k
-    scratchpad(rwx):  ORIGIN = 0x0A000000, LENGTH = 512k
+    envm (rx) : ORIGIN  = 0x20220100, LENGTH = 128k - 0x100
+    dtim (rwx) : ORIGIN = 0x01000000, LENGTH = 7k
+    scratchpad(rwx):  ORIGIN = 0x0A000000, LENGTH  = 0k
     /* This 1k of DTIM is used to run code when switching the eNVM clock */
     switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k    
-    DDR_NON_CACHED (rwx) : ORIGIN  = 0xC0000000, LENGTH = 120k
-    DDR_CACHED (rwx) : ORIGIN  = 0x80000000, LENGTH = 120k
+    ddr_cached_32bit (rwx) : ORIGIN  = 0x80000000, LENGTH = 1M
 }
 
 HEAP_SIZE           = 0k;               /* needs to be calculated for your application if using */
@@ -191,7 +139,7 @@ SECTIONS
         
     . = ALIGN(0x10);
     __text_end = .;
-  } > DDR_CACHED
+  } > ddr_cached_32bit
 
   .l2_scratchpad : ALIGN(0x10)
   { 
@@ -202,7 +150,7 @@ SECTIONS
     . = ALIGN(0x10);
     __l2_scratchpad_end = .;
     __l2_scratchpad_vma_end = .;
-  } >scratchpad AT> DDR_CACHED
+  } >scratchpad AT> ddr_cached_32bit
     
   /* 
    *   The .ram_code section will contain the code That is run from RAM.
@@ -221,7 +169,7 @@ SECTIONS
     *(.ram_coderodata*)
     . = ALIGN (4);
     __sc_end = .;
-  } >switch_code AT> ram     /* On the MPFS for startup code use,  >switch_code AT>eNVM */
+  } >switch_code AT> ddr_cached_32bit     /* On the MPFS for startup code use,  >switch_code AT>eNVM */
 
   /* short/global data section */
   .sdata : ALIGN(0x10)
@@ -234,7 +182,7 @@ SECTIONS
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
-  } > DDR_CACHED
+  } > ddr_cached_32bit
  
   /* data section */
   .data : ALIGN(0x10)
@@ -246,7 +194,7 @@ SECTIONS
     *(.data .data.* .gnu.linkonce.d.*)
     . = ALIGN(0x10);
     __data_end = .;
-  } > DDR_CACHED
+  } > ddr_cached_32bit
 
   /* sbss section */
   .sbss : ALIGN(0x10)
@@ -256,7 +204,7 @@ SECTIONS
     *(.scommon)
     . = ALIGN(0x10);
     __sbss_end = .;
-  } > DDR_CACHED
+  } > ddr_cached_32bit
   
   /* sbss section */
   .bss : ALIGN(0x10)
@@ -267,7 +215,7 @@ SECTIONS
     *(COMMON)
     . = ALIGN(0x10);
     __bss_end = .;
-  } > DDR_CACHED
+  } > ddr_cached_32bit
 
   /* End of uninitialized data segment */
   _end = .;
@@ -279,7 +227,7 @@ SECTIONS
     __heap_end = .;
     . = ALIGN(0x10);
     _heap_end = __heap_end;
-  } > DDR_CACHED
+  } > ddr_cached_32bit
   
     /* must be on 4k boundary- corresponds to page size */
   .stack : ALIGN(0x1000)
@@ -314,14 +262,6 @@ SECTIONS
     PROVIDE(__app_stack_top_h4 = .);
     PROVIDE(__stack_top_h4$ = .);
     
-  } > DDR_CACHED
-  
-  /* must be on 4k boundary- corresponds to page size */
-  .free_lim : ALIGN(0x1000)
-  {
-    /* place __start_of_free_lim$ after last allocation of l2_lim */
-    . = ALIGN(0x10);
-    PROVIDE(__start_of_free_lim$ = .);
-  } > DDR_CACHED
+  } > ddr_cached_32bit
 }
 
