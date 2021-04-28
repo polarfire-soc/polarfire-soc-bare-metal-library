@@ -47,6 +47,7 @@ Type 8  Start U54_2 running image in DDR\r\n\
 Type 9  Start U54_3 running image in DDR\r\n\
 Type a  Start U54_4 running image in DDR\r\n\
 Type b  Display MSS PLL registers\r\n\
+Type c  Load DDR test pattern and run.\r\n\
 ";
 #else
 const uint8_t g_message[] =
@@ -73,12 +74,20 @@ Type b  Display MSS PLL registers\r\n\
 #define twoGb 0x10000000UL  /* ((1024*1024*1024)*2)/sizeof(uint32_t) */
 #define small_ver 0x00010000UL
 
+#define OFFSET_BETWEEN_LINES    0x1000u
+
+#define DDR_BASE            0x80000000u
+#define DDR_SIZE            0x40000000u
+#define CACHE_LINE_SIZE     0x40u
+
+#define NB_CACHE_LINES_USED     (DDR_SIZE / OFFSET_BETWEEN_LINES)
+
 #define MAX_BUFFER_SIZE 128
 
 static volatile uint32_t count_sw_ints_h0 = 0U;
 volatile uint32_t g_10ms_count;
 uint8_t data_block[256];
-uint64_t hart_jump_ddr = 0U;
+uint64_t hart_jump_ddr  = 0U;
 #ifndef DDR_BASE_BOARD
 mss_uart_instance_t *g_uart= &g_mss_uart0_lo ;
 mss_uart_instance_t *g_debug_uart= &g_mss_uart0_lo ;
@@ -86,10 +95,15 @@ mss_uart_instance_t *g_debug_uart= &g_mss_uart0_lo ;
 mss_uart_instance_t *g_uart= &g_mss_uart3_lo ;
 mss_uart_instance_t *g_debug_uart= &g_mss_uart3_lo ;
 #endif
-uint64_t uart_lock;
+volatile uint64_t uart_lock;
 MEM_TYPE mem_area = E51_DDR_START_CACHE;
 uint8_t *bin_base = (uint8_t *)LIBERO_SETTING_DDR_32_CACHE;
 static uint8_t file_name[FILE_NAME_LENGTH + 1]; /* +1 for nul */
+
+/*
+ * external data
+ */
+extern uint64_t ddr_test;
 
 /*
  * Local functions
@@ -104,6 +118,7 @@ static void display_mss_regs(void);
 #ifdef DEBUG_DDR_INIT
 extern uint32_t tip_register_status (mss_uart_instance_t *g_mss_uart_debug_pt);
 #endif
+
 
 /**
  * Simple jump to application
@@ -228,14 +243,10 @@ void e51(void)
           debug_hart0 = 0U;
           sprintf(info_string,"Hart %ld, %ld delta_mcycle %ld mtime\r\n",
           hartid, delta_mcycle, readmtime());
-          mss_take_mutex((uint64_t)&uart_lock);
           MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string,(uint32_t)strlen(info_string));
-          mss_release_mutex((uint64_t)&uart_lock);
         }
 
-        mss_take_mutex((uint64_t)&uart_lock);
         rx_size = (uint8_t)MSS_UART_get_rx(g_uart, (uint8_t*)rx_buff, (uint32_t)sizeof(rx_buff));
-        mss_release_mutex((uint64_t)&uart_lock);
 
         if (rx_size > 0)
         {
@@ -244,10 +255,8 @@ void e51(void)
                 case '0':
                     sprintf(info_string,"MPFS HAL Version Major %d, Minor %d patch %d\r\n",\
                              MPFS_HAL_VERSION_MAJOR,MPFS_HAL_VERSION_MINOR, MPFS_HAL_VERSION_PATCH);
-                    mss_take_mutex((uint64_t)&uart_lock);
                     MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string,(uint32_t)strlen(info_string));
                     MSS_UART_polled_tx_string (g_uart, g_message );
-                    mss_release_mutex((uint64_t)&uart_lock);
                     break;
                 case '1':
 #ifdef DEBUG_DDR_INIT
@@ -255,9 +264,7 @@ void e51(void)
 #endif
                     break;
                 case '2':
-                    mss_take_mutex((uint64_t)&uart_lock);
                     MSS_UART_polled_tx_string (g_uart,(const uint8_t*)"The MSS will now reset\n\r" );
-                    mss_release_mutex((uint64_t)&uart_lock);
                     SYSREG->MSS_RESET_CR = 0xdead;
                     break;
                 case '3':
@@ -272,22 +279,16 @@ void e51(void)
                     debug_hart0 = 1;
                     break;
                 case '6':
-                    mss_take_mutex((uint64_t)&uart_lock);
                     MSS_UART_polled_tx_string(g_uart, (const uint8_t *)"\r\nsend .bin file using ymodem\r\n");
-                    mss_release_mutex((uint64_t)&uart_lock);
                     bin_base = (uint8_t *)LIBERO_SETTING_DDR_32_CACHE;
                     received = ymodem_receive(bin_base, g_rx_size, file_name);
                     if(received != 0U)
                     {
-                        mss_take_mutex((uint64_t)&uart_lock);
                         MSS_UART_polled_tx_string (g_uart,(const uint8_t*)"\n\rNow choose option 7,8,9 or a to run loaded program\n\r" );
-                        mss_release_mutex((uint64_t)&uart_lock);
                     }
                     else
                     {
-                        mss_take_mutex((uint64_t)&uart_lock);
                         MSS_UART_polled_tx_string (g_uart,(const uint8_t*)"\n\rfile receive failed\n\r" );
-                        mss_release_mutex((uint64_t)&uart_lock);
                     }
                     break;
                 case '7':
@@ -325,12 +326,17 @@ void e51(void)
                 case 'b':
                     display_mss_regs();
                     break;
+                case 'c':
+                    raise_soft_interrupt(1u);
+                    ddr_test = 1U;
+                    break;
+                case 'x':
+                	ddr_test = 2U;
+                    break;
 
                 default:
                     /* echo input */
-                    mss_take_mutex((uint64_t)&uart_lock);
                     MSS_UART_polled_tx_string(g_uart, rx_buff);
-                    mss_release_mutex((uint64_t)&uart_lock);
                     break;
             }
         }
@@ -385,6 +391,7 @@ __attribute__((section(".ram_codetext"))) \
  * @return
  */
 #ifdef DEBUG_DDR_INIT
+__attribute__((section(".text_init")))\
 uint32_t setup_ddr_debug_port(mss_uart_instance_t * uart)
 {
 #ifndef   DDR_BASE_BOARD
@@ -416,7 +423,8 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Non Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    //ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_NON_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_32_CACHE,(uint32_t)no_access/8,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
@@ -424,12 +432,11 @@ static void ddr_read_write_nc (uint32_t no_access)
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Accessing 2Gb DDR Cached ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
-    ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
+    //ddr_read_write_fn((uint64_t*)LIBERO_SETTING_DDR_64_CACHE,(uint32_t)no_access,SW_CONFIG_PATTERN);
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\r             Finished ");
     MSS_UART_polled_tx_string(g_uart,(const uint8_t*)"\n\n\r ****************************************************** \n\r");
 }
-
 
 /*==============================================================================
  *

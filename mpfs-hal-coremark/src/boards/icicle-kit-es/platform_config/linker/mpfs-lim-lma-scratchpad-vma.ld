@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,68 +9,18 @@
 /*******************************************************************************
  * 
  * file name : mpfs-lim-lma-scratchpad-vma.ld
+ * Used when debugging code. The debugger loads the code to LIM.
  * Code starts from LIM and relocates itself to an L2 cache scratchpad mapped in
  * the Zero Device address range.
- * Used when debugging start-up code.
+ * 
+ * You can find details on the PolarFireSoC Memory map here:
+ * https://github.com/polarfire-soc/polarfire-soc-documentation/blob/master/memory-hierarchy/mpfs-memory-hierarchy.md
+ * 
  */
  
 OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
 
-
-/*-----------------------------------------------------------------------------
-
-  -- PolarFire SoC Memorp map
-
-
-     0x0800_0000  +-----------------------+
-                  |   DTIM  Len=8K        |
-                  +-----------------------+
-
-     0x0180_0000  +-----------------------+
-                  |   ITIM Hart 0         |
-                  +-----------------------+
-                                                        eNVM detail
-     0x0180_8000  +-----------------------+        +-------------------+   -
-                  |   ITIM Hart 1 Len=28K |        |Sector 2           |   ^
-                  +-----------------------+        |0x2022_0000 8K     |   |
-                                                   +-------------------+   |
-     0x0181_0000  +-----------------------+        |Sector 0           |   1
-                  |   ITIM Hart 2 Len=28K |        |0x2022_2000 56K    |   2
-                  +-----------------------+        +-------------------+   8
-                                                   |Sector 1           |   k
-     0x0181_8000  +-----------------------+        |0x2022_3000 56K    |   |
-                  |   ITIM Hart 3 Len=28K |        +-------------------+   |
-                  +-----------------------+        |Sector 3           |   |
-                                                   |0x2022_3E00 8K     |   v
-     0x0182_0000  +-----------------------+        +-------------------+   -
-                  |   ITIM Hart 4 Len=28K |
-                  +-----------------------+
-
-     0x0800_0000  +-----------------------+
-                  |   LIM  Len max=1920K  |  +------>+------+
-                  +-----------------------+  |       |      |
-                                             |       |      |
-     0x2022_0000  +-----------------------+  |       |      |
-                  |   eNVM 128K           |  |       |      |
-                  +-----------------------+  |       |      |
-                                             |       |      |
-     0x8000_0000  +-----------------------+--+       |  DDR |
-  0x10_0000_0000  | DDR cached            |          |      |
-                  |   SEG0                |     +--->|      |
-                  +-----------------------+     |    |      |
-                                                |    |      |
-     0xC000_0000  +-----------------------+-----+    |      |
-  0x14_0000_0000  | DDR non-cached        |          |      |
-                  |    SEG1               |          |      |
-                  +-----------------------+      +-->+      |
-                                                 |   |      |
-     0xD000_0000  +-----------------------+------+   |      |
-  0x18_0000_0000  | Write Combine buffer  |          +------+
-                  |    SEG1               |
-                  +-----------------------+
-  ----------------------------------------------------------------------------*/
-  
 /*-----------------------------------------------------------------------------
 
 -- MSS hart Reset vector
@@ -78,16 +28,16 @@ ENTRY(_start)
 The MSS reset vector for each hart is configured using the PolarFire SoC MSS
 Configurator and stored in the device's secure NVM.
 The most common usage will be where the reset vector for each hart will be set
-to the start of the eNVM at address 0x2022_0000, giving 128K of contiguous
+to the start of the envm at address 0x2022_0000, giving 128K of contiguous
 non-volatile storage. Normally this is where the initial boot-loader will 
 reside.
 The MSS Configurator outputs the configured reset vector address to an xml file,
 see LIBERO_SETTING_RESET_VECTOR_HART0 etc in <hw_memory.h>
 
-When debugging a bare metal program that is run out of reset from eNVM, a linker 
-script will be used whereby the program will run from LIM instead of eNVM.
+When debugging a bare metal program that is run out of reset from envm, a linker 
+script will be used whereby the program will run from LIM instead of envm.
 In this case, set the reset vector in the linker script to 0x0800_0000.
-This means you are not continually programming the eNVM each time you load a 
+This means you are not continually programming the envm each time you load a 
 program and there is no limitation with hardware break points when debugging.
 See mpfs-lim.ld example linker script when runing from LIM.
 
@@ -95,12 +45,24 @@ See mpfs-lim.ld example linker script when runing from LIM.
 
 MEMORY
 {
-    eNVM_SEC_2_0_1_3 (rx) : ORIGIN = 0x20220000, LENGTH = 128k
-    l2_lim (rwx) :          ORIGIN = 0x08000000, LENGTH = 256k
-    scratchpad(rwx):        ORIGIN = 0x0A000000, LENGTH = 256k
-    ram_DTIM (rwx) :        ORIGIN = 0x01000000, LENGTH = 7k
-    /* This 1k of DTIM is used to run code when switching the eNVM clock */
+    envm (rx) : ORIGIN  = 0x20220100, LENGTH = 128k - 0x100
+    dtim (rwx) : ORIGIN  = 0x01000000, LENGTH = 7k       /* DTIM */
+    e51_itim (rwx)     : ORIGIN = 0x01800000, LENGTH = 28k
+    u54_1_itim (rwx)   : ORIGIN = 0x01808000, LENGTH = 28k
+    u54_2_itim (rwx)   : ORIGIN = 0x01810000, LENGTH = 28k
+    u54_3_itim (rwx)   : ORIGIN = 0x01818000, LENGTH = 28k
+    u54_4_itim (rwx)   : ORIGIN = 0x01820000, LENGTH = 28k
+    l2lim (rwx)        : ORIGIN = 0x08000000, LENGTH = 256k
+    scratchpad(rwx)    : ORIGIN = 0x0A000000, LENGTH = 256k
+    /* This 1k of DTIM is used to run code when switching the envm clock */
     switch_code (rx) :      ORIGIN = 0x01001c00, LENGTH = 1k     
+    /* DDR sections example */
+    ddr_cached_32bit (rwx) : ORIGIN  = 0x80000000, LENGTH = 768M
+    ddr_non_cached_32bit (rwx) : ORIGIN  = 0xC0000000, LENGTH = 256M
+    ddr_wcb_32bit (rwx) : ORIGIN  = 0xD0000000, LENGTH = 256M
+    ddr_cached_38bit (rwx) : ORIGIN  = 0x1000000000, LENGTH = 1024M
+    ddr_non_cached_38bit (rwx) : ORIGIN  = 0x1400000000 + 28M, LENGTH = 0k
+    ddr_wcb_38bit (rwx) : ORIGIN  = 0x1800000000 + 30M , LENGTH  = 0k
 }
 
 HEAP_SIZE           = 8k;               /* needs to be calculated for your application if using */
@@ -123,16 +85,46 @@ HEAP_SIZE           = 8k;               /* needs to be calculated for your appli
  * These are the stack sizes that will be allocated to each hart before starting
  * each hart's application function, e51(), u54_1(), u54_2(), u54_3(), u54_4().
  */
-STACK_SIZE_E51_APPLICATION = 4k;
-STACK_SIZE_U54_1_APPLICATION = 4k;
-STACK_SIZE_U54_2_APPLICATION = 4k;
-STACK_SIZE_U54_3_APPLICATION = 4k;
-STACK_SIZE_U54_4_APPLICATION = 4k;
+STACK_SIZE_E51_APPLICATION = 8k;
+STACK_SIZE_U54_1_APPLICATION = 8k;
+STACK_SIZE_U54_2_APPLICATION = 8k;
+STACK_SIZE_U54_3_APPLICATION = 8k;
+STACK_SIZE_U54_4_APPLICATION = 8k;
+STACK_SIZE_DTM_COREMARK_APPLICATION = 4k;
 
 
 SECTIONS
 {
-  . = 0x08000000;
+    PROVIDE(__envm_start = ORIGIN(envm));
+    PROVIDE(__envm_end = ORIGIN(envm) + LENGTH(envm));
+    PROVIDE(__l2lim_start = ORIGIN(l2lim));
+    PROVIDE(__l2lim_end = ORIGIN(l2lim) + LENGTH(l2lim));
+    PROVIDE(__ddr_cached_32bit_start = ORIGIN(ddr_cached_32bit));
+    PROVIDE(__ddr_cached_32bit_end = ORIGIN(ddr_cached_32bit) + LENGTH(ddr_cached_32bit));
+    PROVIDE(__ddr_non_cached_32bit_start = ORIGIN(ddr_non_cached_32bit));
+    PROVIDE(__ddr_non_cached_32bit_end = ORIGIN(ddr_non_cached_32bit) + LENGTH(ddr_non_cached_32bit));
+    PROVIDE(__ddr_wcb_32bit_start = ORIGIN(ddr_wcb_32bit));
+    PROVIDE(__ddr_wcb_32bit_end = ORIGIN(ddr_wcb_32bit) + LENGTH(ddr_wcb_32bit));
+    PROVIDE(__ddr_cached_38bit_start = ORIGIN(ddr_cached_38bit));
+    PROVIDE(__ddr_cached_38bit_end = ORIGIN(ddr_cached_38bit) + LENGTH(ddr_cached_38bit));
+    PROVIDE(__ddr_non_cached_38bit_start = ORIGIN(ddr_non_cached_38bit));
+    PROVIDE(__ddr_non_cached_38bit_end = ORIGIN(ddr_non_cached_38bit) + LENGTH(ddr_non_cached_38bit));
+    PROVIDE(__ddr_wcb_38bit_start = ORIGIN(ddr_wcb_38bit));
+    PROVIDE(__ddr_wcb_38bit_end = ORIGIN(ddr_wcb_38bit) + LENGTH(ddr_wcb_38bit));
+    PROVIDE(__dtim_start = ORIGIN(dtim));
+    PROVIDE(__dtim_end = ORIGIN(dtim) + LENGTH(dtim));
+    PROVIDE(__e51itim_start = ORIGIN(e51_itim));
+    PROVIDE(__e51itim_end = ORIGIN(e51_itim) + LENGTH(e51_itim));
+    PROVIDE(__u54_1_itim_start = ORIGIN(u54_1_itim));
+    PROVIDE(__u54_1_itim_end = ORIGIN(u54_1_itim) + LENGTH(u54_1_itim));
+    PROVIDE(__u54_2_itim_start = ORIGIN(u54_2_itim));
+    PROVIDE(__u54_2_itim_end = ORIGIN(u54_2_itim) + LENGTH(u54_2_itim));
+    PROVIDE(__u54_3_itim_start = ORIGIN(u54_3_itim));
+    PROVIDE(__u54_3_itim_end = ORIGIN(u54_3_itim) + LENGTH(u54_3_itim));
+    PROVIDE(__u54_4_itim_start = ORIGIN(u54_4_itim));
+    PROVIDE(__u54_4_itim_end = ORIGIN(u54_4_itim) + LENGTH(u54_4_itim));
+    
+  . = __l2lim_start;
   .text_init : ALIGN(0x10)
   {
      *(.text.init)
@@ -148,13 +140,14 @@ SECTIONS
      *mss_nwc_init.o (.text .text* .rodata .rodata* .srodata*)
      *mss_pll.o (.text .text* .rodata .rodata* .srodata*)
      *mss_ddr.o (.text .text* .rodata .rodata* .srodata*)
+     *mss_ddr_debug.o (.text .text* .rodata .rodata* .srodata*)
      *mss_io.o (.text .text* .rodata .rodata* .srodata*)
      *mss_sgmii.o (.text .text* .rodata .rodata* .srodata*)
      *memcpy.o (.text .text* .rodata .rodata* .srodata*)
      *memset.o (.text .text* .rodata .rodata* .srodata*)
      *u54_1.o (.text .text* .rodata .rodata* .srodata*) 
     . = ALIGN(0x10);
-  } >l2_lim 
+  } >l2lim 
   
   .text : ALIGN(0x10)
   {
@@ -162,6 +155,8 @@ SECTIONS
     . = ALIGN(0x10);
     __text_start = .;
     __l2_scratchpad_vma_start = .; 
+    __l2_scratchpad_load = LOADADDR(.text);
+    __l2_scratchpad_start = .; 
     *(.text .text.* .gnu.linkonce.t.*)
     *(.plt)
     . = ALIGN(0x10);
@@ -201,17 +196,18 @@ SECTIONS
         
     . = ALIGN(0x10);
     __text_end = .;
-  } >scratchpad AT> l2_lim
+    __l2_scratchpad_end = .;
+  } >scratchpad AT> l2lim
  
    
   .l2_scratchpad : ALIGN(0x10)
   { 
-    __l2_scratchpad_load = LOADADDR(.l2_scratchpad);
-    __l2_scratchpad_start = .; 
+  /*  __l2_scratchpad_load = LOADADDR(.l2_scratchpad); */
+  /*  __l2_scratchpad_start = .;    */
     *(.l2_scratchpad)
     . = ALIGN(0x10);
-    __l2_scratchpad_end = .;
-  } >scratchpad AT> l2_lim
+  /*  __l2_scratchpad_end = .;  */
+  } >scratchpad AT> l2lim
   
   /* short/global data section */
   .sdata : ALIGN(0x10)
@@ -224,7 +220,7 @@ SECTIONS
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(0x10);
     __sdata_end = .;
-  } >scratchpad AT> l2_lim
+  } >scratchpad AT> l2lim
   
   /* data section */
   .data : ALIGN(0x10)
@@ -236,7 +232,7 @@ SECTIONS
     *(.data .data.* .gnu.linkonce.d.*)
     . = ALIGN(0x10);
     __data_end = .;
-  } > scratchpad AT> l2_lim
+  } > scratchpad AT> l2lim
 
   /* sbss section */
   .sbss : ALIGN(0x10)
@@ -280,7 +276,7 @@ SECTIONS
         . += STACK_SIZE_E51_APPLICATION;
         PROVIDE(__app_stack_top_h0 = .);
         PROVIDE(__stack_top_h0$ = .);
-    } > l2_lim
+    } > l2lim
   
     /* must be on 4k boundary- corresponds to page size */
     .stack_u54_1 : /* ALIGN(0x1000) */
@@ -290,7 +286,7 @@ SECTIONS
         . += STACK_SIZE_U54_1_APPLICATION;
         PROVIDE(__app_stack_top_h1 = .);
         PROVIDE(__stack_top_h1$ = .);
-    } > l2_lim
+    } > l2lim
   
   
     /* must be on 4k boundary- corresponds to page size */
@@ -299,7 +295,7 @@ SECTIONS
         PROVIDE(__stack_bottom_h2$ = .);
         . += STACK_SIZE_U54_2_APPLICATION;
         PROVIDE(__stack_top_h2$ = .);
-    } > l2_lim
+    } > l2lim
     
     /*  */
     .stack_app_u54_2 : /* ALIGN(0x1000) */
@@ -317,7 +313,7 @@ SECTIONS
         . += STACK_SIZE_U54_3_APPLICATION;
         PROVIDE(__app_stack_top_h3 = .);
         PROVIDE(__stack_top_h3$ = .);
-    } > l2_lim
+    } > l2lim
     
     /*  */
     .stack_u54_4 : /* ALIGN(0x1000) */
@@ -327,7 +323,7 @@ SECTIONS
         . += STACK_SIZE_U54_4_APPLICATION;
         PROVIDE(__app_stack_top_h4 = .);
         PROVIDE(__stack_top_h4$ = .);
-    } > l2_lim
+    } > l2lim
     
     /*  */
     .stack_coremark_lim : /* ALIGN(0x1000) */
@@ -335,8 +331,8 @@ SECTIONS
         PROVIDE(__cm_lim_stack_bottom = .);
         . += STACK_SIZE_U54_4_APPLICATION;
         PROVIDE(__cm_lim_stack_top = .);
-    } > l2_lim
-    
+    } > l2lim
+
     /*  */
     .stack_coremark_scratchpad : /* ALIGN(0x1000) */
     {
@@ -344,19 +340,19 @@ SECTIONS
         . += STACK_SIZE_U54_4_APPLICATION;
         PROVIDE(__cm_scratch_stack_top = .);
     } > scratchpad
-    
+
     /*  */
     .stack_coremark_dtm : /* ALIGN(0x1000) */
     {
         PROVIDE(__cm_dtm_stack_bottom = .);
-        . += STACK_SIZE_U54_4_APPLICATION;
+        . += STACK_SIZE_DTM_COREMARK_APPLICATION;
         PROVIDE(__cm_dtm_stack_top = .);
-    } > ram_DTIM
-
+    } > dtim
+    
   /* 
    *   The .ram_code section will contain the code That is run from RAM.
-   *   We are using this code to switch the clocks including eNVM clock.
-   *   This can not be done when running from eNVM
+   *   We are using this code to switch the clocks including envm clock.
+   *   This can not be done when running from envm
    *   This will need to be copied to ram, before any of this code is run.
    */
   .ram_code :
@@ -370,10 +366,8 @@ SECTIONS
     *(.ram_coderodata*)
     . = ALIGN (4);
     __sc_end = .;
-    /* place __start_of_free_lim$ after last allocation of l2_lim */
+    /* place __start_of_free_lim$ after last allocation of l2lim */
     PROVIDE(__start_of_free_lim$ = .);
-  } >switch_code AT> l2_lim     /* On the MPFS for startup code use,  >switch_code AT>eNVM */
+  } >switch_code AT> l2lim     /* On the MPFS for startup code use,  >switch_code AT>envm */
   
 }
-
- 

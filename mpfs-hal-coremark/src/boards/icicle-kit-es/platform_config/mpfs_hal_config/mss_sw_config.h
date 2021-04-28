@@ -221,5 +221,14 @@
  * the default settings
  */
 
+/*
+ * The following three setting disable Data Mask and enable Read Write Modify
+ * This is required if accessing LPDDR4 with non-cached writes and using
+ * MSS Configurator 2021.1 or earlier.
+ */
+#define LIBERO_SETTING_CFG_DM_EN 0x00000000UL
+#define LIBERO_SETTING_CFG_RMW_EN 0x00000001UL
+#define LIBERO_SETTING_DDRPHY_MODE 0x00014A24UL
+
 #endif /* USER_CONFIG_MSS_USER_CONFIG_H_ */
 

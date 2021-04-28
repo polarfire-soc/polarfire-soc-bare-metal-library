@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip Corporation.
+ * Copyright 2019-2021 Microchip Corporation.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,9 +31,6 @@ _start:
      * clear the Return Address Stack
      */
     call .clear_ras
-    li a1, 0x3
-    csrw 0x7c0, a1
-
     /* Setup trap handler */
     la a4, trap_vector
     csrw mtvec, a4          # initalise machine trap vector address
@@ -41,7 +38,6 @@ _start:
     1:
     csrr    a5, mtvec
     bne a4, a5, 1b
-
     /* Disable and clear all interrupts */
     li a2,  MSTATUS_MIE
     csrc mstatus, a2        # clear interrupt enable bit
@@ -240,11 +236,11 @@ _start:
     li a3, HLS_MAIN_HART_STARTED
     la a1, (__stack_top_h0$ - HLS_DEBUG_AREA_SIZE)
 .wait_main_hart:
-    LOAD a2, 0(a1)
+    LWU a2, 0(a1)
     bne a3, a2, .wait_main_hart
     # Flag we are here to the main hart
     li a1, HLS_OTHER_HART_IN_WFI
-    STORE a1, 0(tp)
+    sw a1, 0(tp)
     /* flush the instruction cache */
     fence.i
 .LwaitOtherHart:
@@ -392,7 +388,7 @@ restore_regs:
     .globl  zero_section
     .type   zero_section, @function
 zero_section:
-    beq a0, a1, .zero_section_done
+    bge a0, a1, .zero_section_done
     sd  zero, (a0)
     addi    a0, a0, 8
     j   zero_section
@@ -422,7 +418,7 @@ count_section:
     .globl  copy_section
     .type   copy_section, @function
 copy_section:
-    beq     a1, a0, .copy_section_done // if load_addr == exec_start_addr, goto copy_section_done
+    beq a1, a0, .copy_section_done // if load_addr == exec_start_addr, goto copy_section_done
 .check_if_copy_section_done:
     beq a1, a2, .copy_section_done // if offset != length, goto keep_copying
 .keep_copying:
@@ -434,99 +430,6 @@ copy_section:
 .copy_section_done:
     ret
 
-
-
-/***********************************************************************************
- *
- * memfill() - fills memory, alternate to lib function when not available
- */
-    // config_copy helper function:
-    //  a0 = dest
-    //  a1 = value to fill
-    //  a2 = length
-    .globl  memfill
-    .type   memfill, @function
-memfill:
-    mv  t1,a0
-    mv  t2,a1
-    beqz    a2,2f
-1:
-    sb  t2,0(t1)
-    addi    a2,a2,-1
-    addi    t1,t1,1
-    bnez    a2,1b
-2:
-    ret
-
-/***********************************************************************************
- *
- * The following config_copy() symbol overrides the weak symbol in the HAL and does
- * a safe copy of HW config data
- */
-    // config_copy helper function:
-    //  a0 = dest
-    //  a1 = src
-    //  a2 = length
-    .globl  config_copy
-    .type   config_copy, @function
-config_copy:
-    mv  t1,a0
-    beqz    a2,2f
-1:
-    lb  t2,0(a1)
-    sb  t2,0(t1)
-    addi    a2,a2,-1
-    addi    t1,t1,1
-    addi    a1,a1,1
-    bnez    a2,1b
-2:
-    ret
-
-/***********************************************************************************
- *
- * config_32_copy () Copies a word at a time, used when copying to contigous registers
- */
-    // config_copy helper function:
-    //  a0 = dest
-    //  a1 = src
-    //  a2 = length
-    .globl  config_32_copy
-    .type   config_32_copy, @function
-config_32_copy:
-    mv  t1,a0
-    beqz    a2,2f
-1:
-    lw  t2,0(a1)
-    sw  t2,0(t1)
-    addi    a2,a2,-4
-    addi    t1,t1,4
-    addi    a1,a1,4
-    bnez    a2,1b
-2:
-    ret
-
- /***********************************************************************************
- *
- * config_64_copy - copying using 64 bit loads, addresses must be on 64 bit boundary
- */
-    // config_copy helper function:
-    //  a0 = dest
-    //  a1 = src
-    //  a2 = length
-    .globl  config_64_copy
-    .type   config_64_copy, @function
-config_64_copy:
-    mv  t1,a0
-    beqz    a2,2f
-1:
-    ld  t2,0(a1)
-    sd  t2,0(t1)
-    addi    a2,a2,-8
-    addi    t1,t1,8
-    addi    a1,a1,8
-    bnez    a2,1b
-2:
-    ret
 
 /***********************************************************************************
  *
@@ -570,7 +473,7 @@ copy_switch_code:
     // NOTE: we need to check if we are debugging from LIM,if so do not
     // initialize.
     //
-    la a2, __text_start
+    la a2, _start
     la  a4, 0x08000000          # start of LIM address
     and a2, a2, a4
     bnez a2, .done_clear
@@ -615,11 +518,11 @@ copy_switch_code:
     mv  a4, a2// eg. Use stat of DTIM in not used for anything else 0x01000120
     lw  t2,0(a5)
     sw  t2,0(a4)
-	ret
+    ret
 
 /*
  * clear_ras , clear_ras_2_deep
- * Two deep function calls. 
+ * Two deep function calls.
  * Used to clear the interal processor Return Address Stack
  * This is belt and braces, may not be required
  */
@@ -644,5 +547,6 @@ copy_switch_code:
     nop
     nop
     ret
+
 
 

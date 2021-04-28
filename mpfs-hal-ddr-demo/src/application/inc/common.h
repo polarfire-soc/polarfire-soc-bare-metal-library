@@ -10,6 +10,7 @@
 #define COMMON_H_
 
 #include <stdint.h>
+#include "drivers/mss_mmuart/mss_uart.h"
 
 typedef enum COMMAND_TYPE_
 {
@@ -41,5 +42,20 @@ void u54_2(void);
 void u54_3(void);
 void u54_4(void);
 void jump_to_application( MEM_TYPE mem_area);
+void
+uart_tx_with_mutex
+(
+    mss_uart_instance_t * this_uart,
+    uint64_t mutex_addr,
+    const uint8_t * pbuff,
+    uint32_t tx_size
+);
+void
+uart_tx_string_with_mutex
+(
+    mss_uart_instance_t * this_uart,
+    uint64_t mutex_addr,
+    const uint8_t * pbuff
+);
 
 #endif /* COMMON_H_ */

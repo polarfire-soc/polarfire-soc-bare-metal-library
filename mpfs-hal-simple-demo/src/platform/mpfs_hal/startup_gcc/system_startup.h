@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,13 +94,31 @@ void u54_2(void);
 void u54_3(void);
 void u54_4(void);
 void init_memory( void);
+void init_ddr( void);
 uint8_t init_mem_protection_unit(void);
 uint8_t init_pmp(uint8_t hart_id);
 uint8_t init_bus_error_unit( void);
+uint8_t mss_set_apb_bus_cr(uint32_t reg_value);
+uint8_t mss_get_apb_bus_cr(void);
 char * memfill(void *dest, const void * src, size_t len);
 char * config_copy(void *dest, const void * src, size_t len);
+char * config_16_copy(void *dest, const void * src, size_t len);
 char * config_32_copy(void *dest, const void * src, size_t len);
 char * config_64_copy(void *dest, const void * src, size_t len);
+
+void turn_on_fic0(void);
+void turn_on_fic1(void);
+void turn_on_fic2(void);
+void turn_on_fic3(void);
+void turn_on_mac0(void);
+void turn_on_mac1(void);
+
+void turn_off_fic0(void);
+void turn_off_fic1(void);
+void turn_off_fic2(void);
+void turn_off_fic3(void);
+void turn_off_mac0(void);
+void turn_off_mac1(void);
 
 void copy_section
 (
