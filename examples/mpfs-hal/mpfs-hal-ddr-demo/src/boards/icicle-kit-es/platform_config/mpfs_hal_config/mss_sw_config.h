@@ -141,6 +141,11 @@
 //#define DEBUG_DDR_CFG_DDR_SGMII_PHY
 //#define DEBUG_DDR_DDRCFG
 
+/* uncomment to turn off fifo tuning. This will allow negative testing on known marginal board (PVT testing) */
+//#define TUNE_RPC_166_VALUE 0
+/* uncomment to see failure on marginal board */
+//#define SKIP_VERIFY_PATTERN_IN_CACHE
+
 /*
  * If using DDR4, enable DDR4__CODE_TAG_0_2 define
  */
@@ -162,10 +167,57 @@
  *  used.
  *  using 2MB ( Icicle kit)
 */
+/* DCT diff's from Libero, uncomment to use */
+//#define USE_DCT_SETTINGS
+#if USE_DCT_SETTINGS
+#define LIBERO_SETTING_TIP_CFG_PARAMS               0x07CFE02FUL
+    /* ADDCMD_OFFSET                     [0:3]   RW value= 0x2 changed to 3*/
+    /* BCKLSCLK_OFFSET                   [3:3]   RW value= 0x5 */
+    /* WRCALIB_WRITE_COUNT               [6:7]   RW value= 0x0 */
+    /* READ_GATE_MIN_READS               [13:8]  RW value= 0x7F */
+    /* ADDRCMD_WAIT_COUNT                [22:8]  RW value= 0x1F */
+
+/* from HW_DDR_IO_BANK_H_ */
+
+#define LIBERO_SETTING_DPC_BITS                     0x00050422UL
+    /* DPC_VS                            [0:4]   RW value= 0x2 */
+    /* DPC_VRGEN_H                       [4:6]   RW value= 0x2 */
+    /* DPC_VRGEN_EN_H                    [10:1]  RW value= 0x1 */
+    /* DPC_MOVE_EN_H                     [11:1]  RW value= 0x0 */
+    /* DPC_VRGEN_V                       [12:6]  RW value= 0xC */
+    /* DPC_VRGEN_EN_V                    [18:1]  RW value= 0x1 */
+    /* DPC_MOVE_EN_V                     [19:1]  RW value= 0x0 */
+    /* RESERVE01                         [20:12] RSVD */
+
+#define LIBERO_SETTING_RPC_ODT_DQ                   0x00000006UL
+#define LIBERO_SETTING_RPC_ODT_DQS                  0x00000006UL   //4 2
+#endif
+
+/*
+ * We need to redefine the following AXI address range if set incorrectly
+ * This is the case for Libero 12.5 and Libero 12.6
+ * If using MSS Configurator 2021.1 or later the following four lines can be
+ * removed.
+ * LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_0
+ * is the definition for cached axi addrress
+ * LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_0
+ * is the address for non-cached Libero address
+ * 0x7FFFFFFFUL => 2 GB address range
+ *
+ */
 #define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_0    0x7FFFFFFFUL
 #define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_1    0x00000000UL
 #define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_0    0x7FFFFFFFUL
 #define LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_1    0x00000000UL
+
+/*
+ * The following three setting disable Data Mask and enable Read Write Modify
+ * This is required if accessing LPDDR4 with non-cached writes and using
+ * MSS Configurator 2021.1 or earlier.
+ */
+#define LIBERO_SETTING_CFG_DM_EN 0x00000000UL
+#define LIBERO_SETTING_CFG_RMW_EN 0x00000001UL
+#define LIBERO_SETTING_DDRPHY_MODE 0x00014A24UL
 
 #endif /* USER_CONFIG_MSS_USER_CONFIG_H_ */
 

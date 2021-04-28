@@ -22,12 +22,20 @@
 #include "drivers/FU540_uart/FU540_uart.h"
 #endif
 
-volatile uint32_t count_sw_ints_h1 = 0U;
-
 extern uint64_t uart_lock;
 extern MEM_TYPE mem_area;
 extern uint64_t hart_jump_ddr;
+extern uint64_t ddr_test;
 extern mss_uart_instance_t *g_uart;
+
+volatile uint32_t count_sw_ints_h1 = 0U;
+
+#define NO_OF_ITERATIONS    2
+#define DDR_BASE            0x80000000u
+#define DDR_SIZE            0x40000000u
+
+#define MIN_OFFSET          1U
+#define MAX_OFFSET          16U
 
 /* Main function for the HART1(U54_1 processor).
  * Application code running on HART1 is placed here
@@ -40,6 +48,7 @@ void u54_1(void)
     char info_string[100];
     uint64_t hartid = read_csr(mhartid);
     volatile uint32_t icount = 0U;
+    uint32_t pattern_offset = 12U;
 
     /* Clear pending software interrupt in case there was any.
        Enable only the software interrupt so that the E51 core can bring this
@@ -68,18 +77,29 @@ void u54_1(void)
             sprintf(info_string,\
                     "Hart %lu, use option 6 and 7 to jump to DDR program\r\n",\
                         hartid);
-            mss_take_mutex((uint64_t)&uart_lock);
             MSS_UART_polled_tx(g_uart, (const uint8_t*)info_string,(uint32_t)strlen(info_string));
-            mss_release_mutex((uint64_t)&uart_lock);
         }
+
+        if(ddr_test == 1U)
+        {
+            load_ddr_pattern(DDR_BASE, DDR_SIZE,pattern_offset);
+            MSS_UART_polled_tx(g_uart, (const uint8_t*)"Press x to abort DDR test\r\n",(uint32_t)strlen("Press x to abort DDR test\r\n"));
+            setup_ddr_segments(DEFAULT_SEG_SETUP);
+        	test_ddr(NO_OF_ITERATIONS, DDR_SIZE);
+        	setup_ddr_segments(LIBERO_SEG_SETUP);
+
+        	if (pattern_offset > MAX_OFFSET)
+        	{
+        	    pattern_offset = MIN_OFFSET;
+        	}
+        }
+
         if(hart_jump_ddr == 1U)
         {
-            mss_take_mutex((uint64_t)&uart_lock);
             MSS_UART_polled_tx_string(g_uart,
                     (const uint8_t*)"We are leaving the boot loader\r\n");
             MSS_UART_polled_tx_string(g_uart,
                     (const uint8_t*)"to run in loaded DDR program\r\n");
-            mss_release_mutex((uint64_t)&uart_lock);
             jump_to_application(mem_area);
         }
     }

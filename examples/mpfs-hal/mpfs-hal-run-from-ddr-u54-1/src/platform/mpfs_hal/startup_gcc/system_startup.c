@@ -1,5 +1,5 @@
 /******************************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@
  */
 #include <stddef.h>
 #include <stdbool.h>
-#include "../mss_hal.h"
+#include "mpfs_hal/mss_hal.h"
 #ifdef  MPFS_HAL_HW_CONFIG
 #include "../common/nwc/mss_nwc_init.h"
 #include "system_startup_defs.h"
@@ -39,10 +39,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-/*LDRA_INSPECTED 440 S MR:R.11.1,R.11.2,R.11.4,R.11.6,R.11.7  Have to allocate number (address) as point reference*/
-mss_sysreg_t*   SYSREG = ((mss_sysreg_t*) BASE32_ADDR_MSS_SYSREG);
 
 
 /*==============================================================================
@@ -79,6 +75,7 @@ __attribute__((weak)) int main_first_hart(void)
         (void)init_bus_error_unit();
         (void)init_mem_protection_unit();
         (void)init_pmp((uint8_t)MPFS_HAL_FIRST_HART);
+        (void)mss_set_apb_bus_cr((uint32_t)LIBERO_SETTING_APBBUS_CR);
 #endif  /* MPFS_HAL_HW_CONFIG */
         /*
          * Initialise NWC
@@ -89,12 +86,12 @@ __attribute__((weak)) int main_first_hart(void)
          */
 #ifdef  MPFS_HAL_HW_CONFIG
         (void)mss_nwc_init();
+        //init_ddr();
 #endif  /* MPFS_HAL_HW_CONFIG */
-        /*
-         * Copies text section if relocation required
-         */
-        (void)copy_section(&__text_load, &__text_start, &__text_end);
+
 #ifdef  MPFS_HAL_HW_CONFIG
+        /* main hart init's the PLIC */
+        PLIC_init_on_reset();
         /*
          * Start the other harts. They are put in wfi in entry.S
          * When debugging, harts are released from reset separately,
@@ -107,7 +104,7 @@ __attribute__((weak)) int main_first_hart(void)
         hard_idx = MPFS_HAL_FIRST_HART + 1U;
         while( hard_idx <= MPFS_HAL_LAST_HART)
         {
-            uint32_t wait_count;
+            uint32_t wait_count = 0U;
 
             switch(sm_check_thread)
             {
@@ -173,6 +170,15 @@ __attribute__((weak)) int main_first_hart(void)
         stack_top = (ptrdiff_t)((uint8_t*)&__stack_top_h0$);
         hls = (HLS_DATA*)(stack_top - HLS_DEBUG_AREA_SIZE);
         hls->in_wfi_indicator = HLS_MAIN_HART_FIN_INIT;
+
+        /*
+         * Turn on fic interfaces by default. Drivers will turn on/off other MSS
+         * peripherals as required.
+         */
+        turn_on_fic0();
+        turn_on_fic1();
+        turn_on_fic2();
+        turn_on_fic3();
 
 #endif /* MPFS_HAL_HW_CONFIG */
         (void)main_other_hart();
@@ -386,25 +392,36 @@ __attribute__((weak)) void u54_4(void)
   */
  __attribute__((weak)) void init_memory( void)
  {
-    extern uint64_t __l2_scratchpad_load;
-    extern uint64_t __l2_scratchpad_start;
-    extern uint64_t __l2_scratchpad_end;
-
+    copy_section(&__text_load, &__text_start, &__text_end);
     copy_section(&__sdata_load, &__sdata_start, &__sdata_end);
     copy_section(&__data_load, &__data_start, &__data_end);
 
-    /* filling the lim as a test with identifiable content */
-#if 0 //todo: used during testing, remove
-    count_section(&__stack_top_h4$, &__l2lim_end, &__stack_top_h4$);
-#endif
-    copy_section(&__l2_scratchpad_load, &__l2_scratchpad_start, &__l2_scratchpad_end);
     zero_section(&__sbss_start, &__sbss_end);
     zero_section(&__bss_start, &__bss_end);
 
     __disable_all_irqs();      /* disables local and global interrupt enable */
-    PLIC_init_on_reset();
  }
 
+ /*-----------------------------------------------------------------------------
+   * _start() function called invoked
+   * This function is called on power up and warm reset.
+   */
+  __attribute__((weak)) void init_ddr(void)
+  {
+    if ((LIBERO_SETTING_DDRPHY_MODE & DDRPHY_MODE_MASK) != DDR_OFF_MODE) {
+#ifdef DDR_SUPPORT
+        uint64_t end_address;
+
+#if 0 /* enable to init cache to zero using 64 bit writes */
+        end_address = LIBERO_SETTING_DDR_64_NON_CACHE + LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_0 + LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI2_1;
+        zero_section((uint64_t *)LIBERO_SETTING_DDR_64_NON_CACHE, (uint64_t *)end_address);
+#endif
+
+        end_address = LIBERO_SETTING_DDR_64_CACHE + LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_0 + LIBERO_SETTING_CFG_AXI_END_ADDRESS_AXI1_1;
+        zero_section((uint64_t *)LIBERO_SETTING_DDR_64_CACHE, (uint64_t *)end_address);
+#endif
+    }
+  }
 
  /**
   * This function is configured by editing parameters in
@@ -452,6 +469,122 @@ __attribute__((weak)) uint8_t init_pmp(uint8_t hart_id)
 {
     pmp_configure(hart_id);
     return (0U);
+}
+
+/**
+ * set_apb_bus_cr(void)
+ * todo: add check to see if value valid re. mss configurator
+ * @return
+ */
+__attribute__((weak)) uint8_t mss_set_apb_bus_cr(uint32_t reg_value)
+{
+    SYSREG->APBBUS_CR = reg_value;
+    return (0U);
+}
+
+/**
+ * get_apb_bus_cr(void)
+ * @return
+ */
+__attribute__((weak)) uint8_t mss_get_apb_bus_cr(void)
+{
+    return (SYSREG->APBBUS_CR);
+}
+
+__attribute__((weak))  void turn_on_fic0(void)
+{
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_FIC0_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC0_MASK);
+}
+
+__attribute__((weak))  void turn_on_fic1(void)
+{
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_FIC1_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC1_MASK);
+}
+
+__attribute__((weak))  void turn_on_fic2(void)
+{
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_FIC2_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC2_MASK);
+}
+
+__attribute__((weak))  void turn_on_fic3(void)
+{
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_FIC3_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC3_MASK);
+}
+
+__attribute__((weak))  void turn_on_mac0(void)
+{
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MAC0_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(SUBBLK_CLOCK_CR_MAC0_MASK);
+}
+
+__attribute__((weak))  void turn_on_mac1(void)
+{
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MAC1_MASK);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(SUBBLK_CLOCK_CR_MAC1_MASK);
+}
+
+__attribute__((weak))  void turn_off_fic0(void)
+{
+    /* Turn off clock */
+    SYSREG->SUBBLK_CLOCK_CR &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC0_MASK);
+    /* Hold in reset */
+    SYSREG->SOFT_RESET_CR   |= (uint32_t)(SUBBLK_CLOCK_CR_FIC0_MASK);
+}
+
+__attribute__((weak))  void turn_off_fic1(void)
+{
+    /* Turn off clock */
+    SYSREG->SUBBLK_CLOCK_CR &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC1_MASK);
+    /* Hold in reset */
+    SYSREG->SOFT_RESET_CR   |= (uint32_t)(SUBBLK_CLOCK_CR_FIC1_MASK);
+}
+
+__attribute__((weak))  void turn_off_fic2(void)
+{
+    /* Turn off clock */
+    SYSREG->SUBBLK_CLOCK_CR &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC2_MASK);
+    /* Hold in reset */
+    SYSREG->SOFT_RESET_CR   |= (uint32_t)(SUBBLK_CLOCK_CR_FIC2_MASK);
+}
+
+__attribute__((weak))  void turn_off_fic3(void)
+{
+    /* Turn off clock */
+    SYSREG->SUBBLK_CLOCK_CR &= (uint32_t)~(SUBBLK_CLOCK_CR_FIC3_MASK);
+    /* Hold in reset */
+    SYSREG->SOFT_RESET_CR   |= (uint32_t)(SUBBLK_CLOCK_CR_FIC3_MASK);
+}
+
+__attribute__((weak))  void turn_off_mac0(void)
+{
+    /* Turn off clock */
+    SYSREG->SUBBLK_CLOCK_CR &= (uint32_t)~(SUBBLK_CLOCK_CR_MAC0_MASK);
+    /* Hold in reset */
+    SYSREG->SOFT_RESET_CR   |= (uint32_t)(SUBBLK_CLOCK_CR_MAC0_MASK);
+}
+
+__attribute__((weak))  void turn_off_mac1(void)
+{
+    /* Turn off clock */
+    SYSREG->SUBBLK_CLOCK_CR &= (uint32_t)~(SUBBLK_CLOCK_CR_MAC1_MASK);
+    /* Hold in reset */
+    SYSREG->SOFT_RESET_CR   |= (uint32_t)(SUBBLK_CLOCK_CR_MAC1_MASK);
 }
 
 #ifdef __cplusplus
