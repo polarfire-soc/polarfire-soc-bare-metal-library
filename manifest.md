@@ -30,7 +30,7 @@
 | mss-i2c examples | 1.8.100 | 2021-04-16 | 
 | mss-mmc examples | 1.8.100 | 2020-10-02 | 
 | mss-mmuart examples | 1.7.109 | 2020-08-18 | 
-| mss-mpfs-hal examples | 1.8.100 | 2021-01-25 | 
+| mss-mpfs-hal examples | 1.8.109 | 2021-04-28 | 
 | mss-pdma examples | 1.7.111 | 2021-02-04 | 
 | mss-qspi examples | 1.7.104 | 2020-08-17 | 
 | mss-rtc examples | 1.7.115 | 2021-02-05 | 
