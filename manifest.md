@@ -43,5 +43,5 @@
 
 | Configuration | Revision | Time Stamp (YYYY-MM-DD) |
 |----------|:-------------:|------:|
-| platform_config_reference | 62505570b1c93e1db8caedf7c59ceded3204110b | 2021-04-15 | 
+| platform_config_reference | 4d6b7f2f90724dbadfbdf8bd7baae331c75a23b5 | 2021-04-30 | 
 | soc_config_generator | d0a7e1684b9b93452317e19a898a0e173847b23c | 2021-04-16 | 
