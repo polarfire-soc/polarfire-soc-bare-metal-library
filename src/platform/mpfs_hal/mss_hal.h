@@ -47,7 +47,7 @@ typedef long            ssize_t;
 #include "common/atomic.h"
 #include "common/bits.h"
 #include "common/encoding.h"
-#include "soc_config/hw_platform.h"
+#include "fpga_config/hw_platform.h"
 #include "common/nwc/mss_ddr.h"
 #include "common/mss_clint.h"
 #include "common/mss_h2f.h"
