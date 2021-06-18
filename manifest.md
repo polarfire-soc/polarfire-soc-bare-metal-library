@@ -35,7 +35,7 @@
 | mss-qspi examples | 1.7.104 | 2020-08-17 | 
 | mss-rtc examples | 1.8.105 | 2021-06-18 | 
 | mss-spi examples | 1.7.106 | 2020-08-26 | 
-| mss-sys-services examples | 1.7.107 | 2020-08-26 | 
+| mss-sys-services examples | 1.8.103 | 2021-06-18 | 
 | mss-timer examples | 1.7.109 | 2020-08-26 | 
 | mss-usb examples | 1.6.101 | 2020-06-16 | 
 | mss-watchdog examples | 1.7.105 | 2021-02-01 | 
