@@ -776,8 +776,8 @@ typedef union buffer_status
 #else
 typedef struct buffer_status
 {
-    __I uint32_t RXMSGAV;
-    __I uint32_t TXREQ;
+    __IO uint32_t RXMSGAV;
+    __IO uint32_t TXREQ;
 #endif
 } mss_can_buffer_status;
 
