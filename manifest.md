@@ -26,7 +26,7 @@
 |----------|:-------------:|------:|
 | mss-can examples | 1.7.102 | 2020-08-26 | 
 | mss-ethernet-mac examples | 1.7.107 | 2021-01-15 | 
-| mss-gpio examples | 1.8.100 | 2021-04-16 | 
+| mss-gpio examples | 1.8.103 | 2021-06-21 | 
 | mss-i2c examples | 1.8.100 | 2021-04-16 | 
 | mss-mmc examples | 1.8.100 | 2020-10-02 | 
 | mss-mmuart examples | 1.7.109 | 2020-08-18 | 
