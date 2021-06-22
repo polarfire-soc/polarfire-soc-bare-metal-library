@@ -8,7 +8,7 @@
 | mss_ethernet_mac driver | 1.7.107 | 2021-01-15 | 
 | mss_gpio driver | 1.7.101 | 2020-08-02 | 
 | mss_hal driver | 1.8.103 | 2021-04-15 | 
-| mss_i2c driver | 1.7.102 | 2020-08-13 | 
+| mss_i2c driver | 1.8.101 | 2021-06-22 | 
 | mss_mmc driver | 1.8.100 | 2020-10-02 | 
 | mss_mmuart driver | 1.7.105 | 2020-08-10 | 
 | mss_mpfs_hal driver | 1.8.125 | 2021-06-18 | 
