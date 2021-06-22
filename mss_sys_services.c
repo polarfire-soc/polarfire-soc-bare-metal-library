@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  * 
@@ -1079,6 +1079,12 @@ MSS_SYS_spi_copy
      *(uint32_t *)(mb_format + 8u)  = mss_spi_flash;
      *(uint32_t *)(mb_format + 12u) = n_bytes;
      mb_format[16] = options;
+     
+     if ((options < 1U) || (options > 3U))
+     {
+         return MSS_SYS_PARAM_ERR;
+     }
+     
 
      if (MSS_SYS_SERVICE_INTERRUPT_MODE == g_service_mode)
      {

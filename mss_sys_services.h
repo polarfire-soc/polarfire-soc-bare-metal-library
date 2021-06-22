@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2152,7 +2152,7 @@ MSS_SYS_execute_iap
 /*-------------------------------------------------------------------------*//**
   The MSS_SYS_spi_copy() function allows data to be copied from the system
   controller SPI flash to MSS memory. The SPI SCK frequency is specified by a
-  user-defined option allowing for a maximum SCK frequency of 80MHz.
+  user-defined option with valid values shown in parameter description.
   This function is non-blocking in the interrupt mode , in that, it will exit
   immediately after requesting the service. In polling mode, it becomes a
   blocking function. It will block until the the service is completed and a
@@ -2169,13 +2169,14 @@ MSS_SYS_execute_iap
                     The n_bytes parameter specifies the number of bytes to
                     transfer.
   @param options
-                    The 8 bit options parameter specifies the SPI clk
-                    divider configuration.
+                    The 8 bit options parameter specifies the clock frequency
+                    used for the SPI transfers.
 
-                    OPTIONS[i]  Name    Description
-                    1:0         CLKDIV  SPI clock divider configuration.
-                                        0=80MHz, 1=40MHz,
-                                        2=20MHz, 3=13.33MHz
+                    |options |Clock     |
+                    |--------|----------|
+                    | 1      | 40MHz    |
+                    | 2      | 20MHz    |
+                    | 3      | 13.33MHz |
 
                     7:2 RESERVED        Reserved for future use
   @param mb_offset
