@@ -16,7 +16,7 @@
 | mss_qspi driver | 1.7.101 | 2020-08-02 | 
 | mss_rtc driver | 1.7.102 | 2020-08-13 | 
 | mss_spi driver | 1.7.104 | 2020-08-13 | 
-| mss_sys_services driver | 1.7.103 | 2021-02-01 | 
+| mss_sys_services driver | 1.8.102 | 2021-06-22 | 
 | mss_timer driver | 1.7.103 | 2020-08-13 | 
 | mss_usb driver | 1.7.102 | 2020-08-26 | 
 | mss_watchdog driver | 1.7.102 | 2020-08-02 | 
