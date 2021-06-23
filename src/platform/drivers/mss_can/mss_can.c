@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
- * PolarFire SoC (MPFS) Microprocessor Subsystem CAN bare metal software driver 
+ * PolarFire SoC (MPFS) microprocessor subsystem CAN bare metal software driver 
  * implementation.
- *
  */
+
 
 /*******************************************************************************
  * Include files

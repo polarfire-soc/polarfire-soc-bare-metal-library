@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2019-2020 Microchip FPGA Embedded Systems Solutions.
+ * Copyright 2019-2021 Microchip FPGA Embedded Systems Solutions.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *
- * PolarFire SoC Microprocessor Subsystem CAN bare metal software driver public 
- * API.
+ * PolarFire SoC Microprocessor Subsystem(MSS) CAN bare metal software driver  
+ * public API.
  *
  */
 /*=========================================================================*//**
@@ -223,9 +223,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define __IO volatile
-#define __O volatile
 
 /* The following macro MSS_CAN_ENABLE_INTERRUPTS must be defined to allow the
  * enabling of the MSS CAN peripheral interrupts at the PLIC level.
