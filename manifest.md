@@ -4,7 +4,7 @@
 
 | Drivers | Revision | time stamp (YYYY-MM-DD) |
 |----------|:-------------------:|------:|
-| mss_can driver | 1.7.102 | 2020-08-13 | 
+| mss_can driver | 1.8.100 | 2021-06-23 | 
 | mss_ethernet_mac driver | 1.7.107 | 2021-01-15 | 
 | mss_gpio driver | 1.7.101 | 2020-08-02 | 
 | mss_hal driver | 1.8.103 | 2021-04-15 | 
