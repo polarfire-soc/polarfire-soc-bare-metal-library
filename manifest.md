@@ -38,7 +38,7 @@
 | mss-sys-services examples | 1.8.103 | 2021-06-18 | 
 | mss-timer examples | 1.7.109 | 2020-08-26 | 
 | mss-usb examples | 1.6.101 | 2020-06-16 | 
-| mss-watchdog examples | 1.7.105 | 2021-02-01 | 
+| mss-watchdog examples | 1.8.102 | 2021-06-23 | 
 | pf-pcie examples | 3.2.2 | 2020-08-19 | 
 
 | Configuration | Revision | Time Stamp (YYYY-MM-DD) |
