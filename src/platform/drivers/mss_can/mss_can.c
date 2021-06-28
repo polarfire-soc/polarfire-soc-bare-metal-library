@@ -801,7 +801,7 @@ MSS_CAN_send_message
             this_can->hw_reg->TxMsg[mailbox_number].TXB.L = (pmsg->L | \
                                                    CAN_TX_WPNH_EBL | \
                                                    CAN_TX_REQ);
-            success = CAN_VALID_MSG;
+            success = CAN_OK;
             break;
         }
     }
