@@ -1,5 +1,5 @@
 # DEPRECATED
-The PolarFire SoC Bare Metal Library is officially deprecated.
+The PolarFire SoC Bare Metal Library is being deprecated.
 
 It is recommended that users transition to [polarfire-soc-bare-metal-examples](https://github.com/polarfire-soc/polarfire-soc-bare-metal-examples)
 for the ready to use applications and device driver example projects.
