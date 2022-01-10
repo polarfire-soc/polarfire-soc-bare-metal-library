@@ -1,8 +1,8 @@
 # DEPRECATED
-The PolarFire SoC Bare Metal Library is being deprecated.
+The PolarFire SoC Bare Metal Library has been deprecated.
 
-It is recommended that users transition to [polarfire-soc-bare-metal-examples](https://github.com/polarfire-soc/polarfire-soc-bare-metal-examples)
-for the ready to use applications and device driver example projects.
+The [polarfire-soc-bare-metal-examples](https://github.com/polarfire-soc/polarfire-soc-bare-metal-examples) repository supersedes this repository.
+It contains ready to use applications and device driver example projects.
 
 The PolarFire SoC *platform* source code is available through a separate [platform](https://github.com/polarfire-soc/platform) repository.
 <br><br>
